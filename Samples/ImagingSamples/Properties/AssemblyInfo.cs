@@ -3,12 +3,12 @@
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("netduino.helpers")]
+[assembly: AssemblyTitle("ImagingSamples")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("netduino.helpers")]
-[assembly: AssemblyCopyright("Copyright © Fabien Royer 2011")]
+[assembly: AssemblyProduct("ImagingSamples")]
+[assembly: AssemblyCopyright("Copyright © Fabien Royer & Bertrand Le Roy 2011")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

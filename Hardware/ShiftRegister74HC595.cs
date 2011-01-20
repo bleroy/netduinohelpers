@@ -51,7 +51,7 @@ namespace netduino.helpers.Hardware {
                 ChipSelect_HoldTime: 0,
                 Clock_IdleState: false,
                 Clock_Edge: true,
-                Clock_RateKHz: 1000
+                Clock_RateKHz: 10000
                 );
             Spi = new SPI(spiConfig);
         }

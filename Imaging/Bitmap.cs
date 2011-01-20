@@ -27,10 +27,15 @@ namespace netduino.helpers.Imaging {
     /// </summary>
     public class Bitmap {
         public static readonly int FrameSize = 8;
+        public static readonly byte[] ShiftMasks =
+            new byte[] { 128, 64, 32, 16, 8, 4, 2, 1 };
+        public static readonly byte[] ReverseShiftMasks =
+            new byte[] { 0x7F, 0xBF, 0xDF, 0xEF, 0xF7, 0xFB, 0xFD, 0xFE };
+
         /// <summary>
         /// Bitmap data in hex.
         /// </summary>
-        protected byte[] BitmapData = {0x0, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8};
+        protected byte[] BitmapData;
 
         public Bitmap() {
             HeightModuloSize = 1;
@@ -83,17 +88,24 @@ namespace netduino.helpers.Imaging {
             BitmapData = data;
         }
 
+        public bool GetPixel(int x, int y) {
+            if (x >= Height || y >= Width || x < 0 || y < 0) return false;
+            var xOffset = x % FrameSize;
+            var index = y * WidthModuloSize + (x / FrameSize);
+            return (BitmapData[index] & ShiftMasks[xOffset]) != 0;
+        }
+
         /// <summary>
         /// Takes x and y coordinates in pixels and returns a corresponding 8*8 frame
         /// </summary>
         /// <returns>An 8*8 frame, whose upper left corner is x and y</returns>
         public byte[] this[int x, int y] {
             get {
-                if (x < 0 || x > Width) {
+                if (x < 0 || x + FrameSize > Width) {
                     throw new ArgumentOutOfRangeException("x");
                 }
 
-                if (y < 0 || y > Height) {
+                if (y < 0 || y + FrameSize > Height) {
                     throw new ArgumentOutOfRangeException("y");
                 }
 

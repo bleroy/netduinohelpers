@@ -1,12 +1,10 @@
 using System;
 using System.IO;
 using Microsoft.SPOT;
-using System.Threading;
 using System.Collections;
 using System.Reflection;
 using SecretLabs.NETMF.IO;
 using SecretLabs.NETMF.Hardware.Netduino;
-using netduino.helpers.Hardware;
 
 namespace netduino.helpers.Helpers {
     /*
@@ -60,8 +58,8 @@ namespace netduino.helpers.Helpers {
         /// Note: bitmap resources are expected to be a 1-bit depth images in binary format.
         /// 
         /// </summary>
-        /// <param name="ResourceManifest"></param>
-        public SDResourceLoader(string ResourceManifest = "resources.txt")
+        /// <param name="resourceManifest"></param>
+        public SDResourceLoader(string resourceManifest = "resources.txt")
         {
             Strings = new Hashtable();
             Bitmaps = new Hashtable();
@@ -72,7 +70,7 @@ namespace netduino.helpers.Helpers {
             StorageDevice.MountSD(SdMountPoint, SPI_Devices.SPI1, Pins.GPIO_PIN_D10);
 
             // Read the content of the resource manifest and build the corresponding resources
-            using (TextReader reader = new StreamReader(SdMountPoint + @"\" + ResourceManifest))
+            using (TextReader reader = new StreamReader(SdMountPoint + @"\" + resourceManifest))
             {
                 string line;
                 
@@ -113,9 +111,9 @@ namespace netduino.helpers.Helpers {
         /// <param name="args">A hash table providing the parameters needed to load/execute the assembly</param>
         protected void LoadAssembly(Hashtable args)
         {
-            using (FileStream assmfile = new FileStream(SdMountPoint + @"\" + args["file"], FileMode.Open, FileAccess.Read, FileShare.None))
+            using (var assmfile = new FileStream(SdMountPoint + @"\" + args["file"], FileMode.Open, FileAccess.Read, FileShare.None))
             {
-                byte[] assmbytes = new byte[(int) assmfile.Length];
+                var assmbytes = new byte[(int) assmfile.Length];
                 assmfile.Read(assmbytes, 0, (int) assmfile.Length);
                 var assm = Assembly.Load(assmbytes);
                 var versionString = (string)args["name"] + ", Version=" + (string)args["version"];
@@ -139,7 +137,7 @@ namespace netduino.helpers.Helpers {
         {
             string[] bitmapParams = str.Split(';');
 
-            Hashtable hash = new Hashtable();
+            var hash = new Hashtable();
 
             foreach (string paramString in bitmapParams)
             {
@@ -154,22 +152,22 @@ namespace netduino.helpers.Helpers {
         /// <summary>
         /// Creates a 1-bit depth bitmap object from a binary file
         /// </summary>
-        /// <param name="WidthinPixels">Width of the bitmap in pixels</param>
-        /// <param name="HeightinPixels">Height of the bitmap in pixels</param>
+        /// <param name="widthinPixels">Width of the bitmap in pixels</param>
+        /// <param name="heightinPixels">Height of the bitmap in pixels</param>
         /// <param name="filename">Filename containing the binary data defining the bitmap</param>
-        protected void BuildBitmapResource(int WidthinPixels, int HeightinPixels, string filename)
+        protected void BuildBitmapResource(int widthinPixels, int heightinPixels, string filename)
         {
-            using (FileStream bmpfile = new FileStream(SdMountPoint + @"\" + filename, FileMode.Open, FileAccess.Read, FileShare.None))
+            using (var bmpfile = new FileStream(SdMountPoint + @"\" + filename, FileMode.Open, FileAccess.Read, FileShare.None))
             {
                 // Note: don't exceed the amount of RAM available in the netduino by loading files that are too large!
                 // This will result in an out-of-memory exception.
-                byte[] bitmapdata = new byte[(int) bmpfile.Length];
+                var bitmapdata = new byte[(int) bmpfile.Length];
                 
                 // VS will issue a potential overflow warning here, indicating that an exception will not be thrown if that occurs.
                 // The warning can be safely ignored.
                 bmpfile.Read(bitmapdata, 0, (int) bmpfile.Length);
 
-                var bitmap = new Imaging.Bitmap(HeightinPixels, WidthinPixels, bitmapdata);
+                var bitmap = new Imaging.Bitmap(heightinPixels, widthinPixels, bitmapdata);
 
                 Bitmaps.Add(filename, bitmap);
             }

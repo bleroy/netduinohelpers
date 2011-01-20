@@ -1,6 +1,3 @@
-using System;
-using Microsoft.SPOT;
-
 namespace netduino.helpers.Imaging {
     /*
     Copyright (C) 2011 by Fabien Royer
@@ -64,18 +61,18 @@ namespace netduino.helpers.Imaging {
             // Figure out the width in pixels required to build the bitmap matching the text string
             int textWidthInPixels = text.Length * FrameSize;
 
-            byte[] bmpData = new byte[textWidthInPixels];
+            var bmpData = new byte[textWidthInPixels];
 
             int index = 0;
 
-            foreach (char c in text.ToUpper()) // There's no lowercase in the font used here
-            {
+            var upperText = text.ToUpper();
+            for (var i = 0; i < text.Length; i++) {
                 // Build the target bitmap one character at a time
-                CopyBitmapChar(c, bmpData, index++, text.Length);
+                CopyBitmapChar(upperText[i], bmpData, index++, text.Length);
             }
 
             // Create the final bitmap object matching the text string
-            Bitmap strBmp = new Bitmap(FrameSize, textWidthInPixels, bmpData);
+            var strBmp = new Bitmap(FrameSize, textWidthInPixels, bmpData);
 
             return strBmp;
         }
@@ -97,12 +94,12 @@ namespace netduino.helpers.Imaging {
             // Refer to http://www.ascii-code.com/ ASCII printable characters (character code 32-127)
             if (c >= '@' && c <= '_')
             {
-                x = ((int)c - '@') * FrameSize;
+                x = (c - '@') * FrameSize;
                 // 1st line, so no need to set y
             }
             else if (c >= ' ' && c <= '?')
             {
-                x = ((int)c - ' ') * FrameSize;
+                x = (c - ' ') * FrameSize;
                 y = FrameSize; // 2nd line
             }
 
