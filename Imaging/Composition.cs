@@ -2,128 +2,110 @@ using System.Collections;
 
 namespace netduino.helpers.Imaging {
     public class Composition {
-        private readonly Hashtable _layers = new Hashtable();
-        private byte[] _oddFrame;
-        private byte[] _evenFrame;
+        private readonly ArrayList _missiles = new ArrayList();
+        private byte[] _frameCache;
         private int _frameCacheX;
         private int _frameCacheY;
-        private Hashtable _collisionClasses;
 
-        public void AddBitmap(
+        public Composition(byte[] background, int width, int height) {
+            Background = background;
+            Width = width;
+            Height = height;
+        }
+
+        public byte[] Background { get; private set;}
+        public int Width { get; private set; }
+        public int Height { get; private set; }
+
+        public PlayerMissile this[string name] {
+            get {
+                foreach (PlayerMissile missile in _missiles) {
+                    if (missile.Name == name) return missile;
+                }
+                return null;
+            }
+        }
+
+        public event CoincEventHandler Coinc;
+
+        protected virtual void OnCoinc(CoincEventArgs e) {
+            if (Coinc != null) {
+                Coinc(this, e);
+            }
+        }
+
+        public void AddMissile(
             string name,
-            Bitmap bitmap,
-            Bitmap mask = null,
-            int offsetX = 0,
-            int offsetY = 0,
-            int zIndex = 0,
-            Brightness brightness = Brightness.Full) {
-            _layers.Add(name, new Layer {
-                                            Bitmap = bitmap,
-                                            Mask = mask,
-                                            OffsetX = offsetX,
-                                            OffsetY = offsetY,
-                                            ZIndex = zIndex,
-                                            Brightness = brightness,
-                                            Owner = this
-                                        });
+            int x = 0,
+            int y = 0,
+            byte brightness = (byte) 255) {
+            _missiles.Add(new PlayerMissile(
+                              name: name,
+                              x: x,
+                              y: y,
+                              brightness: brightness,
+                              owner: this
+                              ));
+            ClearCache();
+        }
+
+        public void AddMissile(PlayerMissile missile) {
+            _missiles.Add(missile);
+            missile.Owner = this;
             ClearCache();
         }
 
         private void ClearCache() {
-            _oddFrame = _evenFrame = null;
-            _collisionClasses = null;
+            _frameCache = null;
         }
 
-        public void AddLayer(string name, Layer layer) {
-            _layers.Add(name, layer);
+        public void RemoveMissile(string name) {
+            foreach (PlayerMissile missile in _missiles) {
+                if (missile.Name == name) _missiles.Remove(missile);
+                missile.Owner = null;
+            }
             ClearCache();
         }
 
-        public void RemoveLayer(string name) {
-            _layers.Remove(name);
-            ClearCache();
-        }
-
-        public Layer this[string name] {
-            get { return (Layer)_layers[name]; }
-            set {
-                _layers[name] = value;
-                ClearCache();
+        public byte[] GetFrame(int offsetX, int offsetY) {
+            if (_frameCache != null && offsetX == _frameCacheX && offsetY == _frameCacheY) {
+                return _frameCache;
             }
-        }
-
-        public byte[] GetFrame(int offsetX, int offsetY, bool odd) {
-            if (offsetX == _frameCacheX && offsetY == _frameCacheY) {
-                if (odd && _oddFrame != null) return _oddFrame;
-                if (!odd && _evenFrame != null) return _evenFrame;
-            }
-
-            // .NET Micro does not support bidimensional arrays.
-            // Behold the CLR_E_FAIL error! Use a jagged array.
-            var zBuffer = new int[Bitmap.FrameSize][];
-            for (var i = 0; i < zBuffer.Length; i++) {
-                zBuffer[i] = new int[Bitmap.FrameSize];
-            }
-            var frame = new byte[Bitmap.FrameSize];
-
-            BuildCollisionClasses();
-
-            for (var x = 0; x < Bitmap.FrameSize; x++) {
-                for (var y = 0; y < Bitmap.FrameSize; y++) {
-
-                    foreach(Layer layer in _layers.Values) {
-
-                        if (zBuffer[x][y] > layer.ZIndex) continue;
-                        var layerX = offsetX + x - layer.OffsetX;
-                        var layerY = offsetY + y - layer.OffsetY;
-
-                        if (layer.Brightness == Brightness.Hidden ||
-                            layerX > layer.Bitmap.Width ||
-                            layerY > layer.Bitmap.Height ||
-                            layerX < 0 ||
-                            layerY < 0) continue;
-
-                        if (layer.Mask != null && !layer.Mask.GetPixel(layerX, layerY)) continue;
-
-                        var layerPixelLit = layer.Bitmap.GetPixel(layerX, layerY);
-                        
-                        if (layerPixelLit && (odd || layer.Brightness == Brightness.Full)) {
-                            zBuffer[x][y] = layer.ZIndex;
-                            frame[y] |= Bitmap.ShiftMasks[x];
-                        }
-                        else if (layer.Mask != null || layerPixelLit) {
-                            zBuffer[x][y] = layer.ZIndex;
-                            frame[y] &= Bitmap.ReverseShiftMasks[x];
-                        }
-
-                        //if ((layer.Mask == null && layerPixelLit) ||
-                        //    (layer.Mask != null)) {
-                            
-                        //    collisions.Add(layer);
-                        //}
-                    }
-                }
-            }
-            
-            if (odd) _oddFrame = frame;
-            else _evenFrame = frame;
+            _frameCache = new byte[Bitmap.FrameSize * Bitmap.FrameSize];
             _frameCacheX = offsetX;
             _frameCacheY = offsetY;
 
-            return frame;
+            for (var x = 0; x < Bitmap.FrameSize; x++) {
+                for (var y = 0; y < Bitmap.FrameSize; y++) {
+                    var absX = offsetX + x;
+                    var absY = offsetY + y;
+
+                    if (absX > Width || absY > Height || absX < 0 || absY < 0) continue;
+
+                    _frameCache[x*Bitmap.FrameSize + y] =
+                        Background[absX*Width + absY];
+                }
+            }
+
+            foreach (PlayerMissile missile in _missiles) {
+                var relX = missile.X - offsetX;
+                var relY = missile.Y - offsetY;
+                if (relY < 0 || relX < 0 || relX >= Bitmap.FrameSize || relY >= Bitmap.FrameSize) continue;
+                _frameCache[relX*Width + relY] = missile.Brightness;
+            }
+
+            CheckForCollisions();
+            
+            return _frameCache;
         }
 
-        private void BuildCollisionClasses() {
-            if (_collisionClasses == null) {
-                _collisionClasses = new Hashtable();
-                foreach (Layer layer in _layers.Values) {
-                    if (layer.Classes != null) {
-                        foreach (string cls in layer.Classes) {
-                            if (!_collisionClasses.Contains(cls)) {
-                                _collisionClasses.Add(cls, new ArrayList());
-                            }
-                            ((ArrayList) _collisionClasses[cls]).Add(layer);
-                        }
+        private void CheckForCollisions() {
+            for (var i = 0; i < _missiles.Count; i++) {
+                var missile1 = (PlayerMissile)_missiles[i];
+                for (var j = i + 1; j < _missiles.Count; j++) {
+                    var missile2 = (PlayerMissile)_missiles[j];
+                    if (missile1.X == missile2.X && missile1.Y == missile2.Y) {
+                        OnCoinc(new CoincEventArgs(missile1, missile2));
                     }
                 }
             }

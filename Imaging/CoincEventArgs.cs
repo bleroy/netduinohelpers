@@ -2,16 +2,12 @@
 
 namespace netduino.helpers.Imaging {
     public class CoincEventArgs : EventArgs {
-        public CoincEventArgs(string cls, Layer projectile, int x, int y) {
-            Class = cls;
-            Projectile = projectile;
-            X = x;
-            Y = y;
+        public CoincEventArgs(PlayerMissile missile1, PlayerMissile missile2) {
+            Missile1 = missile1;
+            Missile2 = missile2;
         }
 
-        public string Class { get; private set; }
-        public Layer Projectile { get; private set; }
-        public int X { get; private set; }
-        public int Y { get; private set; }
+        public PlayerMissile Missile1 { get; private set; }
+        public PlayerMissile Missile2 { get; private set; }
     }
 }
