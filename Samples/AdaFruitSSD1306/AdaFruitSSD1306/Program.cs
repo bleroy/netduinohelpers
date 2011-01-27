@@ -43,7 +43,7 @@ namespace AdaFruitOLED
                 oled.Display();
             }
             
-            oled.Select(false);
+            //oled.Select(false);
         }
 
         protected static byte[] netduino = new byte[AdaFruitSSD1306.SSD1306_BUFFER_SIZE] {
