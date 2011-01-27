@@ -1,4 +1,5 @@
 using Microsoft.SPOT.Hardware;
+using netduino.helpers.Helpers;
 
 namespace netduino.helpers.Hardware {
     /*
@@ -42,7 +43,7 @@ namespace netduino.helpers.Hardware {
         /// </summary>
         /// <param name="latchPin">Pin connected to register latch on the 74HC595</param>
         /// <param name="spiModule">SPI module being used to send data to the shift register</param>
-        public ShiftRegister74HC595(Cpu.Pin latchPin, SPI.SPI_module spiModule) {
+        public ShiftRegister74HC595(Cpu.Pin latchPin, SPI.SPI_module spiModule, uint speedKHz = 1000) {
             var spiConfig = new SPI.Configuration(
                 SPI_mod: spiModule,
                 ChipSelect_Port: latchPin,
@@ -51,7 +52,7 @@ namespace netduino.helpers.Hardware {
                 ChipSelect_HoldTime: 0,
                 Clock_IdleState: false,
                 Clock_Edge: true,
-                Clock_RateKHz: 10000
+                Clock_RateKHz: speedKHz
                 );
             Spi = new SPI(spiConfig);
         }
@@ -70,30 +71,7 @@ namespace netduino.helpers.Hardware {
         /// <returns>The byte with the reversed bits</returns>
         public byte FlipBits(byte val)
         {
-            byte reversed = 0;
-
-            int bit = 0;
-
-            while (true) {
-                if ((val & 1) == 1) {
-                    reversed |= 1;
-                }
-                else {
-                    reversed |= 0;
-                }
-
-                bit++;
-
-                if (bit < 8) {
-                    reversed <<= 1;
-                    val >>= 1;
-                }
-                else {
-                    break;
-                }
-            }
-
-            return reversed;
+            return BitReverseTable256.Table[val];
         }
     }
 }

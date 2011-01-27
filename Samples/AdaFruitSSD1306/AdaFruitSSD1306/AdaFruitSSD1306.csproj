@@ -36,8 +36,13 @@
   <ItemGroup>
     <Reference Include="Microsoft.SPOT.Hardware" />
     <Reference Include="Microsoft.SPOT.Native" />
-    <Reference Include="netduino.helpers, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="SecretLabs.NETMF.Hardware" />
     <Reference Include="SecretLabs.NETMF.Hardware.Netduino" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\netduino.helpers.csproj">
+      <Project>{D15C30B3-3FDE-475F-AB25-7EA65DE56911}</Project>
+      <Name>netduino.helpers</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>
