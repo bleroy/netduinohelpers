@@ -80,7 +80,7 @@ namespace netduino.helpers.Imaging {
                     var absX = offsetX + x;
                     var absY = offsetY + y;
 
-                    if (absX > Width || absY > Height || absX < 0 || absY < 0) continue;
+                    if (absX >= Width || absY >= Height || absX < 0 || absY < 0) continue;
 
                     _frameCache[x*Bitmap.FrameSize + y] =
                         Background[absX*Width + absY];

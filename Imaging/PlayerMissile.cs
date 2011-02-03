@@ -17,30 +17,30 @@ namespace netduino.helpers.Imaging {
         public int X {
             get { return _x; }
             set {
+                _x = value;
                 if (Owner != null) {
                     Owner.NotifyChange();
                 }
-                _x = value;
             }
         }
         
         public int Y {
             get { return _y; }
             set {
-                if (Owner != null) {
+                _y = value;
+                 if (Owner != null) {
                     Owner.NotifyChange();
                 }
-                _y = value;
-            }
+           }
         }
 
         public byte Brightness {
             get { return _brightness; }
             set {
+                _brightness = value;
                 if (Owner != null) {
                     Owner.NotifyChange();
                 }
-                _brightness = value;
             }
         }
 
