@@ -37,6 +37,7 @@
     <Compile Include="Hardware\LedMS88SR74HC595.cs" />
     <Compile Include="Hardware\PushButton.cs" />
     <Compile Include="Hardware\ShiftRegister74HC595.cs" />
+    <Compile Include="Helpers\BitReverseTable256.cs" />
     <Compile Include="Helpers\SDResourceLoader.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
+using netduino.helpers.Helpers;
 
 namespace netduino.helpers.Hardware
 {
@@ -73,13 +74,39 @@ namespace netduino.helpers.Hardware
             SSD1306_SWITCHCAPVCC = 0x2
         }
 
-        public AdaFruitSSD1306(Cpu.Pin DATA, Cpu.Pin CLOCK, Cpu.Pin DC, Cpu.Pin RESET, Cpu.Pin CHIPSELECT)
-        {
+        protected delegate void DisplayWriteMethod(byte data);
+
+        public AdaFruitSSD1306(Cpu.Pin DATA, Cpu.Pin CLOCK, Cpu.Pin DC, Cpu.Pin RESET, Cpu.Pin CHIPSELECT) {
             dataPin = new OutputPort(DATA, false);
             clockPin = new OutputPort(CLOCK, false);
             dcPin = new OutputPort(DC, false);
             resetPin = new OutputPort(RESET, false);
             chipSelectPin = new OutputPort(CHIPSELECT, false);
+
+            DisplayWrite = new DisplayWriteMethod(BitBangWrite);
+        }
+
+        public AdaFruitSSD1306(Cpu.Pin DC, Cpu.Pin RESET, Cpu.Pin CHIPSELECT, SPI.SPI_module spiModule = SPI.SPI_module.SPI1, uint speedKHz = 1000)
+        {
+            var spiConfig = new SPI.Configuration(
+                SPI_mod: spiModule,
+                ChipSelect_Port: CHIPSELECT,
+                ChipSelect_ActiveState: false,
+                ChipSelect_SetupTime: 0,
+                ChipSelect_HoldTime: 0,
+                Clock_IdleState: false,
+                Clock_Edge: true,
+                Clock_RateKHz: speedKHz
+                );
+
+            Spi = new SPI(spiConfig);
+
+            dcPin = new OutputPort(DC, false);
+            resetPin = new OutputPort(RESET, false);
+
+            SpiBuffer = new byte[1];
+
+            DisplayWrite = new DisplayWriteMethod(SpiWrite);
         }
 
         public void DrawBitmap(int x, int y, ref byte[] bitmap, int w, int h, Color color) {
@@ -120,7 +147,7 @@ namespace netduino.helpers.Hardware
             }
         }
 
-        // bresenham's algorithm - thx wikpedia
+        // bresenham's algorithm - thx wikipedia
         void DrawLine(int x0, int y0, int x1, int y1, Color color) {
             int steep = (System.Math.Abs(y1 - y0) > System.Math.Abs(x1 - x0)) ? 1 : 0;
           
@@ -270,7 +297,9 @@ namespace netduino.helpers.Hardware
 
         public void Select(bool select)
         {
-            chipSelectPin.Write(!select);
+            if (chipSelectPin != null) {
+                chipSelectPin.Write(!select);
+            }
         }
 
         public void Initialize(VccType vcctype = VccType.SSD1306_SWITCHCAPVCC) {
@@ -301,18 +330,14 @@ namespace netduino.helpers.Hardware
 
             SendCommand(Command.SSD1306_DISPLAYALLON_RESUME); // 0xA4
 
-            /*
             SendCommand(Command.SSD1306_SETMULTIPLEX); // 0xA8
             SendCommand((Command) 0x3F);  // 0x3F 1/64 duty
-             */
 
             SendCommand(Command.SSD1306_SETDISPLAYOFFSET); // 0xD3
             SendCommand((Command) 0x0); // no offset
 
-            /* Slows the display down!
             SendCommand(Command.SSD1306_SETDISPLAYCLOCKDIV);  // 0xD5
             SendCommand((Command) 0x80);  // the suggested ratio 0x80
-             */
 
             SendCommand(Command.SSD1306_SETPRECHARGE); // 0xd9
             if (vcctype == VccType.SSD1306_EXTERNALVCC) {
@@ -358,15 +383,15 @@ namespace netduino.helpers.Hardware
 
         public void SendCommand(Command cmd) {
             dcPin.Write(false);
-            Write((byte) cmd);
+            DisplayWrite((byte) cmd);
         }
 
         public void SendData(byte data) {
             dcPin.Write(true);
-            Write(data);
+            DisplayWrite(data);
         }
 
-        protected void Write(byte data) {
+        protected void BitBangWrite(byte data) {
             byte i = 8;
             int mask;
 
@@ -381,6 +406,11 @@ namespace netduino.helpers.Hardware
                 clockPin.Write(true);
                 --i;
             }
+        }
+
+        protected void SpiWrite(byte data) {
+            SpiBuffer[0] = data;
+            Spi.Write(SpiBuffer);
         }
 
         public void Display() {
@@ -405,17 +435,45 @@ namespace netduino.helpers.Hardware
 
         public void Dispose()
         {
-            dcPin.Dispose();
-            resetPin.Dispose();
-            clockPin.Dispose();
-            dataPin.Dispose();
-            chipSelectPin.Dispose();
+            if (dcPin != null)
+            {
+                dcPin.Dispose();
+            }
+
+            if (resetPin != null)
+            {
+                resetPin.Dispose();
+            }
+
+            if (clockPin != null)
+            {
+                clockPin.Dispose();
+            }
+
+            if (dataPin != null)
+            {
+                dataPin.Dispose();
+            }
+
+            if (chipSelectPin != null)
+            {
+                chipSelectPin.Dispose();
+            }
+
+            if (Spi != null)
+            {
+                Spi.Dispose();
+            }
 
             dcPin = null;
             resetPin = null;
             clockPin = null;
             dataPin = null;
             chipSelectPin = null;
+
+            Spi = null;
+            SpiBuffer = null;
+            DisplayWrite = null;
 
             buffer = null;
             Font = null;
@@ -426,6 +484,11 @@ namespace netduino.helpers.Hardware
         protected OutputPort clockPin;
         protected OutputPort dataPin;
         protected OutputPort chipSelectPin;
+
+        protected SPI Spi;
+        protected byte[] SpiBuffer;
+
+        protected DisplayWriteMethod DisplayWrite;
 
         public const int SSD1306_BUFFER_SIZE = 1024;
 
