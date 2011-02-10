@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 
 namespace netduino.helpers.Imaging {
@@ -7,15 +8,14 @@ namespace netduino.helpers.Imaging {
         private int _frameCacheX;
         private int _frameCacheY;
 
-        public Composition(byte[] background, int width, int height) {
+        public Composition(Bitmap background) {
             Background = background;
-            Width = width;
-            Height = height;
         }
 
-        public byte[] Background { get; private set;}
-        public int Width { get; private set; }
-        public int Height { get; private set; }
+        public Composition(byte[] background, int width, int height)
+            : this(new Bitmap(background, width, height)) {}
+
+        public Bitmap Background { get; private set; }
 
         public PlayerMissile this[string name] {
             get {
@@ -37,13 +37,11 @@ namespace netduino.helpers.Imaging {
         public void AddMissile(
             string name,
             int x = 0,
-            int y = 0,
-            byte brightness = (byte) 255) {
+            int y = 0) {
             _missiles.Add(new PlayerMissile(
                               name: name,
                               x: x,
                               y: y,
-                              brightness: brightness,
                               owner: this
                               ));
             ClearCache();
@@ -71,27 +69,15 @@ namespace netduino.helpers.Imaging {
             if (_frameCache != null && offsetX == _frameCacheX && offsetY == _frameCacheY) {
                 return _frameCache;
             }
-            _frameCache = new byte[Bitmap.FrameSize * Bitmap.FrameSize];
+            _frameCache = Background.GetFrame(offsetX, offsetY);
             _frameCacheX = offsetX;
             _frameCacheY = offsetY;
-
-            for (var x = 0; x < Bitmap.FrameSize; x++) {
-                for (var y = 0; y < Bitmap.FrameSize; y++) {
-                    var absX = offsetX + x;
-                    var absY = offsetY + y;
-
-                    if (absX >= Width || absY >= Height || absX < 0 || absY < 0) continue;
-
-                    _frameCache[x*Bitmap.FrameSize + y] =
-                        Background[absX*Width + absY];
-                }
-            }
 
             foreach (PlayerMissile missile in _missiles) {
                 var relX = missile.X - offsetX;
                 var relY = missile.Y - offsetY;
                 if (relY < 0 || relX < 0 || relX >= Bitmap.FrameSize || relY >= Bitmap.FrameSize) continue;
-                _frameCache[relX*Width + relY] = missile.Brightness;
+                _frameCache[relY] |= Bitmap.ShiftMasks[relX];
             }
 
             CheckForCollisions();

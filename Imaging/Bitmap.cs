@@ -37,17 +37,17 @@ namespace netduino.helpers.Imaging {
         /// </summary>
         protected byte[] BitmapData;
 
-        public Bitmap() {
-            HeightModuloSize = 1;
-            WidthModuloSize = 1;
-        }
-
-        public Bitmap(int heightInPixels, int widthInPixels, byte[] data) {
+        public Bitmap(byte[] data, int widthInPixels, int heightInPixels) {
             if ((heightInPixels % 8) != 0 || (widthInPixels % 8) != 0) {
-                throw new InvalidOperationException("height and width must be multiples of 8");
+                throw new ArgumentException("height and width must be multiples of 8");
+            }
+            if (data.Length != heightInPixels * widthInPixels / 8) {
+                throw new ArgumentException("Data must be consistent with width and height.", "data");
             }
 
-            Redefine(heightInPixels, widthInPixels, data);
+            WidthModuloSize = widthInPixels >> 3;
+            HeightModuloSize = heightInPixels >> 3;
+            BitmapData = data;
         }
 
         protected int HeightModuloSize { get; set; }
@@ -70,22 +70,10 @@ namespace netduino.helpers.Imaging {
                 return HeightModuloSize << 3;
             }
         }
-        /// <summary>
-        /// Allows the bitmap to be redefined with a new one at runtime
-        /// </summary>
-        /// <param name="heightInPixels">Height of the new bitmap in pixels</param>
-        /// <param name="widthInPixels">Width of the new bitmap in pixels</param>
-        /// <param name="data">The new bitmap</param>
-        protected void Redefine(int heightInPixels, int widthInPixels, byte[] data)
-        {
-            if ((heightInPixels % 8) != 0 || (widthInPixels % 8) != 0)
-            {
-                throw new InvalidOperationException("height and width must be multiples of 8");
-            }
 
-            HeightModuloSize = heightInPixels >> 3;
-            WidthModuloSize = widthInPixels >> 3;
-            BitmapData = data;
+        public bool this[int x, int y] {
+            get { return GetPixel(x, y); }
+            set { SetPixel(x, y, value); }
         }
 
         public bool GetPixel(int x, int y) {
@@ -95,53 +83,61 @@ namespace netduino.helpers.Imaging {
             return (BitmapData[index] & ShiftMasks[xOffset]) != 0;
         }
 
+        public void SetPixel(int x, int y, bool value) {
+            if (x >= Height || y >= Width || x < 0 || y < 0) return;
+            var xOffset = x % FrameSize;
+            var index = y * WidthModuloSize + (x / FrameSize);
+            if (value) {
+                BitmapData[index] |= ShiftMasks[xOffset];
+            }
+            else {
+                BitmapData[index] &= ReverseShiftMasks[xOffset];
+            }
+        }
+
         /// <summary>
         /// Takes x and y coordinates in pixels and returns a corresponding 8*8 frame
         /// </summary>
         /// <returns>An 8*8 frame, whose upper left corner is x and y</returns>
-        public byte[] this[int x, int y] {
-            get {
-                if (x < 0 || x + FrameSize > Width) {
-                    throw new ArgumentOutOfRangeException("x");
+        public byte[] GetFrame(int x, int y) {
+            var bitmapX = x / FrameSize; // Divide x by frameSize to determine where the x coordinate lands in the bitmap
+            var xOffset = x % FrameSize; // Determine the amount of horizontal scrolling required to show the frame at this position
+
+            var frame = new byte[FrameSize]; // Create the final frame
+
+            var endLine = (y + FrameSize); // determine the ending line in the bitmap to create the final frame
+
+            for (int line = y, frameLine = 0, index = bitmapX + y * WidthModuloSize;
+                 line < endLine;
+                 line++, frameLine++, index += WidthModuloSize) { // Build the frame one line at a time
+
+                if (line < 0 || line >= Height) {
+                    frame[frameLine] = 0x00;
                 }
-
-                if (y < 0 || y + FrameSize > Height) {
-                    throw new ArgumentOutOfRangeException("y");
-                }
-
-                var bitmapX = x / FrameSize; // Divide x by frameSize to determine where the x coordinate lands in the bitmap
-                var xOffset = x % FrameSize; // Determine the amount of horizontal scrolling required to show the frame at this position
-
-                var frame = new byte[FrameSize]; // Create the final frame
-
-                var endLine = (y + FrameSize); // determine the ending line in the bitmap to create the final frame
-
-                if (endLine > Height) // don't get out of bounds!
-                {
-                    endLine = Height;
-                }
-
-                for (int line = y, frameLine = 0; line < endLine; line++, frameLine++) // Build the frame one line at a time
-                {
-                    var index = line * WidthModuloSize + bitmapX; // determine the location of the graphics in the bitmap matrix
-
-                    if (xOffset == 0) // if no scrolling is required, stored the graphics as-is
-                    {
+                else if (xOffset == 0) {
+                    if (x >= 0 && x + FrameSize < Width) {
+                        // if no scrolling is required, stored the graphics as-is
                         frame[frameLine] = BitmapData[index];
                     }
-                    else // we need to merge / scroll two graphics to make one line
-                    {
-                        var merged = BitmapData[index];
-                        merged <<= (byte)(xOffset);
-                        var neighbor = BitmapData[index + 1];
-                        neighbor >>= (byte)(FrameSize - xOffset);
-                        merged |= neighbor;
-                        frame[frameLine] = merged;
-                    }
                 }
-
-                return frame;
+                else {
+                    // we need to merge / scroll two graphics to make one line
+                    byte merged = 0;
+                    if (x >= 0 && x < Width) {
+                        merged = BitmapData[index];
+                        merged <<= (byte) (xOffset);
+                    }
+                    byte neighbor = 0;
+                    if (x + FrameSize >= 0 && x + FrameSize < Width) {
+                        neighbor = BitmapData[index + 1];
+                        neighbor >>= (byte) (FrameSize - xOffset);
+                    }
+                    merged |= neighbor;
+                    frame[frameLine] = merged;
+                }
             }
+
+            return frame;
         }
     }
 }

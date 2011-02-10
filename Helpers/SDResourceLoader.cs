@@ -167,7 +167,7 @@ namespace netduino.helpers.Helpers {
                 // The warning can be safely ignored.
                 bmpfile.Read(bitmapdata, 0, (int) bmpfile.Length);
 
-                var bitmap = new Imaging.Bitmap(heightinPixels, widthinPixels, bitmapdata);
+                var bitmap = new Imaging.Bitmap(bitmapdata, widthinPixels, heightinPixels);
 
                 Bitmaps.Add(filename, bitmap);
             }

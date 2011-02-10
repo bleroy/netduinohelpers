@@ -16,38 +16,37 @@ namespace ImagingSamples {
                 //// Let's make it smile!
                 //var smile = new byte[] {0x42, 0x18, 0x18, 0x81, 0x7E, 0x3C, 0x18, 0x00};
                 //DisplayAndWait(smile, matrix, button);
-                // TODO: All together now
                 var comp = new Composition(new byte[]  {
-                                                     0, 1, 2, 4, 4, 2, 1, 0,
-                                                     1, 2, 4, 8, 8, 4, 2, 1,
-                                                     2, 4, 8, 16, 16, 8, 4, 2,
-                                                     4, 8, 16, 32, 32, 16, 8, 4,
-                                                     4, 8, 16, 32, 32, 16, 8, 4,
-                                                     2, 4, 8, 16, 16, 8, 4, 2,
-                                                     1, 2, 4, 8, 8, 4, 2, 1,
-                                                     0, 1, 2, 4, 4, 2, 1, 0,
-                                                 }, 8, 8);
+                    0x00, 0x00,
+                    0x00, 0x00,
+                    0x00, 0x00,
+                    0x00, 0x00,
+                    0x03, 0xC0,
+                    0x07, 0xE0,
+                    0x0F, 0xF0,
+                    0x0F, 0xF0,
+                    0x0F, 0xF0,
+                    0x0F, 0xF0,
+                    0x07, 0xE0,
+                    0x03, 0xC0,
+                    0x00, 0x00,
+                    0x00, 0x00,
+                    0x00, 0x00,
+                    0x00, 0x00,
+                }, 16, 16);
                 var player = new PlayerMissile("player", 0, 0);
-                var missile = new PlayerMissile("missile", 7, 7);
+                var missile = new PlayerMissile("missile", 0, 0);
                 comp.AddMissile(player);
                 comp.AddMissile(missile);
                 while (true) {
-                    for (var size = 0; size < 32; size++) {
-                        player.X = size/4;
-                        player.Y = size/8;
-                        missile.X = 7 - size/8;
-                        missile.Y = 7 - size/4;
-                        var frame = comp.GetFrame((Math.Sin(size*20))/500, (Math.Cos(size*20))/500);
-                        var cutoff = new byte[8];
-                        for (var i = 0; i < 8; i++) {
-                            for (var j = 0; j < 8; j++) {
-                                if (frame[i*8 + j] > size) {
-                                    cutoff[j] |= (byte) (1 << i);
-                                }
-                            }
-                        }
-                        matrix.Set(cutoff);
-                        Thread.Sleep(10);
+                    for (var angle = 0; angle < 360; angle++) {
+                        player.X = 8 + Math.Sin(angle * 2)/160;
+                        player.Y = 8 + Math.Cos(angle * 2)/160;
+                        missile.X = 8 + Math.Sin(angle) / 160;
+                        missile.Y = 8 + Math.Cos(angle) / 160;
+                        var frame = comp.GetFrame(Math.Sin(angle*20)/250 + 4, Math.Cos(angle*20)/250 + 4);
+                        matrix.Set(frame);
+                        Thread.Sleep(50);
                     }
                 }
             }

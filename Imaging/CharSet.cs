@@ -48,7 +48,7 @@ namespace netduino.helpers.Imaging {
             };
 
         public CharSet()
-            : base(16, 256, FontData)
+            : base(FontData, 256, 16)
         {
         }
         /// <summary>
@@ -72,7 +72,7 @@ namespace netduino.helpers.Imaging {
             }
 
             // Create the final bitmap object matching the text string
-            var strBmp = new Bitmap(FrameSize, textWidthInPixels, bmpData);
+            var strBmp = new Bitmap(bmpData, textWidthInPixels, FrameSize);
 
             return strBmp;
         }
@@ -104,7 +104,7 @@ namespace netduino.helpers.Imaging {
             }
 
             // Grab the bitmap frame matching the character
-            var frame = base[x,y];
+            var frame = GetFrame(x, y);
 
             // Copy the character frame into the target bitmap buffer
             for (int line = y, frameLine = 0; frameLine < FrameSize; line++, frameLine++) // Build the frame one line at a time
