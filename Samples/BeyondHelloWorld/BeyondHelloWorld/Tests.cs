@@ -71,7 +71,7 @@ namespace BeyondHelloWorld
                 Debug.Print("X=" + X.ToString() + " (" + Joystick.XDirection.ToString() + ")" + ", Y=" + Joystick.y.ToString() + " (" + Joystick.YDirection.ToString() + ")");
 
                 // move the bitmap according to the direction of the joystick
-                matrix.Set(Invaders[X, Y]);
+                matrix.Set(Invaders.GetFrame(X, Y));
 
                 Thread.Sleep(80);
             }
@@ -97,8 +97,8 @@ namespace BeyondHelloWorld
             //  If the SD card is not present, show an SD card icon and wait for a reset...
             using (var matrix = new LedMS88SR74HC595().Initialize())
             {
-                var SD = new Bitmap(8, 8, new byte[] { 0x7e, 0x42, 0x42, 0x42, 0x42, 0x42, 0x22, 0x1e });
-                matrix.Set(SD[0, 0]);
+                var SD = new Bitmap(new byte[] { 0x7e, 0x42, 0x42, 0x42, 0x42, 0x42, 0x22, 0x1e }, 8, 8);
+                matrix.Set(SD.GetFrame(0, 0));
                 while (true) { 
                     Thread.Sleep(1000); 
                 }
