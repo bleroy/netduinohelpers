@@ -87,6 +87,15 @@ namespace RTC
 
             // Sleep another 5 seconds before exiting
             Thread.Sleep(5 * 1000);
+
+            // Reset the clock & RAM
+            clock.Set(new DateTime(2011, 2, 17, 21, 36, 00));
+
+            for (byte I = 0; I < DS1307.DS1307_RAM_SIZE; I++) {
+                ram[I] = (byte)0;
+            }
+            // Write it to the RAM in the clock
+            clock.SetRAM(ram);            
         }
 
         // Test the square wave frequencies supported by the clock (oscilloscope or interrupt handler useful here).

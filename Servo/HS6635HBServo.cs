@@ -73,6 +73,7 @@ namespace netduino.helpers.Servo
         // Positions the servo to its center position
         public void Center() {
             Pulse = CenterRangePulse;
+            Thread.Sleep(1000);
         }
 
         /// <summary>
@@ -95,7 +96,7 @@ namespace netduino.helpers.Servo
                     (double)value
                     );
                 
-                Debug.Print("Degree: " + value.ToString() + " = " + pulse.ToString());
+                //Debug.Print("Degree: " + value.ToString() + " = " + pulse.ToString());
                 
                 Pulse = pulse;
             }
@@ -104,14 +105,18 @@ namespace netduino.helpers.Servo
         // Positions the servo using an absolute pulse
         public uint Pulse {
             set {
-                if (value > MaxRangePulse) {
-                    value = MaxRangePulse;
-                } else {
-                    if (value < MinRangePulse) {
-                        value = MinRangePulse;
+                if (value != 0) {
+                    if (value > MaxRangePulse) {
+                        value = MaxRangePulse;
+                    } else {
+                        if (value < MinRangePulse) {
+                            value = MinRangePulse;
+                        }
                     }
+                    _servo.SetPulse(PulseRefreshRateMs * 1000, value);
+                } else {
+                    _servo.SetPulse(0, 0);
                 }
-                _servo.SetPulse(PulseRefreshRateMs * 1000, value);
             }
         }
 

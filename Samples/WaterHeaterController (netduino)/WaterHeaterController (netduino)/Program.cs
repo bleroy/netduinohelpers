@@ -1,26 +1,52 @@
-﻿using System;
+﻿#define NETDUINO_MINI
+
+using System;
 using System.Threading;
 using System.Collections;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware;
-using SecretLabs.NETMF.Hardware.Netduino;
 using netduino.helpers.Hardware;
 using netduino.helpers.SerialUI;
 using netduino.helpers.Servo;
+using System.IO.Ports;
+
+#if NETDUINO_MINI
+    using SecretLabs.NETMF.Hardware.NetduinoMini;
+#else
+    using SecretLabs.NETMF.Hardware.Netduino;
+#endif
 
 namespace WaterHeaterController {
     public class Program {
-        private static readonly PushButton _pushButton = new PushButton(Pin: Pins.ONBOARD_SW1, Target: PushButtonHandler);
-        private static readonly PWM _ledBlue = new PWM(Pins.GPIO_PIN_D5);
-        private static readonly PWM _ledRed = new PWM(Pins.GPIO_PIN_D6);
 
+#if NETDUINO_MINI
+        private static readonly OutputPort _servoPowerEnable = new OutputPort(Pins.GPIO_PIN_16, false);
+        private static readonly PushButton _pushButton = new PushButton(Pin: Pins.GPIO_PIN_17, Target: PushButtonHandler);
+        private static readonly OutputPort _ledOverride = new OutputPort(Pins.GPIO_PIN_13, false);
+        private static readonly OutputPort _ledServoPowerEnable = new OutputPort(Pins.GPIO_PIN_15, false); 
+        private static readonly PWM _ledLowHeat = new PWM(Pins.GPIO_PIN_18);
+        private static readonly PWM _ledHighHeat = new PWM(Pins.GPIO_PIN_19);
+        private static readonly HS6635HBServo _servo = new HS6635HBServo(Pins.GPIO_PIN_20,minPulse: 700, centerPulse: 1600);
+#else
+        private static readonly OutputPort _servoPowerEnable = new OutputPort(Pins.GPIO_PIN_D3, false);
+        private static readonly PushButton _pushButton = new PushButton(Pin: Pins.ONBOARD_SW1, Target: PushButtonHandler);
+        private static readonly OutputPort _ledOverride = new OutputPort(Pins.GPIO_PIN_D2, false);
+        private static readonly OutputPort _ledServoPowerEnable = new OutputPort(Pins.GPIO_PIN_D4, false);
+        private static readonly PWM _ledLowHeat = new PWM(Pins.GPIO_PIN_D5);
+        private static readonly PWM _ledHighHeat = new PWM(Pins.GPIO_PIN_D6);
+        private static readonly HS6635HBServo _servo = new HS6635HBServo(Pins.GPIO_PIN_D9,minPulse: 700, centerPulse: 1600);
+#endif
+
+#if DEBUG
+        private static SerialUserInterface _serialUI = new SerialUserInterface(Serial.COM2);
+#else
         private static SerialUserInterface _serialUI = new SerialUserInterface();
+#endif
 
         private static readonly Schedule _schedule = new Schedule();
         private static readonly Status _status = new Status();
         private static readonly DS1307 _clock = new DS1307();
-        private static readonly HS6635HBServo _servo = new HS6635HBServo(Pins.GPIO_PIN_D9);
 
         private const string Divider = "-------------------------------------------------------------\r\n";
 
@@ -29,10 +55,11 @@ namespace WaterHeaterController {
         private static bool _shutdown = false;
 
         private const uint LowHeat = 180;
-        private const uint Center = 90;
+        private const uint Center = 100;
         private const uint HighHeat = 0;
 
         public static void Main() {
+
             const int millisecIncrement = 100;
             const int millisecElapsedLimit = 60000;
 
@@ -43,19 +70,24 @@ namespace WaterHeaterController {
             var previousHeaterStatus = true;
             var initialize = true;
 
-            _ledRed.SetDutyCycle(0);
-            _ledBlue.SetDutyCycle(0);
+            _ledHighHeat.SetDutyCycle(0);
+            _ledLowHeat.SetDutyCycle(0);
 
+            InitializeClock();
+
+            Log("\r\nWater Heater Controller v1.0\r\n"); 
             Log("Initializing...");
             LoadSchedule();
+
+            PowerServo(true);
             Log("Centering servo");
             _servo.Center();
             Log("Setting heater on high heat by default");
             _servo.Move(Center, currentHeat);
-            Log("Running");
+            Log("Running...");
+            PowerServo(false);
 
             while (true) {
-
                 if (_serialUI.SerialErrorReceived == true) {
                     _serialUI.Dispose();
                     _serialUI = new SerialUserInterface();
@@ -79,18 +111,25 @@ namespace WaterHeaterController {
                     Log("Heater state change"); 
                     initialize = false;
                     _scheduleChange = false;
+
+                    _ledOverride.Write(_schedule.WaterHeaterManualOverride);
+
                     if (currentHeaterStatus) {
                         Log("Setting heater on high");
+                        PowerServo(true);
                         _servo.Move(currentHeat, HighHeat);
+                        PowerServo(false); 
+                        _ledHighHeat.SetDutyCycle(50);
+                        _ledLowHeat.SetDutyCycle(0);
                         currentHeat = HighHeat;
-                        _ledRed.SetDutyCycle(50);
-                        _ledBlue.SetDutyCycle(0);
                     } else {
                         Log("Setting heater on low");
+                        PowerServo(true);
                         _servo.Move(currentHeat, LowHeat);
+                        PowerServo(false); 
+                        _ledHighHeat.SetDutyCycle(0);
+                        _ledLowHeat.SetDutyCycle(50);
                         currentHeat = LowHeat;
-                        _ledRed.SetDutyCycle(0);
-                        _ledBlue.SetDutyCycle(50);
                     }
                     previousHeaterStatus = currentHeaterStatus;
                 }
@@ -98,9 +137,11 @@ namespace WaterHeaterController {
                 if (_shutdown) {
                     Log("Shutting down");
                     Log("Moving servo to center...");
-                    _ledRed.SetDutyCycle(50);
-                    _ledBlue.SetDutyCycle(50);
+                    _ledHighHeat.SetDutyCycle(50);
+                    _ledLowHeat.SetDutyCycle(50);
+                    PowerServo(true);
                     _servo.Move(currentHeat, Center);
+                    PowerServo(false);
 
                     Log("Shutdown complete");
                     Log("Cycle power to restart.");
@@ -109,8 +150,8 @@ namespace WaterHeaterController {
                     var direction = 1;
 
                     while (true) {
-                        _ledRed.SetDutyCycle((uint)dutyCycle);
-                        _ledBlue.SetDutyCycle((uint)dutyCycle);
+                        _ledHighHeat.SetDutyCycle((uint)dutyCycle);
+                        _ledLowHeat.SetDutyCycle((uint)dutyCycle);
                         dutyCycle += direction;
                         if (dutyCycle == 50) {
                             direction = -1;
@@ -125,7 +166,24 @@ namespace WaterHeaterController {
             }
         }
 
-        public static void LoadSchedule() {
+        private static void InitializeClock() {
+            try {
+                _clock.Get();
+            } catch (Exception e) {
+                Debug.Print("Initializating the clock with default values due to: " + e);
+                byte[] ram = new byte[DS1307.DS1307_RAM_SIZE];
+                _clock.Set(new DateTime(2011, 1, 1, 12, 0, 0));
+                _clock.Halt(false); 
+                _clock.SetRAM(ram);
+            }
+        }
+
+        private static void PowerServo(bool power) {
+            _ledServoPowerEnable.Write(power);
+            _servoPowerEnable.Write(power);
+        }
+
+        private static void LoadSchedule() {
             Log("Loading schedule");
             try {
                 var clockRAM = _clock.GetRAM();
@@ -136,7 +194,7 @@ namespace WaterHeaterController {
             }
         }
 
-        public static void SaveSchedule() {
+        private static void SaveSchedule() {
             Log("Saving schedule");
             var clockRAM = new byte[DS1307.DS1307_RAM_SIZE];
             var serializer = new Serializer(clockRAM);
@@ -145,7 +203,7 @@ namespace WaterHeaterController {
             _scheduleChange = true;
         }
 
-        public static void Log(string line) {
+        private static void Log(string line) {
             _serialUI.Display("[" + _clock.Get().ToString() + "] " + line + "\r\n");
         }
 
@@ -162,7 +220,7 @@ namespace WaterHeaterController {
             _serialUI.AddInputItem(new SerialInputItem { Option = "1", Label = ": Show Schedule", Callback = ShowSchedule });
             _serialUI.AddInputItem(new SerialInputItem { Option = "2", Label = ": Set Schedule", Callback = SetSchedule });
             _serialUI.AddInputItem(new SerialInputItem { Option = "3", Label = ": Set Clock", Callback = SetClock, Context = 0 });
-            _serialUI.AddInputItem(new SerialInputItem { Option = "4", Label = ": Set Heater ON / Resume Schedule", Callback = SwitchHeaterOn });
+            _serialUI.AddInputItem(new SerialInputItem { Option = "4", Label = ": Swith Heater ON / Resume Schedule", Callback = SwitchHeaterOn });
             _serialUI.AddInputItem(new SerialInputItem { Option = "X", Label = ": Shutdown", Callback = Shutdown });
             _serialUI.AddInputItem(new SerialInputItem { Callback = RefreshMainMenu });
 
@@ -358,7 +416,7 @@ namespace WaterHeaterController {
             _serialUI.Go();
         }
 
-        public static int ToInt(string name) {
+        private static int ToInt(string name) {
             var value = (string) _serialUI.Store[name];
             var Int = -1;
             try {

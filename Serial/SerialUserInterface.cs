@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using System.IO.Ports;
 using System.Collections;
+using Microsoft.SPOT;
 
 namespace netduino.helpers.SerialUI {
     /*
@@ -123,6 +124,7 @@ namespace netduino.helpers.SerialUI {
         public void Display(string line) {
             byte[] bytes = _encoding.GetBytes(line);
             _comPort.Write(bytes, 0, bytes.Length);
+            //Debug.Print(line);
         }
 
         // Start accepting user input from the serial port
