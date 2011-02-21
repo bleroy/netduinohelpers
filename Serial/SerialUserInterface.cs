@@ -75,7 +75,7 @@ namespace netduino.helpers.SerialUI {
 
         public SerialUserInterface(string port = Serial.COM1) {
             SerialErrorReceived = false;
-            _comPort = new SerialPort(port, 230400, Parity.None, 8, StopBits.One);
+            _comPort = new SerialPort(port, 115200, Parity.None, 8, StopBits.One);
             _comPort.ReadTimeout = 20;
             _comPort.WriteTimeout = 20;
             _comPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);

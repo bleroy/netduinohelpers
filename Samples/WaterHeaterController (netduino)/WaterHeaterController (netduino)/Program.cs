@@ -12,8 +12,12 @@ using netduino.helpers.Servo;
 using System.IO.Ports;
 
 #if NETDUINO_MINI
+    // You must ensure that you also have the reference set to SecretLabs.NETMF.Hardware.NetduinoMini in the project
+    // You must also remove the SecretLabs.NETMF.Hardware.Netduino if it was there.
     using SecretLabs.NETMF.Hardware.NetduinoMini;
 #else
+    // You must ensure that you also have the reference set to SecretLabs.NETMF.Hardware.Netduino in the project
+    // You must also remove the SecretLabs.NETMF.Hardware.NetduinoMini if it was there.
     using SecretLabs.NETMF.Hardware.Netduino;
 #endif
 
@@ -28,6 +32,7 @@ namespace WaterHeaterController {
         private static readonly PWM _ledLowHeat = new PWM(Pins.GPIO_PIN_18);
         private static readonly PWM _ledHighHeat = new PWM(Pins.GPIO_PIN_19);
         private static readonly HS6635HBServo _servo = new HS6635HBServo(Pins.GPIO_PIN_20,minPulse: 700, centerPulse: 1600);
+        private static SerialUserInterface _serialUI = new SerialUserInterface(Serial.COM2);
 #else
         private static readonly OutputPort _servoPowerEnable = new OutputPort(Pins.GPIO_PIN_D3, false);
         private static readonly PushButton _pushButton = new PushButton(Pin: Pins.ONBOARD_SW1, Target: PushButtonHandler);
@@ -36,14 +41,8 @@ namespace WaterHeaterController {
         private static readonly PWM _ledLowHeat = new PWM(Pins.GPIO_PIN_D5);
         private static readonly PWM _ledHighHeat = new PWM(Pins.GPIO_PIN_D6);
         private static readonly HS6635HBServo _servo = new HS6635HBServo(Pins.GPIO_PIN_D9,minPulse: 700, centerPulse: 1600);
-#endif
-
-#if DEBUG
-        private static SerialUserInterface _serialUI = new SerialUserInterface(Serial.COM2);
-#else
         private static SerialUserInterface _serialUI = new SerialUserInterface();
 #endif
-
         private static readonly Schedule _schedule = new Schedule();
         private static readonly Status _status = new Status();
         private static readonly DS1307 _clock = new DS1307();
@@ -109,8 +108,6 @@ namespace WaterHeaterController {
 
                 if (currentHeaterStatus != previousHeaterStatus || _scheduleChange == true || initialize == true) {
                     Log("Heater state change"); 
-                    initialize = false;
-                    _scheduleChange = false;
 
                     _ledOverride.Write(_schedule.WaterHeaterManualOverride);
 
@@ -132,6 +129,8 @@ namespace WaterHeaterController {
                         currentHeat = LowHeat;
                     }
                     previousHeaterStatus = currentHeaterStatus;
+                    _scheduleChange = false;
+                    initialize = false;
                 }
 
                 if (_shutdown) {
@@ -236,8 +235,6 @@ namespace WaterHeaterController {
         }
 
         public static void ShowSchedule(SerialInputItem item) {
-            _pushButton.Input.DisableInterrupt();
-
             var scheduleList = new ArrayList();
             _schedule.Display(scheduleList);
 
@@ -249,8 +246,6 @@ namespace WaterHeaterController {
             _serialUI.Go();
 
             RefreshMainMenu(null);
-
-            _pushButton.Input.EnableInterrupt();
         }
 
         public static void SetSchedule(SerialInputItem item) {
@@ -258,7 +253,6 @@ namespace WaterHeaterController {
 
             switch (item.Context) {
                 case 0:
-                    _pushButton.Input.DisableInterrupt();
                     _serialUI.Store.Clear();
                     _serialUI.AddDisplayItem(Divider);
                     _serialUI.AddDisplayItem("Set Heater Weekly Schedule:\r\n");
@@ -279,7 +273,6 @@ namespace WaterHeaterController {
                         Log("Invalid week day input.");
                         _serialUI.Store.Clear();
                         RefreshMainMenu(null);
-                        _pushButton.Input.EnableInterrupt();
                         return;
                     }
                     break;
@@ -292,7 +285,6 @@ namespace WaterHeaterController {
                         Log("Invalid timeslot input.");
                         _serialUI.Store.Clear();
                         RefreshMainMenu(null);
-                        _pushButton.Input.EnableInterrupt();
                         return;
                     }
                     break;
@@ -327,7 +319,6 @@ namespace WaterHeaterController {
                         Log("Begin hour must be <= to End hour except if End hour is 0.");
                         _serialUI.Store.Clear();
                         RefreshMainMenu(null);
-                        _pushButton.Input.EnableInterrupt();
                         return;
                     }
 
@@ -341,7 +332,6 @@ namespace WaterHeaterController {
 
                     _serialUI.Store.Clear();
                     RefreshMainMenu(null);
-                    _pushButton.Input.EnableInterrupt();
                     return;
             }
 
@@ -364,7 +354,6 @@ namespace WaterHeaterController {
 
             switch (item.Context) {
                 case 0:
-                    _pushButton.Input.DisableInterrupt();
                     _serialUI.Store.Clear();
                     _serialUI.AddDisplayItem(Divider);
                     _serialUI.AddDisplayItem("Set Clock:\r\n");
@@ -409,7 +398,6 @@ namespace WaterHeaterController {
                     _serialUI.Store.Clear();
 
                     RefreshMainMenu(null);
-                    _pushButton.Input.EnableInterrupt();
                     return;
             }
             
@@ -428,10 +416,13 @@ namespace WaterHeaterController {
         }
 
         public static void SwitchHeaterOn(SerialInputItem item) {
-            Log("Switching heater state");
+            Log("Switching heater state, please wait...");
             _schedule.WaterHeaterManualOverride ^= true;
             _scheduleChange = true;
             RefreshMainMenu(null);
+            while (_scheduleChange == true) {
+                Thread.Sleep(10);
+            }        
         }
 
         public static void PushButtonHandler(UInt32 port, UInt32 state, DateTime time) {
