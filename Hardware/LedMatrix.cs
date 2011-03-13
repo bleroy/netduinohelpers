@@ -141,7 +141,9 @@ namespace netduino.helpers.Hardware {
 
         public void Dispose() {
             Clear();
-            DisplayThread.Abort();
+            if (DisplayThread != null) {
+                DisplayThread.Abort();
+            }
         }
     }
 }

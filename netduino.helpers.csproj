@@ -33,10 +33,15 @@
     <Compile Include="Hardware\AdaFruitSSD1306.cs" />
     <Compile Include="Hardware\AnalogJoystick.cs" />
     <Compile Include="Hardware\DS1307.cs" />
+    <Compile Include="Hardware\ExtendedSpiConfiguration.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Hardware\LedMatrix.cs" />
     <Compile Include="Hardware\LedMS88SR74HC595.cs" />
+    <Compile Include="Hardware\Max72197221.cs" />
     <Compile Include="Hardware\PushButton.cs" />
     <Compile Include="Hardware\ShiftRegister74HC595.cs" />
+    <Compile Include="Hardware\StorageDevice.cs" />
     <Compile Include="Helpers\BitReverseTable256.cs" />
     <Compile Include="Helpers\SDResourceLoader.cs">
       <SubType>Code</SubType>
@@ -59,11 +64,5 @@
     <Reference Include="SecretLabs.NETMF.Hardware, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="SecretLabs.NETMF.Hardware.Netduino, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="System.IO" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="SecretLabs.NETMF.IO\SecretLabs.NETMF.IO.csproj">
-      <Project>{032000FA-5BA3-4FC9-994F-45B59089C5F2}</Project>
-      <Name>SecretLabs.NETMF.IO</Name>
-    </ProjectReference>
   </ItemGroup>
 </Project>

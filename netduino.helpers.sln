@@ -2,11 +2,6 @@
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual C# Express 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "netduino.helpers", "netduino.helpers.csproj", "{D15C30B3-3FDE-475F-AB25-7EA65DE56911}"
-	ProjectSection(ProjectDependencies) = postProject
-		{032000FA-5BA3-4FC9-994F-45B59089C5F2} = {032000FA-5BA3-4FC9-994F-45B59089C5F2}
-	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecretLabs.NETMF.IO", "SecretLabs.NETMF.IO\SecretLabs.NETMF.IO.csproj", "{032000FA-5BA3-4FC9-994F-45B59089C5F2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,10 +13,6 @@ Global
 		{D15C30B3-3FDE-475F-AB25-7EA65DE56911}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D15C30B3-3FDE-475F-AB25-7EA65DE56911}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D15C30B3-3FDE-475F-AB25-7EA65DE56911}.Release|Any CPU.Build.0 = Release|Any CPU
-		{032000FA-5BA3-4FC9-994F-45B59089C5F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{032000FA-5BA3-4FC9-994F-45B59089C5F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{032000FA-5BA3-4FC9-994F-45B59089C5F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{032000FA-5BA3-4FC9-994F-45B59089C5F2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -3,7 +3,7 @@ using System.Reflection;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
 
-namespace SecretLabs.NETMF.Hardware {
+namespace SecretLabs.NETMF.IO {
     public class ExtendedSpiConfiguration : SPI.Configuration {
         public ExtendedSpiConfiguration(
             Cpu.Pin ChipSelect_Port,
