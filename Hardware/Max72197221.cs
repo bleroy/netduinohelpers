@@ -1,7 +1,5 @@
 using System;
-using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
-using SecretLabs.NETMF.Hardware;
 using SecretLabs.NETMF.IO;
 using SecretLabs.NETMF.Hardware.Netduino;
 
@@ -110,8 +108,8 @@ namespace netduino.helpers.Hardware {
         /// <param name="latchPin">SPI Hardware pin 10 by default. Any other pin if controlling multiple LED drivers.</param>
         /// <param name="spiModule">SPI module, SPI 1 is used by default.</param>
         /// <param name="speedKHz">Speed of the SPI bus in kHz. Set @ 2MHz by default.</param>
-        public Max72197221(Cpu.Pin latchPin = Pins.GPIO_PIN_D10, SPI.SPI_module spiModule = SPI.SPI_module.SPI1, uint speedKHz = 2000) {
-            var ExtendedSpiConfig = new ExtendedSpiConfiguration(
+        public Max72197221(Cpu.Pin latchPin = Pins.GPIO_PIN_D10, SPI.SPI_module spiModule = SPI.SPI_module.SPI1, uint speedKHz = (uint)2000) {
+            var extendedSpiConfig = new ExtendedSpiConfiguration(
                 SPI_mod: spiModule,
                 ChipSelect_Port: latchPin,
                 ChipSelect_ActiveState: false,
@@ -122,62 +120,52 @@ namespace netduino.helpers.Hardware {
                 Clock_RateKHz: speedKHz,
                 BitsPerTransfer: 16);
 
-            Spi = new SPI(ExtendedSpiConfig);
+            Spi = new SPI(extendedSpiConfig);
 
             DigitScanLimitSafety = true;
 
             SpiBuffer = new ushort[1];
         }
 
-        public byte Intensity {
-            set {
-                if (value < 0 || value > 15) {
-                    throw new ArgumentOutOfRangeException("Intensity");
-                }
-                Write((byte)RegisterAddressMap.Intensity, value);
+        public void SetIntensity(byte value) {
+            if (value < 0 || value > 15) {
+                throw new ArgumentOutOfRangeException("value");
             }
+            Write((byte) RegisterAddressMap.Intensity, value);
         }
 
         public bool DigitScanLimitSafety { get; set; }
 
-        public byte DigitScanLimit {
-            set {
-                if (value < 0 || value > 7) {
-                    throw new ArgumentOutOfRangeException("ScanLimit");
-                }
-
-                if (DigitScanLimitSafety == true && value < 3) {
-                    throw new ArgumentException("DigitScanLimitSafety");
-                }
-                Write((byte)RegisterAddressMap.ScanLimit, value);
+        public void SetDigitScanLimit(byte value) {
+            if (value < 0 || value > 7) {
+                throw new ArgumentOutOfRangeException("value");
             }
+
+            if (DigitScanLimitSafety && value < 3) {
+                throw new ArgumentException("SetDigitScanLimitSafety value should not be set too low in order to keep within datasheet limits and protect your matrix or digits from burning out.");
+            }
+            Write((byte) RegisterAddressMap.ScanLimit, value);
         }
 
-        public DecodeModeRegister DecodeMode {
-            set {
-                if (value < DecodeModeRegister.NoDecodeMode || value > DecodeModeRegister.DecodeDigitAll) {
-                    throw new ArgumentOutOfRangeException("DecodeModeRegister");
-                }
-                Write((byte)RegisterAddressMap.DecodeMode, (byte)value);
+        public void SetDecodeMode(DecodeModeRegister value) {
+            if (value < DecodeModeRegister.NoDecodeMode || value > DecodeModeRegister.DecodeDigitAll) {
+                throw new ArgumentOutOfRangeException("value");
             }
+            Write((byte) RegisterAddressMap.DecodeMode, (byte) value);
         }
 
-        public ShutdownRegister Shutdown {
-            set {
-                if (value != ShutdownRegister.NormalOperation && value != ShutdownRegister.ShutdownMode) {
-                    throw new ArgumentOutOfRangeException("ShutdownRegister");
-                }
-                Write((byte)RegisterAddressMap.Shutdown, (byte)value);
+        public void Shutdown(ShutdownRegister value = ShutdownRegister.ShutdownMode) {
+            if (value != ShutdownRegister.NormalOperation && value != ShutdownRegister.ShutdownMode) {
+                throw new ArgumentOutOfRangeException("value");
             }
+            Write((byte) RegisterAddressMap.Shutdown, (byte) value);
         }
 
-        public DisplayTestRegister DisplayTest {
-            set {
-                if (value != DisplayTestRegister.DisplayTestMode && value != DisplayTestRegister.NormalOperation) {
-                    throw new ArgumentOutOfRangeException("DisplayTestRegister");
-                }
-                Write((byte)RegisterAddressMap.DisplayTest, (byte)value);
+        public void SetDisplayTest(DisplayTestRegister value) {
+            if (value != DisplayTestRegister.DisplayTestMode && value != DisplayTestRegister.NormalOperation) {
+                throw new ArgumentOutOfRangeException("value");
             }
+            Write((byte) RegisterAddressMap.DisplayTest, (byte) value);
         }
 
         /// <summary>
@@ -189,8 +177,8 @@ namespace netduino.helpers.Hardware {
             if (matrix.Length != 8) {
                 throw new ArgumentOutOfRangeException("matrix");
             }
-            byte rowNumber = 1;
-            foreach (byte rowData in matrix) {
+            var rowNumber = (byte)RegisterAddressMap.Digit0;
+            foreach (var rowData in matrix) {
                 Write(rowNumber, rowData);
                 rowNumber++;
             }
@@ -205,20 +193,20 @@ namespace netduino.helpers.Hardware {
         /// </summary>
         /// <param name="digits">A string containing characters from 0-9, '-', ' ', 'E', 'H', 'L', 'P' or '.'</param>
         public void Display(string digits) {
-            int length = digits.Length;
-            CodeBFont data = CodeBFont.Zero;
-            CodeBDecimalPoint decimalPoint = CodeBDecimalPoint.OFF;
-            RegisterAddressMap digitPosition = RegisterAddressMap.Digit0;
+            var length = digits.Length;
+            var decimalPoint = CodeBDecimalPoint.OFF;
+            var digitPosition = RegisterAddressMap.Digit0;
             while (length != 0) {
-                char Char = digits[--length];                
-                if (Char == '.') {
+                var c = digits[--length];                
+                if (c == '.') {
                     decimalPoint = CodeBDecimalPoint.ON;
                     continue;
                 }
-                if (Char >= '0' && Char <= '9') {
-                    data = (CodeBFont)(Char - '0');
+                CodeBFont data;
+                if (c >= '0' && c <= '9') {
+                    data = (CodeBFont)(c - '0');
                 } else {
-                    switch (Char) {
+                    switch (c) {
                         case '-':
                             data = CodeBFont.Dash;
                             break;
@@ -257,13 +245,13 @@ namespace netduino.helpers.Hardware {
             if (register < RegisterAddressMap.NoOp || register > RegisterAddressMap.Digit7) {
                 throw new ArgumentOutOfRangeException("register");
             }
-            byte data = (byte)codeBFont;
+            var data = (byte)codeBFont;
             data |= (byte)decimalPoint;
             Write((byte)register, data);
         }
 
         protected void Write(byte register, byte value) {
-            SpiBuffer[0] = (ushort) register;
+            SpiBuffer[0] = register;
             SpiBuffer[0] <<= 8;
             SpiBuffer[0] |= value;
             Spi.Write(SpiBuffer);

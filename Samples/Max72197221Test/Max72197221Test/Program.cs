@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Threading;
-using Microsoft.SPOT;
-using Microsoft.SPOT.Hardware;
-using SecretLabs.NETMF.Hardware;
-using SecretLabs.NETMF.Hardware.Netduino;
 using netduino.helpers.Hardware;
 
 namespace Max72197221Test {
@@ -32,7 +27,7 @@ namespace Max72197221Test {
     public class Program {
         private static Max72197221 _max;
         private static ArrayList _displayList;
-        private static byte _intensity = 0;
+        private static byte _intensity;
 
         public static void Main() {
             InitializeSpinnerDisplay();
@@ -49,11 +44,11 @@ namespace Max72197221Test {
 
             StringToDigitTest();
 
-            var spinnerThread = new Thread(new ThreadStart(Spinner));
+            var spinnerThread = new Thread(Spinner);
             spinnerThread.Start(); 
             
-            var IntensityThread = new Thread(new ThreadStart(IntensityTest));
-            IntensityThread.Start();
+            var intensityThread = new Thread(IntensityTest);
+            intensityThread.Start();
 
             WaitForEver();
         }
@@ -65,7 +60,7 @@ namespace Max72197221Test {
         }
 
         private static void StringToDigitTest() {
-            _max.DecodeMode = Max72197221.DecodeModeRegister.DecodeDigitAll;
+            _max.SetDecodeMode(Max72197221.DecodeModeRegister.DecodeDigitAll);
             _max.Display("        ");
             Thread.Sleep(1000);
             _max.Display("12345678");
@@ -76,11 +71,11 @@ namespace Max72197221Test {
             Thread.Sleep(3000);
             _max.Display("-.-.-. . . . .");
             Thread.Sleep(3000);
-            _max.DecodeMode = Max72197221.DecodeModeRegister.NoDecodeMode;
+            _max.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);
         }
 
         private static void DigitDecodeTest() {
-            _max.DecodeMode = Max72197221.DecodeModeRegister.DecodeDigitAll;
+            _max.SetDecodeMode(Max72197221.DecodeModeRegister.DecodeDigitAll);
             _max.Display(Max72197221.RegisterAddressMap.Digit0, Max72197221.CodeBFont.Zero, Max72197221.CodeBDecimalPoint.ON);
             _max.Display(Max72197221.RegisterAddressMap.Digit1, Max72197221.CodeBFont.One, Max72197221.CodeBDecimalPoint.OFF);
             _max.Display(Max72197221.RegisterAddressMap.Digit2, Max72197221.CodeBFont.Two, Max72197221.CodeBDecimalPoint.ON);
@@ -99,55 +94,56 @@ namespace Max72197221Test {
             _max.Display(Max72197221.RegisterAddressMap.Digit6, Max72197221.CodeBFont.P, Max72197221.CodeBDecimalPoint.ON);
             _max.Display(Max72197221.RegisterAddressMap.Digit7, Max72197221.CodeBFont.Blank, Max72197221.CodeBDecimalPoint.OFF);
             Thread.Sleep(4000);
-            _max.DecodeMode = Max72197221.DecodeModeRegister.NoDecodeMode;
+            _max.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);
         }
 
         private static void ShutdownTestMode() {
-            _max.DecodeMode = Max72197221.DecodeModeRegister.NoDecodeMode;
-            _max.DigitScanLimit = 7;
-            _max.Intensity = 3;
+            _max.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);
+            _max.SetDigitScanLimit(7);
+            _max.SetIntensity(3);
 
             _max.Display(new byte[] { 255, 129, 189, 165, 165, 189, 129, 255});
 
             for(int I = 0; I < 3; I++) {
                 Thread.Sleep(300); 
-                _max.Shutdown = Max72197221.ShutdownRegister.ShutdownMode;
+                _max.Shutdown();
                 Thread.Sleep(300);
-                _max.Shutdown = Max72197221.ShutdownRegister.NormalOperation;
+                _max.Shutdown(Max72197221.ShutdownRegister.NormalOperation);
             }
         }
 
         private static void DigitScanLimitTest() {
             _max.DigitScanLimitSafety = false;
-            _max.Intensity = 1;
+            _max.SetIntensity(1);
 
             for (int I = 0; I < 3; I++) {
                 byte limit = 7;
                 for (; limit > 1; limit--) {
-                    _max.DigitScanLimit = limit;
+                    _max.SetDigitScanLimit(limit);
                     Thread.Sleep(80);
                 }
                 for (; limit < 8; limit++) {
-                    _max.DigitScanLimit = limit;
+                    _max.SetDigitScanLimit(limit);
                     Thread.Sleep(80);
                 }
             }
             _max.DigitScanLimitSafety = true;
-            _max.Intensity = 3;
+            _max.SetIntensity(3);
         }
 
         private static void DisplayTestMode() {
-            _max.DisplayTest = Max72197221.DisplayTestRegister.DisplayTestMode;
+            _max.SetDisplayTest(Max72197221.DisplayTestRegister.DisplayTestMode);
             Thread.Sleep(4000);
-            _max.DisplayTest = Max72197221.DisplayTestRegister.NormalOperation;
+            _max.SetDisplayTest(Max72197221.DisplayTestRegister.NormalOperation);
         }
 
         private static void InitializeSpinnerDisplay() {
-            _displayList = new ArrayList();
-            _displayList.Add(new byte[] { 1, 2, 4, 8, 16, 32, 64, 128 });
-            _displayList.Add(new byte[] { 0, 0, 0, 255, 0, 0, 0, 0 });
-            _displayList.Add(new byte[] { 128, 64, 32, 16, 8, 4, 2, 1 });
-            _displayList.Add(new byte[] { 16, 16, 16, 16, 16, 16, 16, 16 });
+            _displayList = new ArrayList {
+                                             new byte[] {1, 2, 4, 8, 16, 32, 64, 128},
+                                             new byte[] {0, 0, 0, 255, 0, 0, 0, 0},
+                                             new byte[] {128, 64, 32, 16, 8, 4, 2, 1},
+                                             new byte[] {16, 16, 16, 16, 16, 16, 16, 16}
+                                         };
         }
 
         private static void IntensityTest() {
@@ -165,7 +161,7 @@ namespace Max72197221Test {
             while (true) {
                 foreach (byte[] matrix in _displayList) {
                     _max.Display(matrix);
-                    _max.Intensity = _intensity;
+                    _max.SetIntensity(_intensity);
                     Thread.Sleep(80);
                 }
             }
