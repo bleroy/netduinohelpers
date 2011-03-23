@@ -1,6 +1,3 @@
-using System;
-using Microsoft.SPOT;
-
 namespace netduino.helpers.Sound {
     public enum RttlPitches {
         B0 = 31,

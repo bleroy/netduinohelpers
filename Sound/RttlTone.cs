@@ -1,13 +1,10 @@
-using System;
-using Microsoft.SPOT;
-
 namespace netduino.helpers.Sound {
     public class RttlTone {
         
         public uint Note { get; private set; }
         public uint Period { get; private set; }
 
-        private int _duration;
+        private readonly int _duration;
 
         /// <summary>
         /// Calculate the duration of the note based on the song's tempo

@@ -1,8 +1,5 @@
-using System;
 using System.Threading;
 using System.Collections;
-using Microsoft.SPOT;
-using netduino.helpers.Sound;
 using SecretLabs.NETMF.Hardware;
 
 namespace netduino.helpers.Sound {
@@ -64,11 +61,11 @@ namespace netduino.helpers.Sound {
         /// <summary>
         /// Creates a song based on an RTTL string
         /// </summary>
-        /// <param name="RttlData"></param>
-        public RttlSong(string RttlData) {
-            var parts = RttlData.Split(':');
+        /// <param name="rttlData"></param>
+        public RttlSong(string rttlData) {
+            var parts = rttlData.Split(':');
             var header = parts[1].Split(',');
-            var RawRttlNotes = parts[2].Split(',');
+            var rawRttlNotes = parts[2].Split(',');
 
             Name = parts[0];
             Duration = int.Parse(header[0].Substring(2, header[0].Length - 2));
@@ -77,7 +74,7 @@ namespace netduino.helpers.Sound {
 
             Tempo = ((1000 * 60) / Beat) * 4;
 
-            ParseRttlData(RawRttlNotes);
+            ParseRttlData(rawRttlNotes);
         }
 
         /// <summary>
@@ -85,25 +82,24 @@ namespace netduino.helpers.Sound {
         /// Derived from http://code.google.com/p/rogue-code/source/browse/Arduino/libraries/Tone/trunk/examples/RTTTL/RTTTL.pde
         /// and Ian Lintner's port to C# https://github.com/ianlintner/Netduino-Ring-Tone-Player
         /// </summary>
-        /// <param name="RawRttlNotes"></param>
-        protected void ParseRttlData(string[] RawRttlNotes) {
+        /// <param name="rawRttlNotes"></param>
+        protected void ParseRttlData(string[] rawRttlNotes) {
             Notes = new ArrayList();
 
             char[] charParserArray; //used for parsing the current section
-            var defaultDuration = 4; //quarter note unless specified
-            var defaultOctave = 6; //middle c octave
+            const int defaultDuration = 4;
+            const int defaultOctave = 6;
 
 
-            foreach (string rttlNote in RawRttlNotes) {
+            foreach (var rttlNote in rawRttlNotes) {
                 charParserArray = rttlNote.ToLower().ToCharArray();
 
                 //start parsing a note entry
-                for (int i = 0; i < rttlNote.Length; i++) {
+                for (var i = 0; i < rttlNote.Length; i++) {
                     var durationParseNumber = 0;
-                    var currentDuration = 0;
-                    var currentScale = 0;
+                    int currentScale;
                     var currentNote = 0;
-                    var OctaveOffset = 0;
+                    const int octaveOffset = 0;
 
                     // first, get note duration, if available
                     while (i < charParserArray.Length && IsDigit(charParserArray[i])) {
@@ -111,11 +107,7 @@ namespace netduino.helpers.Sound {
                         durationParseNumber = (durationParseNumber * 10) + (charParserArray[i++] - '0');
                     }
 
-                    if (durationParseNumber > 0) {
-                        currentDuration = durationParseNumber;
-                    } else {
-                        currentDuration = defaultDuration;
-                    }
+                    var currentDuration = durationParseNumber > 0 ? durationParseNumber : defaultDuration;
 
                     // c is first note i.e. c = 1
                     // b = 12
@@ -175,7 +167,7 @@ namespace netduino.helpers.Sound {
                     }
 
                     //offset if necessary
-                    currentScale += OctaveOffset;
+                    currentScale += octaveOffset;
 
                     //add the note by calculating it's location in the RTTTL note array, scale/octave offsets are in groups of 12 notes
                     Notes.Add(new RttlTone((uint)RttlNotes[(currentScale - 1) * 12 + currentNote], (uint)currentDuration));
@@ -191,7 +183,7 @@ namespace netduino.helpers.Sound {
         /// <returns>If asynchronous == true, returns a reference to the thread playing the song or a null reference if asynchronous == false.</returns>
         public Thread Play(PWM channel, bool asynchronous = false) {
             if (asynchronous) {
-                Thread thread = new Thread(() => { Player(channel); });
+                var thread = new Thread(() => Player(channel));
                 thread.Start();
                 return thread;
             } 
@@ -222,11 +214,8 @@ namespace netduino.helpers.Sound {
         /// </summary>
         /// <param name="c"></param>
         /// <returns>True if the character is a digit</returns>
-        private bool IsDigit(char c) {
-            if (c >= '0' && c <= '9') {
-                return true;
-            }
-            return false;
+        private static bool IsDigit(char c) {
+            return c >= '0' && c <= '9';
         }
     }
 }
