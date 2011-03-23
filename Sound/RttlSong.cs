@@ -1,0 +1,232 @@
+using System;
+using System.Threading;
+using System.Collections;
+using Microsoft.SPOT;
+using netduino.helpers.Sound;
+using SecretLabs.NETMF.Hardware;
+
+namespace netduino.helpers.Sound {
+    /*
+    Copyright (C) 2011 by Fabien Royer
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.
+    */
+    /// <summary>
+    /// This class implements the Ring Tone Transfer Language
+    /// http://en.wikipedia.org/wiki/Ring_Tone_Transfer_Language
+    /// </summary>
+    public class RttlSong {
+        /// <summary>
+        /// Notes from C1 to B7 organized in groups of 12
+        /// </summary>
+        public static RttlPitches[] RttlNotes = {
+            RttlPitches.C1,RttlPitches.CS1,RttlPitches.D1,RttlPitches.DS1,RttlPitches.E1,RttlPitches.F1,RttlPitches.FS1,RttlPitches.G1,RttlPitches.GS1,RttlPitches.A1,RttlPitches.AS1,RttlPitches.B1,
+            RttlPitches.C2,RttlPitches.CS2,RttlPitches.D2,RttlPitches.DS2,RttlPitches.E2,RttlPitches.F2,RttlPitches.FS2,RttlPitches.G2,RttlPitches.GS2,RttlPitches.A2,RttlPitches.AS2,RttlPitches.B2,
+            RttlPitches.C3,RttlPitches.CS3,RttlPitches.D3,RttlPitches.DS3,RttlPitches.E3,RttlPitches.F3,RttlPitches.FS3,RttlPitches.G3,RttlPitches.GS3,RttlPitches.A3,RttlPitches.AS3,RttlPitches.B3,
+            RttlPitches.C4,RttlPitches.CS4,RttlPitches.D4,RttlPitches.DS4,RttlPitches.E4,RttlPitches.F4,RttlPitches.FS4,RttlPitches.G4,RttlPitches.GS4,RttlPitches.A4,RttlPitches.AS4,RttlPitches.B4,
+            RttlPitches.C5,RttlPitches.CS5,RttlPitches.D5,RttlPitches.DS5,RttlPitches.E5,RttlPitches.F5,RttlPitches.FS5,RttlPitches.G5,RttlPitches.GS5,RttlPitches.A5,RttlPitches.AS5,RttlPitches.B5,
+            RttlPitches.C6,RttlPitches.CS6,RttlPitches.D6,RttlPitches.DS6,RttlPitches.E6,RttlPitches.F6,RttlPitches.FS6,RttlPitches.G6,RttlPitches.GS6,RttlPitches.A6,RttlPitches.AS6,RttlPitches.B6,
+            RttlPitches.C7,RttlPitches.CS7,RttlPitches.D7,RttlPitches.DS7,RttlPitches.E7,RttlPitches.F7,RttlPitches.FS7,RttlPitches.G7,RttlPitches.GS7,RttlPitches.A7,RttlPitches.AS7,RttlPitches.B7
+            };
+
+        // Name of the RTTL song
+        public string Name { get; set; }
+        // Song's duration
+        public int Duration { get; set; }
+        // Song's octave
+        public int Octave { get; set; }
+        // Song BPM
+        public int Beat { get; set; }
+        // Interval to wait between notes
+        public int Tempo { get; set; }
+
+        /// <summary>
+        /// RTTL notes in PWM
+        /// </summary>
+        public ArrayList Notes;
+
+        /// <summary>
+        /// Creates a song based on an RTTL string
+        /// </summary>
+        /// <param name="RttlData"></param>
+        public RttlSong(string RttlData) {
+            var parts = RttlData.Split(':');
+            var header = parts[1].Split(',');
+            var RawRttlNotes = parts[2].Split(',');
+
+            Name = parts[0];
+            Duration = int.Parse(header[0].Substring(2, header[0].Length - 2));
+            Octave = int.Parse(header[1].Substring(2, header[1].Length - 2));
+            Beat = int.Parse(header[2].Substring(2, header[2].Length - 2));
+
+            Tempo = ((1000 * 60) / Beat) * 4;
+
+            ParseRttlData(RawRttlNotes);
+        }
+
+        /// <summary>
+        /// Parses a raw RTTL string into a series of PWN tones and durations
+        /// Derived from http://code.google.com/p/rogue-code/source/browse/Arduino/libraries/Tone/trunk/examples/RTTTL/RTTTL.pde
+        /// and Ian Lintner's port to C# https://github.com/ianlintner/Netduino-Ring-Tone-Player
+        /// </summary>
+        /// <param name="RawRttlNotes"></param>
+        protected void ParseRttlData(string[] RawRttlNotes) {
+            Notes = new ArrayList();
+
+            char[] charParserArray; //used for parsing the current section
+            var defaultDuration = 4; //quarter note unless specified
+            var defaultOctave = 6; //middle c octave
+
+
+            foreach (string rttlNote in RawRttlNotes) {
+                charParserArray = rttlNote.ToLower().ToCharArray();
+
+                //start parsing a note entry
+                for (int i = 0; i < rttlNote.Length; i++) {
+                    var durationParseNumber = 0;
+                    var currentDuration = 0;
+                    var currentScale = 0;
+                    var currentNote = 0;
+                    var OctaveOffset = 0;
+
+                    // first, get note duration, if available
+                    while (i < charParserArray.Length && IsDigit(charParserArray[i])) {
+                        //construct the duration
+                        durationParseNumber = (durationParseNumber * 10) + (charParserArray[i++] - '0');
+                    }
+
+                    if (durationParseNumber > 0) {
+                        currentDuration = durationParseNumber;
+                    } else {
+                        currentDuration = defaultDuration;
+                    }
+
+                    // c is first note i.e. c = 1
+                    // b = 12
+                    // pause or undefined = 0
+                    if (i < charParserArray.Length) {
+                        switch (charParserArray[i]) {
+                            case 'c':
+                                currentNote = 1;
+                                break;
+                            case 'd':
+                                currentNote = 3;
+                                break;
+                            case 'e':
+                                currentNote = 5;
+                                break;
+                            case 'f':
+                                currentNote = 6;
+                                break;
+                            case 'g':
+                                currentNote = 8;
+                                break;
+                            case 'a':
+                                currentNote = 10;
+                                break;
+                            case 'b':
+                                currentNote = 12;
+                                break;
+                            case 'p':
+                                currentNote = 0;
+                                break;
+                            default:
+                                currentNote = 0;
+                                break;
+                        }
+                    }
+
+                    i++;
+
+                    // process whether the note is sharp
+                    if (i < charParserArray.Length && charParserArray[i] == '#') {
+                        currentNote++;
+                        i++;
+                    }
+
+                    // is it dotted note, divide the duration in half
+                    if (i < charParserArray.Length && charParserArray[i] == '.') {
+                        currentDuration += currentDuration / 2;
+                        i++;
+                    }
+
+                    // now, get octave
+                    if (i < charParserArray.Length && IsDigit(charParserArray[i])) {
+                        currentScale = charParserArray[i] - '0';
+                        i++;
+                    } else {
+                        currentScale = defaultOctave;
+                    }
+
+                    //offset if necessary
+                    currentScale += OctaveOffset;
+
+                    //add the note by calculating it's location in the RTTTL note array, scale/octave offsets are in groups of 12 notes
+                    Notes.Add(new RttlTone((uint)RttlNotes[(currentScale - 1) * 12 + currentNote], (uint)currentDuration));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Plays the song
+        /// </summary>
+        /// <param name="channel">The PWN pin connected to the speaker</param>
+        /// <param name="asynchronous">True: play the song on a separate thread and return immediately. False: play the song and return when done.</param>
+        /// <returns>If asynchronous == true, returns a reference to the thread playing the song or a null reference if asynchronous == false.</returns>
+        public Thread Play(PWM channel, bool asynchronous = false) {
+            if (asynchronous) {
+                Thread thread = new Thread(() => { Player(channel); });
+                thread.Start();
+                return thread;
+            } 
+
+            Player(channel);
+            return null;
+        }
+
+        /// <summary>
+        /// Run through the song's notes and play each one
+        /// </summary>
+        /// <param name="channel">Any PWN pin</param>
+        private void Player(PWM channel) {
+            foreach (RttlTone tone in Notes) {
+                if (tone.Note != 0) {
+                    channel.SetPulse(tone.Period, tone.Period / 2);
+                    Thread.Sleep(tone.GetDelay(Tempo));
+                    channel.SetDutyCycle(0);
+                } else {
+                    channel.SetDutyCycle(0);
+                    Thread.Sleep(tone.GetDelay(Tempo));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Determines if a character is a digit between 0-9
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns>True if the character is a digit</returns>
+        private bool IsDigit(char c) {
+            if (c >= '0' && c <= '9') {
+                return true;
+            }
+            return false;
+        }
+    }
+}

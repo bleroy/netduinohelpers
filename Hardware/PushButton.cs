@@ -2,7 +2,6 @@ using System;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware;
-using SecretLabs.NETMF.Hardware.Netduino;
 
 namespace netduino.helpers.Hardware {
     /*
@@ -38,7 +37,7 @@ namespace netduino.helpers.Hardware {
         public InterruptPort Input;
 
         /// <summary>
-        /// The default constructor uses the on-board switch on the netduino and triggers on a high edge.
+        /// The interrupt fires on a high edge when the button is pressed.
         /// If using a button other than the built-in one, you should connect pull-down resistors to the switch.
         /// Lady Ada has an excellent tutorial on this subject: http://www.ladyada.net/learn/arduino/lesson5.html
         /// </summary>
@@ -46,10 +45,9 @@ namespace netduino.helpers.Hardware {
         /// <param name="IntMode">Defines the type of edge-change triggering the interrupt.</param>
         /// <param name="Target">The event handler called when an interrupt occurs.</param>
         public PushButton(
-            Cpu.Pin Pin = Pins.ONBOARD_SW1,
+            Cpu.Pin Pin,
             Port.InterruptMode IntMode = Port.InterruptMode.InterruptEdgeHigh,
-            NativeEventHandler Target = null)
-        {
+            NativeEventHandler Target = null) {
             Input = new InterruptPort(Pin, false, Port.ResistorMode.Disabled, IntMode);
 
             if (Target == null) {

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>BeyondHelloWorld</AssemblyName>
     <OutputType>Exe</OutputType>
-    <RootNamespace>BeyondHelloWorld</RootNamespace>
+    <RootNamespace>BeyondHelloWorld2</RootNamespace>
     <ProjectTypeGuids>{b69e3092-b931-443c-abe7-7e7b65f2a37f};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
@@ -30,9 +30,6 @@
   </PropertyGroup>
   <Import Project="$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets" />
   <ItemGroup>
-    <Compile Include="LedMS88SR74HC595.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tests.cs" />
   </ItemGroup>
@@ -44,6 +41,5 @@
     </Reference>
     <Reference Include="SecretLabs.NETMF.Hardware" />
     <Reference Include="SecretLabs.NETMF.Hardware.Netduino" />
-    <Reference Include="SecretLabs.NETMF.IO, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL" />
   </ItemGroup>
 </Project>

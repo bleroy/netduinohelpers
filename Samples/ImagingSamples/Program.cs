@@ -8,8 +8,13 @@ using SecretLabs.NETMF.Hardware.Netduino;
 namespace ImagingSamples {
     public class Program {
         public static void Main() {
-            var button = new InputPort(Pins.ONBOARD_SW1, false, Port.ResistorMode.Disabled);
-            using (var matrix = new LedMS88SR74HC595().Initialize()) {
+            //var button = new InputPort(Pins.ONBOARD_SW1, false, Port.ResistorMode.Disabled);
+            using (var matrix = new Max72197221(chipSelect: Pins.GPIO_PIN_D8, speedKHz: 10000)) {
+                matrix.Shutdown(Max72197221.ShutdownRegister.NormalOperation);
+                matrix.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);
+                matrix.SetDigitScanLimit(7);
+                matrix.SetIntensity(8);
+
                 // Oh, prototype is so sad!
                 //var sad = new byte[] {0x66, 0x24, 0x00, 0x18, 0x00, 0x3C, 0x42, 0x81};
                 //DisplayAndWait(sad, matrix, button);
@@ -45,15 +50,15 @@ namespace ImagingSamples {
                         missile.X = 8 + Math.Sin(angle) / 160;
                         missile.Y = 8 + Math.Cos(angle) / 160;
                         var frame = comp.GetFrame(Math.Sin(angle*20)/250 + 4, Math.Cos(angle*20)/250 + 4);
-                        matrix.Set(frame);
-                        Thread.Sleep(50);
+                        matrix.Display(frame);
+                        Thread.Sleep(25);
                     }
                 }
             }
         }
 
-        private static void DisplayAndWait(byte[] smile, LedMatrix matrix, InputPort button) {
-            matrix.Set(smile);
+        private static void DisplayAndWait(byte[] smile, Max72197221 matrix, InputPort button) {
+            matrix.Display(smile);
             while (button.Read()) {
                 Thread.Sleep(10);
             }

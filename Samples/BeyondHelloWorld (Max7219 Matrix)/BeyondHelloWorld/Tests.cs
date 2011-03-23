@@ -8,9 +8,8 @@ using SecretLabs.NETMF.Hardware.Netduino;
 using netduino.helpers.Hardware;
 using netduino.helpers.Imaging;
 using netduino.helpers.Helpers;
-using POV.Matrix;
 
-namespace BeyondHelloWorld
+namespace BeyondHelloWorld2
 {
     public class Program
     {
@@ -28,21 +27,26 @@ namespace BeyondHelloWorld
             // I'm being lazy here and using the default on-board switch instead of the actual joystick button :)
             JoystickButton = new PushButton(Pin: Pins.ONBOARD_SW1, Target: new NativeEventHandler(ButtonEventHandler));
 
+            var matrix = new Max72197221(chipSelect: Pins.GPIO_PIN_D8);
+
+            matrix.Shutdown(Max72197221.ShutdownRegister.NormalOperation);
+            matrix.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);
+            matrix.SetDigitScanLimit(7);
+            matrix.SetIntensity(8);
+
             try {
                 // Load the resources from the SD card 
                 // Place the content of the "SD Card Resources" folder at the root of an SD card
                 rsc = new SDResourceLoader(Pins.GPIO_PIN_D10);
             }
             catch (IOException) {
-                ShowNoSDPresent();
+                ShowNoSDPresent(matrix);
             }
 
             // Using the space invaders bitmap in this example
             var Invaders = (Bitmap) rsc.Bitmaps["spaceinvaders.bmp.bin"];
 
             rsc.Dispose();
-
-            var matrix = new LedMS88SR74HC595().Initialize();
 
             while (true)
             {
@@ -72,7 +76,7 @@ namespace BeyondHelloWorld
                 Debug.Print("X=" + X.ToString() + " (" + Joystick.XDirection.ToString() + ")" + ", Y=" + Joystick.y.ToString() + " (" + Joystick.YDirection.ToString() + ")");
 
                 // move the bitmap according to the direction of the joystick
-                matrix.Set(Invaders.GetFrame(X, Y));
+                matrix.Display(Invaders.GetFrame(X, Y));
 
                 Thread.Sleep(80);
             }
@@ -93,16 +97,12 @@ namespace BeyondHelloWorld
         }
 
         // Shows and SD icon on the matrix and wait for a reset
-        private static void ShowNoSDPresent()
+        private static void ShowNoSDPresent(Max72197221 matrix)
         {
-            //  If the SD card is not present, show an SD card icon and wait for a reset...
-            using (var matrix = new LedMS88SR74HC595().Initialize())
-            {
-                var SD = new Bitmap(new byte[] { 0x7e, 0x42, 0x42, 0x42, 0x42, 0x42, 0x22, 0x1e }, 8, 8);
-                matrix.Set(SD.GetFrame(0, 0));
-                while (true) { 
-                    Thread.Sleep(1000); 
-                }
+            var SD = new Bitmap(new byte[] { 0x7e, 0x42, 0x42, 0x42, 0x42, 0x42, 0x22, 0x1e }, 8, 8);
+            matrix.Display(SD.GetFrame(0, 0));
+            while (true) { 
+                Thread.Sleep(1000); 
             }
         }
     }

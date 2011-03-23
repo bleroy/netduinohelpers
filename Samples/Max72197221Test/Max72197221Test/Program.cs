@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Threading;
 using netduino.helpers.Hardware;
+using SecretLabs.NETMF.Hardware.Netduino;
 
 namespace Max72197221Test {
     /*
@@ -31,8 +32,8 @@ namespace Max72197221Test {
 
         public static void Main() {
             InitializeSpinnerDisplay();
-            
-            _max = new Max72197221();
+
+            _max = new Max72197221(chipSelect: Pins.GPIO_PIN_D8);
             
             DisplayTestMode();
 

@@ -37,11 +37,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Hardware\LedMatrix.cs" />
-    <Compile Include="Hardware\LedMS88SR74HC595.cs" />
     <Compile Include="Hardware\Max72197221.cs" />
     <Compile Include="Hardware\PushButton.cs" />
     <Compile Include="Hardware\ShiftRegister74HC595.cs" />
-    <Compile Include="Hardware\StorageDevice.cs" />
     <Compile Include="Helpers\BitReverseTable256.cs" />
     <Compile Include="Helpers\SDResourceLoader.cs">
       <SubType>Code</SubType>
@@ -55,6 +53,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serial\SerialUserInterface.cs" />
     <Compile Include="Servo\HS6635HBServo.cs" />
+    <Compile Include="Sound\RttlPitches.cs" />
+    <Compile Include="Sound\RttlSong.cs" />
+    <Compile Include="Sound\RttlTone.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.SPOT.Hardware" />
@@ -63,6 +64,10 @@
     </Reference>
     <Reference Include="SecretLabs.NETMF.Hardware, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="SecretLabs.NETMF.Hardware.Netduino, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL" />
+    <Reference Include="SecretLabs.NETMF.IO">
+      <HintPath>SecretLabs\SecretLabs.NETMF.IO.dll</HintPath>
+    </Reference>
     <Reference Include="System.IO" />
   </ItemGroup>
+  <ItemGroup />
 </Project>

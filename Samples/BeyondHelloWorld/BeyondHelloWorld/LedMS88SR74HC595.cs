@@ -2,7 +2,7 @@
 using SecretLabs.NETMF.Hardware.Netduino;
 using netduino.helpers.Hardware;
 
-namespace LedMS88SR74HC595 {
+namespace POV.Matrix {
     /*
     Copyright (C) 2011 by Fabien Royer
     

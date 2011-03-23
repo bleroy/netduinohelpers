@@ -4,7 +4,7 @@ using Microsoft.SPOT;
 using System.Collections;
 using System.Reflection;
 using SecretLabs.NETMF.IO;
-using SecretLabs.NETMF.Hardware.Netduino;
+using Microsoft.SPOT.Hardware;
 
 namespace netduino.helpers.Helpers {
     /*
@@ -35,8 +35,10 @@ namespace netduino.helpers.Helpers {
     {
         public Hashtable Strings;
         public Hashtable Bitmaps;
+        public Hashtable RTTLSongs;
 
         const string SdMountPoint = "SD";
+
         /// <summary>
         /// Mounts an SD card and reads the content of the manifest to instantiate the corresponding objects.
         /// By default, the resources to need to be loaded are in a file named 'resources.txt' at the root of the SD card.
@@ -48,6 +50,7 @@ namespace netduino.helpers.Helpers {
         /// bitmap:name=c64-computer.bmp.bin;width=256;height=16
         /// string:name=hi;value=Hello!
         /// string:name=gameover;value=Game Over!
+        /// rttl:name=songs.txt
         /// assembly:file=assm.pe;name=ASSM,Version=1.0.0.0;class=ASSM.TestClass;method=Print
         /// 
         /// Any line starting with a '*' will be skipped.
@@ -59,29 +62,27 @@ namespace netduino.helpers.Helpers {
         /// 
         /// </summary>
         /// <param name="resourceManifest"></param>
-        public SDResourceLoader(string resourceManifest = "resources.txt")
+        public SDResourceLoader(Cpu.Pin chipSelect, string resourceManifest = "resources.txt", SPI.SPI_module spiModule = SPI.SPI_module.SPI1)
         {
             Strings = new Hashtable();
             Bitmaps = new Hashtable();
+            RTTLSongs = new Hashtable();
 
             // BUG BUG
             // In firmware v4.1.1.0 alpha 3, only the mount point string matters. The rest is hard-coded.
             // This will need to be changed once the final firmware is released.
-            StorageDevice.MountSD(SdMountPoint, SPI_Devices.SPI1, Pins.GPIO_PIN_D10);
+            StorageDevice.MountSD(SdMountPoint, spiModule, chipSelect);
 
             // Read the content of the resource manifest and build the corresponding resources
-            using (TextReader reader = new StreamReader(SdMountPoint + @"\" + resourceManifest))
-            {
+            using (TextReader reader = new StreamReader(SdMountPoint + @"\" + resourceManifest)){
                 string line;
                 
                 // Parse each line of the manifest and build the corresponding resource object
-                while ((line = reader.ReadLine()).Length != 0)
-                {
+                while ((line = reader.ReadLine()).Length != 0) {
                     Debug.Print(line);
 
                     // Skip any line starting with a '*'
-                    if (line[0] == '*')
-                    {
+                    if (line[0] == '*') {
                         continue;
                     }
 
@@ -90,16 +91,16 @@ namespace netduino.helpers.Helpers {
 
                     Hashtable hash = Parse(list[1]);
 
-                    if (list[0] == "bitmap")
-                    {
+                    if (list[0] == "bitmap") {
                         BuildBitmapResource(Int32.Parse((string) hash["width"]), Int32.Parse((string) hash["height"]), (string) hash["name"]);
                     }
-                    else if (list[0] == "string")
-                    {
+                    else if (list[0] == "string") {
                         Strings.Add(hash["name"],hash["value"]);
-                    }
-                    else if (list[0] == "assembly")
-                    {
+                    } 
+                    else if (list[0] == "rttl") {
+                        BuildRttlResource((string)hash["name"]);
+                    } 
+                    else if (list[0] == "assembly") {
                         LoadAssembly(hash);
                     }
                 }
@@ -109,18 +110,15 @@ namespace netduino.helpers.Helpers {
         /// Loads an assembly in little-endian PE format and invokes the entry point method if provided
         /// </summary>
         /// <param name="args">A hash table providing the parameters needed to load/execute the assembly</param>
-        protected void LoadAssembly(Hashtable args)
-        {
-            using (var assmfile = new FileStream(SdMountPoint + @"\" + args["file"], FileMode.Open, FileAccess.Read, FileShare.None))
-            {
+        protected void LoadAssembly(Hashtable args) {
+            using (var assmfile = new FileStream(SdMountPoint + @"\" + args["file"], FileMode.Open, FileAccess.Read, FileShare.None)) {
                 var assmbytes = new byte[(int) assmfile.Length];
                 assmfile.Read(assmbytes, 0, (int) assmfile.Length);
                 var assm = Assembly.Load(assmbytes);
                 var versionString = (string)args["name"] + ", Version=" + (string)args["version"];
                 var obj = AppDomain.CurrentDomain.CreateInstanceAndUnwrap(versionString, (string)args["class"]);
 
-                if (args.Contains("method"))
-                {
+                if (args.Contains("method")) {
                     var type = assm.GetType((string)args["class"]);
                     MethodInfo mi = type.GetMethod((string)args["method"]);
                     mi.Invoke(obj, null);
@@ -133,14 +131,10 @@ namespace netduino.helpers.Helpers {
         /// </summary>
         /// <param name="str">A string of ';' delimited name/value pairs, each separated by an '=' sign.</param>
         /// <returns>A hashtable of name/value pairs</returns>
-        protected Hashtable Parse(string str)
-        {
+        protected Hashtable Parse(string str) {
             string[] bitmapParams = str.Split(';');
-
             var hash = new Hashtable();
-
-            foreach (string paramString in bitmapParams)
-            {
+            foreach (string paramString in bitmapParams) {
                 string[] pair = paramString.Split('=');
 
                 hash.Add(pair[0], pair[1]);
@@ -155,29 +149,36 @@ namespace netduino.helpers.Helpers {
         /// <param name="widthinPixels">Width of the bitmap in pixels</param>
         /// <param name="heightinPixels">Height of the bitmap in pixels</param>
         /// <param name="filename">Filename containing the binary data defining the bitmap</param>
-        protected void BuildBitmapResource(int widthinPixels, int heightinPixels, string filename)
-        {
-            using (var bmpfile = new FileStream(SdMountPoint + @"\" + filename, FileMode.Open, FileAccess.Read, FileShare.None))
-            {
+        protected void BuildBitmapResource(int widthinPixels, int heightinPixels, string filename) {
+            using (var bmpfile = new FileStream(SdMountPoint + @"\" + filename, FileMode.Open, FileAccess.Read, FileShare.None)) {
                 // Note: don't exceed the amount of RAM available in the netduino by loading files that are too large!
                 // This will result in an out-of-memory exception.
                 var bitmapdata = new byte[(int) bmpfile.Length];
-                
-                // VS will issue a potential overflow warning here, indicating that an exception will not be thrown if that occurs.
-                // The warning can be safely ignored.
                 bmpfile.Read(bitmapdata, 0, (int) bmpfile.Length);
-
                 var bitmap = new Imaging.Bitmap(bitmapdata, widthinPixels, heightinPixels);
-
                 Bitmaps.Add(filename, bitmap);
+            }
+        }
+
+        /// <summary>
+        /// Create song objects from a set of RTTL string in a file
+        /// </summary>
+        /// <param name="filename">Name of the file with the RTTL encoded strings</param>
+        protected void BuildRttlResource(string filename) {
+            // Read the content of the resource manifest and build the corresponding resources
+            using (TextReader reader = new StreamReader(SdMountPoint + @"\" + filename)){
+                string rttlData;
+                while ((rttlData = reader.ReadLine()).Length != 0) {
+                    var song = new Sound.RttlSong(rttlData);
+                    RTTLSongs.Add(song.Name, song);
+                }
             }
         }
 
         /// <summary>
         /// Releases the SD card mount point.
         /// </summary>
-        public void Dispose()
-        {
+        public void Dispose() {
             StorageDevice.Unmount(SdMountPoint);
         }
     }

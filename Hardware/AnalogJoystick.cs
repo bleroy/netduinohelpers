@@ -2,7 +2,6 @@ using System;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware;
-using SecretLabs.NETMF.Hardware.Netduino;
 
 namespace netduino.helpers.Hardware {
     /*
@@ -178,7 +177,7 @@ namespace netduino.helpers.Hardware {
         /// </summary>
         /// <param name="xAxisPin">Analog pin for the x axis</param>
         /// <param name="yAxisPin">Analog pin for the y axis</param>
-        public AnalogJoystick(Cpu.Pin xAxisPin = Pins.GPIO_PIN_A0, Cpu.Pin yAxisPin = Pins.GPIO_PIN_A1, int minRange = 0, int maxRange = 1023, int CenterDeadZoneRadius = 10)
+        public AnalogJoystick(Cpu.Pin xAxisPin, Cpu.Pin yAxisPin, int minRange = 0, int maxRange = 1023, int CenterDeadZoneRadius = 10)
         {
             MaxRange = maxRange;
 

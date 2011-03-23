@@ -1,7 +1,6 @@
 using System;
 using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.IO;
-using SecretLabs.NETMF.Hardware.Netduino;
 
 namespace netduino.helpers.Hardware {
     /*
@@ -105,13 +104,13 @@ namespace netduino.helpers.Hardware {
         /// MOSI = pin 11
         /// CS = pin 10
         /// </summary>
-        /// <param name="latchPin">SPI Hardware pin 10 by default. Any other pin if controlling multiple LED drivers.</param>
+        /// <param name="chipSelect">Chip Select pin.</param>
         /// <param name="spiModule">SPI module, SPI 1 is used by default.</param>
-        /// <param name="speedKHz">Speed of the SPI bus in kHz. Set @ 2MHz by default.</param>
-        public Max72197221(Cpu.Pin latchPin = Pins.GPIO_PIN_D10, SPI.SPI_module spiModule = SPI.SPI_module.SPI1, uint speedKHz = (uint)2000) {
+        /// <param name="speedKHz">Speed of the SPI bus in kHz. Set @ 10MHz by default (max chip speed).</param>
+        public Max72197221(Cpu.Pin chipSelect, SPI.SPI_module spiModule = SPI.SPI_module.SPI1, uint speedKHz = (uint)10000) {
             var extendedSpiConfig = new ExtendedSpiConfiguration(
                 SPI_mod: spiModule,
-                ChipSelect_Port: latchPin,
+                ChipSelect_Port: chipSelect,
                 ChipSelect_ActiveState: false,
                 ChipSelect_SetupTime: 0,
                 ChipSelect_HoldTime: 0,
