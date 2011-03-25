@@ -54,47 +54,41 @@ namespace netduino.helpers.Sound {
         public int Tempo { get; set; }
 
         /// <summary>
-        /// RTTL notes in PWM
+        /// Cached RTTL notes
         /// </summary>
-        public ArrayList Notes;
+        private string[] _rttlNotes;
 
         /// <summary>
         /// Creates a song based on an RTTL string
         /// </summary>
-        /// <param name="rttlData"></param>
+        /// <param name="rttlData">Raw RTTL note string</param>
         public RttlSong(string rttlData) {
             var parts = rttlData.Split(':');
             var header = parts[1].Split(',');
-            var rawRttlNotes = parts[2].Split(',');
+            _rttlNotes = parts[2].Split(',');
 
             Name = parts[0];
             Duration = int.Parse(header[0].Substring(2, header[0].Length - 2));
             Octave = int.Parse(header[1].Substring(2, header[1].Length - 2));
             Beat = int.Parse(header[2].Substring(2, header[2].Length - 2));
-
             Tempo = ((1000 * 60) / Beat) * 4;
-
-            ParseRttlData(rawRttlNotes);
         }
 
         /// <summary>
-        /// Parses a raw RTTL string into a series of PWN tones and durations
+        /// Plays a raw RTTL string by converting it into PWN tones
         /// Derived from http://code.google.com/p/rogue-code/source/browse/Arduino/libraries/Tone/trunk/examples/RTTTL/RTTTL.pde
         /// and Ian Lintner's port to C# https://github.com/ianlintner/Netduino-Ring-Tone-Player
         /// </summary>
-        /// <param name="rawRttlNotes"></param>
-        protected void ParseRttlData(string[] rawRttlNotes) {
-            Notes = new ArrayList();
-
+        public void Play(PWM channel) {
             char[] charParserArray; //used for parsing the current section
             const int defaultDuration = 4;
             const int defaultOctave = 6;
+            var tone = new RttlTone();
 
-
-            foreach (var rttlNote in rawRttlNotes) {
+            foreach (var rttlNote in _rttlNotes) {
                 charParserArray = rttlNote.ToLower().ToCharArray();
 
-                //start parsing a note entry
+                // Parse each note... and play it!
                 for (var i = 0; i < rttlNote.Length; i++) {
                     var durationParseNumber = 0;
                     int currentScale;
@@ -169,11 +163,31 @@ namespace netduino.helpers.Sound {
                     //offset if necessary
                     currentScale += octaveOffset;
 
-                    //add the note by calculating it's location in the RTTTL note array, scale/octave offsets are in groups of 12 notes
-                    Notes.Add(new RttlTone((uint)RttlNotes[(currentScale - 1) * 12 + currentNote], (uint)currentDuration));
+                    // Setup the tone by calculating the note's location in the RTTTL note array
+                    tone.SetTone((uint)RttlNotes[(currentScale - 1) * 12 + currentNote], (uint)currentDuration);
+                    
+                    // Play the tone
+                    PlayTone(tone, channel);
                 }
             }
         }
+
+        /// <summary>
+        /// Play an single tone on a given channel 
+        /// </summary>
+        /// <param name="tone">A RttlTone object</param>
+        /// <param name="channel">Any PWN pin</param>
+        public void PlayTone(RttlTone tone, PWM channel) {
+            if (tone.Note != 0) {
+                channel.SetPulse(tone.Period, tone.Period / 2);
+                Thread.Sleep(tone.GetDelay(Tempo));
+                channel.SetDutyCycle(0);
+            } else {
+                channel.SetDutyCycle(0);
+                Thread.Sleep(tone.GetDelay(Tempo));
+            }
+        }
+
 
         /// <summary>
         /// Plays the song
@@ -183,36 +197,19 @@ namespace netduino.helpers.Sound {
         /// <returns>If asynchronous == true, returns a reference to the thread playing the song or a null reference if asynchronous == false.</returns>
         public Thread Play(PWM channel, bool asynchronous = false) {
             if (asynchronous) {
-                var thread = new Thread(() => Player(channel));
+                var thread = new Thread(() => Play(channel));
                 thread.Start();
                 return thread;
             } 
 
-            Player(channel);
+            Play(channel);
             return null;
-        }
-
-        /// <summary>
-        /// Run through the song's notes and play each one
-        /// </summary>
-        /// <param name="channel">Any PWN pin</param>
-        private void Player(PWM channel) {
-            foreach (RttlTone tone in Notes) {
-                if (tone.Note != 0) {
-                    channel.SetPulse(tone.Period, tone.Period / 2);
-                    Thread.Sleep(tone.GetDelay(Tempo));
-                    channel.SetDutyCycle(0);
-                } else {
-                    channel.SetDutyCycle(0);
-                    Thread.Sleep(tone.GetDelay(Tempo));
-                }
-            }
         }
 
         /// <summary>
         /// Determines if a character is a digit between 0-9
         /// </summary>
-        /// <param name="c"></param>
+        /// <param name="c">Character to test</param>
         /// <returns>True if the character is a digit</returns>
         private static bool IsDigit(char c) {
             return c >= '0' && c <= '9';

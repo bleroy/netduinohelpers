@@ -13,11 +13,18 @@ namespace RingToneTest {
         static PWM _channel = new PWM(Pins.GPIO_PIN_D5);
         public static void Main() {
             AsynchronousPlay();
+
+            Debug.EnableGCMessages(true);
+            Debug.Print(Debug.GC(true).ToString());
+
             PlayFromResource();
+
+            Debug.Print(Debug.GC(true).ToString());
+            Debug.EnableGCMessages(false);
         }
 
         /// <summary>
-        /// Play an RTTL song asynchronously loaded from a text string
+        /// Play an RTTL song asynchronously
         /// </summary>
         public static void AsynchronousPlay() {
             var song = new RttlSong("PacMan:d=4,o=5,b=90:32b,32p,32b6,32p,32f#6,32p,32d#6,32p,32b6,32f#6,16p,16d#6,16p,32c6,32p,32c7,32p,32g6,32p,32e6,32p,32c7,32g6,16p,16e6,16p,32b,32p,32b6,32p,32f#6,32p,32d#6,32p,32b6,32f#6,16p,16d#6,16p,32d#6,32e6,32f6,32p,32f6,32f#6,32g6,32p,32g6,32g#6,32a6,32p,32b.6");
@@ -33,7 +40,7 @@ namespace RingToneTest {
         }
 
         /// <summary>
-        /// Play a set of songs loaded from SD card resources synchronously
+        /// Play a set of RTTL songs synchronously, loaded from SD card resources
         /// </summary>
         public static void PlayFromResource(){
             var sd = new SDResourceLoader(Pins.GPIO_PIN_D10);
