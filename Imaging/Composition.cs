@@ -34,23 +34,26 @@ namespace netduino.helpers.Imaging {
             }
         }
 
-        public void AddMissile(
+        public PlayerMissile AddMissile(
             string name,
             int x = 0,
             int y = 0) {
-            _missiles.Add(new PlayerMissile(
-                              name: name,
-                              x: x,
-                              y: y,
-                              owner: this
-                              ));
+            var missile = new PlayerMissile(
+                name: name,
+                x: x,
+                y: y,
+                owner: this
+                );
+            _missiles.Add(missile);
             ClearCache();
+            return missile;
         }
 
-        public void AddMissile(PlayerMissile missile) {
+        public PlayerMissile AddMissile(PlayerMissile missile) {
             _missiles.Add(missile);
             missile.Owner = this;
             ClearCache();
+            return missile;
         }
 
         private void ClearCache() {

@@ -1,5 +1,4 @@
 using System;
-using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware;
 
@@ -40,12 +39,12 @@ namespace netduino.helpers.Hardware {
         /// <summary>
         /// Returns the current raw x position
         /// </summary>
-        public int x { get { return Xinput.Read(); } }
+        public int X { get { return Xinput.Read(); } }
 
         /// <summary>
         /// Returns the current raw y position
         /// </summary>
-        public int y { get { return Yinput.Read(); } }
+        public int Y { get { return Yinput.Read(); } }
 
         // Upper end of of the user-defined value range for the X and Y axis
         protected int MaxRange;
@@ -81,7 +80,7 @@ namespace netduino.helpers.Hardware {
         public Direction XDirection {
             get
             {
-                int tempX = x;
+                int tempX = X;
 
                 if (tempX >= XMinCenter && tempX <= XMaxCenter)
                 {
@@ -108,7 +107,7 @@ namespace netduino.helpers.Hardware {
         public Direction YDirection {
             get
             {
-                int tempY = y;
+                int tempY = Y;
 
                 if (tempY >= YMinCenter && tempY <= YMaxCenter)
                 {
@@ -134,18 +133,18 @@ namespace netduino.helpers.Hardware {
         /// Assumes that the joystick is at the center position on the X & Y axis.
         /// Do not touch the joystick during auto-calibration :)
         /// </summary>
-        /// <param name="CenterDeadZoneRadius">A user-defined radius used to eliminate spurious readings around the center</param>
-        public void AutoCalibrateCenter(int CenterDeadZoneRadius)
+        /// <param name="centerDeadZoneRadius">A user-defined radius used to eliminate spurious readings around the center</param>
+        public void AutoCalibrateCenter(int centerDeadZoneRadius)
         {
-            XMinCenter = x;
+            XMinCenter = X;
             XMaxCenter = XMinCenter;
-            YMinCenter = y;
+            YMinCenter = Y;
             YMaxCenter = YMinCenter;
 
-            for (int I = 0; I < 100; I++)
+            for (var I = 0; I < 100; I++)
             {
-                int tempX = x;
-                int tempY = y;
+                var tempX = X;
+                var tempY = Y;
 
                 if (tempX < XMinCenter)
                 {
@@ -168,8 +167,8 @@ namespace netduino.helpers.Hardware {
                 }
             }
 
-            XMinCenter -= CenterDeadZoneRadius;
-            YMaxCenter += CenterDeadZoneRadius;
+            XMinCenter -= centerDeadZoneRadius;
+            YMaxCenter += centerDeadZoneRadius;
         }
 
         /// <summary>
@@ -177,7 +176,10 @@ namespace netduino.helpers.Hardware {
         /// </summary>
         /// <param name="xAxisPin">Analog pin for the x axis</param>
         /// <param name="yAxisPin">Analog pin for the y axis</param>
-        public AnalogJoystick(Cpu.Pin xAxisPin, Cpu.Pin yAxisPin, int minRange = 0, int maxRange = 1023, int CenterDeadZoneRadius = 10)
+        /// <param name="minRange"></param>
+        /// <param name="maxRange"></param>
+        /// <param name="centerDeadZoneRadius"></param>
+        public AnalogJoystick(Cpu.Pin xAxisPin, Cpu.Pin yAxisPin, int minRange = 0, int maxRange = 1023, int centerDeadZoneRadius = 10)
         {
             MaxRange = maxRange;
 
@@ -187,7 +189,7 @@ namespace netduino.helpers.Hardware {
             Yinput = new AnalogInput(yAxisPin);
             Yinput.SetRange(minRange, maxRange);
 
-            AutoCalibrateCenter(CenterDeadZoneRadius);
+            AutoCalibrateCenter(centerDeadZoneRadius);
         }
 
         /// <summary>

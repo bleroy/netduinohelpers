@@ -17,7 +17,6 @@ namespace RingToneTest {
             Debug.EnableGCMessages(true);
             Debug.Print(Debug.GC(true).ToString());
 
-            PlayFromResource();
 
             Debug.Print(Debug.GC(true).ToString());
             Debug.EnableGCMessages(false);

@@ -1,7 +1,5 @@
 using System;
-using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
-using SecretLabs.NETMF.Hardware;
 
 namespace netduino.helpers.Hardware {
     /*
@@ -41,20 +39,20 @@ namespace netduino.helpers.Hardware {
         /// If using a button other than the built-in one, you should connect pull-down resistors to the switch.
         /// Lady Ada has an excellent tutorial on this subject: http://www.ladyada.net/learn/arduino/lesson5.html
         /// </summary>
-        /// <param name="Pin">A digital pin connected to the actual push-button.</param>
-        /// <param name="IntMode">Defines the type of edge-change triggering the interrupt.</param>
-        /// <param name="Target">The event handler called when an interrupt occurs.</param>
+        /// <param name="pin">A digital pin connected to the actual push-button.</param>
+        /// <param name="intMode">Defines the type of edge-change triggering the interrupt.</param>
+        /// <param name="target">The event handler called when an interrupt occurs.</param>
         public PushButton(
-            Cpu.Pin Pin,
-            Port.InterruptMode IntMode = Port.InterruptMode.InterruptEdgeHigh,
-            NativeEventHandler Target = null) {
-            Input = new InterruptPort(Pin, false, Port.ResistorMode.Disabled, IntMode);
+            Cpu.Pin pin,
+            Port.InterruptMode intMode = Port.InterruptMode.InterruptEdgeHigh,
+            NativeEventHandler target = null) {
+            Input = new InterruptPort(pin, true, Port.ResistorMode.Disabled, intMode);
 
-            if (Target == null) {
-                Input.OnInterrupt += new NativeEventHandler(InternalInterruptHandler);
+            if (target == null) {
+                Input.OnInterrupt += InternalInterruptHandler;
             }
             else {
-                Input.OnInterrupt += Target;
+                Input.OnInterrupt += target;
             }
 
             Input.EnableInterrupt();
