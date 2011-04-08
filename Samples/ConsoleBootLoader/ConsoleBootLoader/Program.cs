@@ -49,9 +49,9 @@ namespace ConsoleBootLoader {
                 Matrix.SetIntensity(8);
 
 #if NETDUINO_MINI
-                ResourceLoader.Load(Pins.GPIO_PIN_13, args: args);
+                ResourceLoader.Load(Pins.GPIO_PIN_13, args: new object[] {args});
 #else
-                ResourceLoader.Load(Pins.GPIO_PIN_D10, resourceManifest: "cartridge.txt", args: args);
+                ResourceLoader.Load(Pins.GPIO_PIN_D10, resourceManifest: "cartridge.txt", args: new object[] {args});
 #endif
             } catch (IOException) {
                 Matrix.Display(new byte[] { 0x7e, 0x42, 0x42, 0x42, 0x42, 0x42, 0x22, 0x1e });
