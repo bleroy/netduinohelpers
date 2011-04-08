@@ -8,6 +8,9 @@ namespace netduino.helpers.Imaging {
             _x = x;
             _y = y;
             Owner = owner;
+            if (Owner != null) {
+                Owner.AddMissile(this);
+            }
         }
 
         public string Name { get; private set; }

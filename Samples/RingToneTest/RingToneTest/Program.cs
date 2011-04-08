@@ -17,6 +17,7 @@ namespace RingToneTest {
             Debug.EnableGCMessages(true);
             Debug.Print(Debug.GC(true).ToString());
 
+            PlayFromResource();
 
             Debug.Print(Debug.GC(true).ToString());
             Debug.EnableGCMessages(false);
@@ -42,7 +43,8 @@ namespace RingToneTest {
         /// Play a set of RTTL songs synchronously, loaded from SD card resources
         /// </summary>
         public static void PlayFromResource(){
-            var sd = new SDResourceLoader(Pins.GPIO_PIN_D10);
+            var sd = new SDResourceLoader();
+            sd.Load(Pins.GPIO_PIN_D10);
             foreach(string songName in sd.RTTLSongs.Keys) {
                 RttlSong song = (RttlSong) sd.RTTLSongs[songName];
                 Debug.Print("Playing: " + song.Name);

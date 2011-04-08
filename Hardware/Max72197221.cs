@@ -1,6 +1,6 @@
 using System;
 using Microsoft.SPOT.Hardware;
-using SecretLabs.NETMF.IO;
+using SecretLabs.NETMF.Hardware;
 
 namespace netduino.helpers.Hardware {
     /*

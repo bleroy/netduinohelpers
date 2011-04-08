@@ -37,91 +37,100 @@ namespace netduino.helpers.Helpers {
         public Hashtable Bitmaps;
         public Hashtable RTTLSongs;
 
-        const string SdMountPoint = "SD";
+        const string SdMountPoint = @"SD";
 
-        /// <summary>
-        /// Mounts an SD card and reads the content of the manifest to instantiate the corresponding objects.
-        /// By default, the resources to need to be loaded are in a file named 'resources.txt' at the root of the SD card.
-        /// Filenames referenced in the manifest can be placed in subdirectories relative to the SD card mount point.
-        ///
-        /// Sample manifest:
-        /// 
-        /// bitmap:name=spaceinvaders.bmp.bin;width=32;height=8
-        /// bitmap:name=c64-computer.bmp.bin;width=256;height=16
-        /// string:name=hi;value=Hello!
-        /// string:name=gameover;value=Game Over!
-        /// rttl:name=songs.txt
-        /// assembly:file=assm.pe;name=ASSM,Version=1.0.0.0;class=ASSM.TestClass;method=Print
-        /// 
-        /// Any line starting with a '*' will be skipped.
-        /// 
-        /// Note: leave the method parameter empty to only load the assembly.
-        /// Only provide a method as the entry point to be called once all the other assemblies have been loaded.
-        /// 
-        /// Note: bitmap resources are expected to be a 1-bit depth images in binary format.
-        /// 
-        /// </summary>
-        /// <param name="resourceManifest"></param>
-        public SDResourceLoader(Cpu.Pin chipSelect, string resourceManifest = "resources.txt", SPI.SPI_module spiModule = SPI.SPI_module.SPI1)
-        {
+        public SDResourceLoader() {
             Strings = new Hashtable();
             Bitmaps = new Hashtable();
             RTTLSongs = new Hashtable();
+        }
 
-            // BUG BUG
-            // In firmware v4.1.1.0 alpha 3, only the mount point string matters. The rest is hard-coded.
-            // This will need to be changed once the final firmware is released.
+        // Mounts an SD card and reads the content of the manifest to instantiate the corresponding objects.
+        // By default, the resources to need to be loaded are in a file named 'resources.txt' at the root of the SD card.
+        // Filenames referenced in the manifest can be placed in subdirectories relative to the SD card mount point.
+        //
+        // Sample manifest:
+        // 
+        // bitmap:name=spaceinvaders.bmp.bin;width=32;height=8
+        // bitmap:name=c64-computer.bmp.bin;width=256;height=16
+        // string:name=hi;value=Hello!
+        // string:name=gameover;value=Game Over!
+        // rttl:name=songs.txt
+        // assembly:file=assm.pe;name=ASSM,Version=1.0.0.0;class=ASSM.TestClass;method=Print
+        // 
+        // Any line starting with a '*' will be skipped.
+        // 
+        // Note: leave the method parameter empty to only load the assembly.
+        // Only provide a method as the entry point to be called once all the other assemblies have been loaded.
+        // 
+        // Note: bitmap resources are expected to be a 1-bit depth images in binary format.
+        
+        /// <summary>
+        /// Load resources from an SD card.
+        /// Load and bootstrap assemblies.
+        /// </summary>
+        /// <param name="chipSelect">As of firmware 4.1.1.b1, this is always the hardware SPI CS (netduino: pin 10, mini: pin13)</param>
+        /// <param name="resourceManifest">Filename referencing the resources to be loaded</param>
+        /// <param name="spiModule">SPI interface to use</param>
+        /// <param name="args">An array of objects to be passed as arguments for dynamically loaded assemblies with a declared 'method' parameter</param>
+        public void Load(Cpu.Pin chipSelect, string resourceManifest = "resources.txt", SPI.SPI_module spiModule = SPI.SPI_module.SPI1, object[] args = null)
+        {
             StorageDevice.MountSD(SdMountPoint, spiModule, chipSelect);
+            try {
+                // Read the content of the resource manifest and build the corresponding resources
+                using (var reader = new StreamReader(SdMountPoint + @"\" + resourceManifest)) {
+                    string line;
 
-            // Read the content of the resource manifest and build the corresponding resources
-            using (TextReader reader = new StreamReader(SdMountPoint + @"\" + resourceManifest)){
-                string line;
-                
-                // Parse each line of the manifest and build the corresponding resource object
-                while ((line = reader.ReadLine()).Length != 0) {
-                    Debug.Print(line);
+                    // Parse each line of the manifest and build the corresponding resource object
+                    while ((line = reader.ReadLine()).Length != 0) {
+                        Debug.Print(line);
 
-                    // Skip any line starting with a '*'
-                    if (line[0] == '*') {
-                        continue;
-                    }
+                        // Skip any line starting with a '*'
+                        if (line[0] == '*') {
+                            continue;
+                        }
 
-                    // Split the line on the colon delimiter to obtain the type of the resource
-                    string[] list = line.Split(':');
+                        // Split the line on the colon delimiter to obtain the type of the resource
+                        string[] list = line.Split(':');
 
-                    Hashtable hash = Parse(list[1]);
+                        Hashtable hash = Parse(list[1]);
 
-                    if (list[0] == "bitmap") {
-                        BuildBitmapResource(Int32.Parse((string) hash["width"]), Int32.Parse((string) hash["height"]), (string) hash["name"]);
-                    }
-                    else if (list[0] == "string") {
-                        Strings.Add(hash["name"],hash["value"]);
-                    } 
-                    else if (list[0] == "rttl") {
-                        BuildRttlResource((string)hash["name"]);
-                    } 
-                    else if (list[0] == "assembly") {
-                        LoadAssembly(hash);
+                        if (list[0] == "bitmap") {
+                            BuildBitmapResource(Int32.Parse((string)hash["width"]),
+                                                Int32.Parse((string)hash["height"]), (string)hash["name"]);
+                        }
+                        else if (list[0] == "string") {
+                            Strings.Add(hash["name"], hash["value"]);
+                        }
+                        else if (list[0] == "rttl") {
+                            BuildRttlResource((string)hash["name"]);
+                        }
+                        else if (list[0] == "assembly") {
+                            LoadAssembly(hash, args);
+                        }
                     }
                 }
+            }
+            finally {
+                StorageDevice.Unmount(SdMountPoint);
             }
         }
         /// <summary>
         /// Loads an assembly in little-endian PE format and invokes the entry point method if provided
         /// </summary>
-        /// <param name="args">A hash table providing the parameters needed to load/execute the assembly</param>
-        protected void LoadAssembly(Hashtable args) {
-            using (var assmfile = new FileStream(SdMountPoint + @"\" + args["file"], FileMode.Open, FileAccess.Read, FileShare.None)) {
+        /// <param name="resourceParams">A hash table providing the parameters needed to load/execute the assembly</param>
+        protected void LoadAssembly(Hashtable resourceParams, object[] args) {
+            using (var assmfile = new FileStream(SdMountPoint + @"\" + resourceParams["file"], FileMode.Open, FileAccess.Read, FileShare.None)) {
                 var assmbytes = new byte[(int) assmfile.Length];
                 assmfile.Read(assmbytes, 0, (int) assmfile.Length);
                 var assm = Assembly.Load(assmbytes);
-                var versionString = (string)args["name"] + ", Version=" + (string)args["version"];
-                var obj = AppDomain.CurrentDomain.CreateInstanceAndUnwrap(versionString, (string)args["class"]);
+                var versionString = (string)resourceParams["name"] + ", Version=" + (string)resourceParams["version"];
+                var obj = AppDomain.CurrentDomain.CreateInstanceAndUnwrap(versionString, (string)resourceParams["class"]);
 
-                if (args.Contains("method")) {
-                    var type = assm.GetType((string)args["class"]);
-                    MethodInfo mi = type.GetMethod((string)args["method"]);
-                    mi.Invoke(obj, null);
+                if (resourceParams.Contains("method")) {
+                    var type = assm.GetType((string)resourceParams["class"]);
+                    MethodInfo mi = type.GetMethod((string)resourceParams["method"]);
+                    mi.Invoke(obj, args);
                 }
             }
         }
@@ -166,7 +175,7 @@ namespace netduino.helpers.Helpers {
         /// <param name="filename">Name of the file with the RTTL encoded strings</param>
         protected void BuildRttlResource(string filename) {
             // Read the content of the resource manifest and build the corresponding resources
-            using (TextReader reader = new StreamReader(SdMountPoint + @"\" + filename)){
+            using (TextReader reader = new StreamReader(SdMountPoint + @"\" + filename)) {
                 string rttlData;
                 while ((rttlData = reader.ReadLine()).Length != 0) {
                     var song = new Sound.RttlSong(rttlData);
@@ -176,10 +185,12 @@ namespace netduino.helpers.Helpers {
         }
 
         /// <summary>
-        /// Releases the SD card mount point.
+        /// Releases the allocated resources.
         /// </summary>
         public void Dispose() {
-            StorageDevice.Unmount(SdMountPoint);
+            Strings = null;
+            Bitmaps = null;
+            RTTLSongs = null;
         }
     }
 }

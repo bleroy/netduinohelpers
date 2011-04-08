@@ -30,6 +30,9 @@
   </PropertyGroup>
   <Import Project="$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets" />
   <ItemGroup>
+    <Compile Include="Fun\CartridgeVersionInfo.cs" />
+    <Compile Include="Fun\Game.cs" />
+    <Compile Include="Fun\GameLoop.cs" />
     <Compile Include="Hardware\AdaFruitSSD1306.cs" />
     <Compile Include="Hardware\AnalogJoystick.cs" />
     <Compile Include="Hardware\DS1307.cs" />

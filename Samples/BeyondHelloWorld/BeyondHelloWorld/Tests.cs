@@ -26,12 +26,13 @@ namespace BeyondHelloWorld
             Joystick = new AnalogJoystick(Pins.GPIO_PIN_A0, Pins.GPIO_PIN_A1);
 
             // I'm being lazy here and using the default on-board switch instead of the actual joystick button :)
-            JoystickButton = new PushButton(Pin: Pins.ONBOARD_SW1, Target: new NativeEventHandler(ButtonEventHandler));
+            JoystickButton = new PushButton(pin: Pins.ONBOARD_SW1, target: new NativeEventHandler(ButtonEventHandler));
 
             try {
                 // Load the resources from the SD card 
                 // Place the content of the "SD Card Resources" folder at the root of an SD card
-                rsc = new SDResourceLoader(Pins.GPIO_PIN_D10);
+                rsc = new SDResourceLoader();
+                rsc.Load(Pins.GPIO_PIN_D10);
             }
             catch (IOException) {
                 ShowNoSDPresent();
@@ -69,7 +70,7 @@ namespace BeyondHelloWorld
                     Y = Invaders.Height - 1;
                 }
 
-                Debug.Print("X=" + X.ToString() + " (" + Joystick.XDirection.ToString() + ")" + ", Y=" + Joystick.y.ToString() + " (" + Joystick.YDirection.ToString() + ")");
+                Debug.Print("X=" + Joystick.X.ToString() + " (" + Joystick.XDirection.ToString() + ")" + ", Y=" + Joystick.Y.ToString() + " (" + Joystick.YDirection.ToString() + ")");
 
                 // move the bitmap according to the direction of the joystick
                 matrix.Set(Invaders.GetFrame(X, Y));
