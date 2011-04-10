@@ -31,6 +31,7 @@
   <Import Project="$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets" />
   <ItemGroup>
     <Compile Include="Fun\CartridgeVersionInfo.cs" />
+    <Compile Include="Fun\ConsoleHardwareConfig.cs" />
     <Compile Include="Fun\Game.cs" />
     <Compile Include="Fun\GameLoop.cs" />
     <Compile Include="Hardware\AdaFruitSSD1306.cs" />

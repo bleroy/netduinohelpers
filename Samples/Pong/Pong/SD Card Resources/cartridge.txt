@@ -1,0 +1,1 @@
+assembly:file=Pong.pe;name=Pong;version=1.0.0.0;class=Pong.Program;method=Run
