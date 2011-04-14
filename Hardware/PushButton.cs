@@ -35,18 +35,23 @@ namespace netduino.helpers.Hardware {
         public InterruptPort Input;
 
         /// <summary>
-        /// The interrupt fires on a high edge when the button is pressed.
+        /// The interrupt fires on a high edge when the button is pressed by default.
         /// If using a button other than the built-in one, you should connect pull-down resistors to the switch.
         /// Lady Ada has an excellent tutorial on this subject: http://www.ladyada.net/learn/arduino/lesson5.html
         /// </summary>
         /// <param name="pin">A digital pin connected to the actual push-button.</param>
         /// <param name="intMode">Defines the type of edge-change triggering the interrupt.</param>
         /// <param name="target">The event handler called when an interrupt occurs.</param>
+        /// <param name="resistorMode">Internal pullup resistor configuration</param>
+        /// <param name="glitchFilter">Input debouncing filter</param>
         public PushButton(
             Cpu.Pin pin,
             Port.InterruptMode intMode = Port.InterruptMode.InterruptEdgeHigh,
-            NativeEventHandler target = null) {
-            Input = new InterruptPort(pin, true, Port.ResistorMode.Disabled, intMode);
+            NativeEventHandler target = null,
+            Port.ResistorMode resistorMode = Port.ResistorMode.Disabled,
+            bool glitchFilter = true
+            ) {
+                Input = new InterruptPort(pin, glitchFilter, resistorMode, intMode);
 
             if (target == null) {
                 Input.OnInterrupt += InternalInterruptHandler;

@@ -36,6 +36,7 @@ namespace Pong {
     /// Inside of 'cartridge.txt', write the following line of text:
     /// assembly:file=Pong.pe;name=Pong;version=1.0.0.0;class=Pong.Program;method=Run
     /// The ConsoleBootLoader will use the content of 'cartridge.txt' to find the entry point of the game and it will start it.
+    /// Refer to the 'SD Card Resources' folders for a complete example.
     /// </summary>
     public class Program {
         /// <summary>
