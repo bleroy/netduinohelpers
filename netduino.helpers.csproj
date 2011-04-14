@@ -48,12 +48,14 @@
     <Compile Include="Helpers\SDResourceLoader.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Imaging\B.cs" />
     <Compile Include="Imaging\Bitmap.cs" />
     <Compile Include="Imaging\CharSet.cs" />
     <Compile Include="Imaging\CoincEventHandler.cs" />
     <Compile Include="Imaging\CoincEventArgs.cs" />
     <Compile Include="Imaging\Composition.cs" />
     <Compile Include="Imaging\PlayerMissile.cs" />
+    <Compile Include="Imaging\SmallChars.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serial\SerialUserInterface.cs" />
     <Compile Include="Servo\HS6635HBServo.cs" />

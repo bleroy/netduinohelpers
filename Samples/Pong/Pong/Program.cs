@@ -1,4 +1,5 @@
-﻿using Microsoft.SPOT;
+﻿using System.Threading;
+using Microsoft.SPOT.Hardware;
 using netduino.helpers.Fun;
 using netduino.helpers.Hardware;
 using netduino.helpers.Helpers;
@@ -27,6 +28,7 @@ namespace Pong {
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     THE SOFTWARE.
     */
+
     /// <summary>
     /// The project is a simple game of Pong.
     /// It is intended to demonstrate how to build a game with the netduino.helpers and how to turn your game into a 'cartridge' on an SD card.
@@ -44,29 +46,31 @@ namespace Pong {
         /// When game development is complete, comment out the content Main() to remove the overhead
         /// </summary>
         public static void Main() {
-            /*
-            AnalogJoystick JoystickLeft = new AnalogJoystick(Pins.GPIO_PIN_A0, Pins.GPIO_PIN_A1);
-            AnalogJoystick JoystickRight = new AnalogJoystick(Pins.GPIO_PIN_A2, Pins.GPIO_PIN_A3);
-            Max72197221 Matrix = new Max72197221(chipSelect: Pins.GPIO_PIN_D8);
-            PWM Speaker = new PWM(Pins.GPIO_PIN_D5);
-            SDResourceLoader ResourceLoader = new SDResourceLoader();
-            object[] args = new object[(int)CartridgeVersionInfo.LoaderArgumentsVersion100.Size];
+            var joystickLeft = new AnalogJoystick(xAxisPin: Pins.GPIO_PIN_A0, yAxisPin: Pins.GPIO_PIN_A1);
+            var joystickRight = new AnalogJoystick(xAxisPin: Pins.GPIO_PIN_A2, yAxisPin: Pins.GPIO_PIN_A3);
+            var matrix = new Max72197221(chipSelect: Pins.GPIO_PIN_D8);
+            var speaker = new PWM(Pins.GPIO_PIN_D5);
+            var resourceLoader = new SDResourceLoader();
+            var buttonLeft = new PushButton(Pins.GPIO_PIN_D0);
+            var buttonRight = new PushButton(Pins.GPIO_PIN_D1);
+            var args = new object[(int)CartridgeVersionInfo.LoaderArgumentsVersion100.Size];
 
-            int index = 0;
+            var index = 0;
             args[index++] = CartridgeVersionInfo.CurrentVersion;
-            args[index++] = JoystickLeft;
-            args[index++] = JoystickRight;
-            args[index++] = Matrix;
-            args[index++] = Speaker;
-            args[index++] = ResourceLoader;
+            args[index++] = joystickLeft;
+            args[index++] = joystickRight;
+            args[index++] = matrix;
+            args[index++] = speaker;
+            args[index++] = resourceLoader;
+            args[index++] = buttonLeft;
+            args[index] = buttonRight;
 
-            Matrix.Shutdown(Max72197221.ShutdownRegister.NormalOperation);
-            Matrix.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);
-            Matrix.SetDigitScanLimit(7);
-            Matrix.SetIntensity(8);
+            matrix.Shutdown(Max72197221.ShutdownRegister.NormalOperation);
+            matrix.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);
+            matrix.SetDigitScanLimit(7);
+            matrix.SetIntensity(8);
 
             Run(args);
-            */
         }
 
         /// <summary>

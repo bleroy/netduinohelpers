@@ -23,10 +23,8 @@ namespace Pong {
     THE SOFTWARE.
     */
     public class Paddle {
-        public int Size {
-            get { return _pixels.Length; }
-        }
-        
+        public const int Size = 3;
+
         public int Y {
             get { return _pixels[0].Y; }
             set {
@@ -43,13 +41,12 @@ namespace Pong {
         private readonly PlayerMissile[] _pixels;
 
         public Paddle(Side side, GameOfPong game) {
-            const int size = 3;
             _side = side;
             _game = game;
             _world = game.World;
             _ball = _world["ball"];
-            _pixels = new PlayerMissile[size];
-            for(var i = 0; i < size; i++) {
+            _pixels = new PlayerMissile[Size];
+            for(var i = 0; i < Size; i++) {
                 _pixels[i] = new PlayerMissile(
                     "paddle" +
                     (_side == Side.Right ? 'R' : 'L') +

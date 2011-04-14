@@ -32,7 +32,7 @@ namespace netduino.helpers.Hardware {
     /// </summary>
     public class PushButton : IDisposable
     {
-        public InterruptPort Input;
+        private bool _state;
 
         /// <summary>
         /// The interrupt fires on a high edge when the button is pressed by default.
@@ -46,7 +46,7 @@ namespace netduino.helpers.Hardware {
         /// <param name="glitchFilter">Input debouncing filter</param>
         public PushButton(
             Cpu.Pin pin,
-            Port.InterruptMode intMode = Port.InterruptMode.InterruptEdgeHigh,
+            Port.InterruptMode intMode = Port.InterruptMode.InterruptEdgeBoth,
             NativeEventHandler target = null,
             Port.ResistorMode resistorMode = Port.ResistorMode.Disabled,
             bool glitchFilter = true
@@ -63,13 +63,21 @@ namespace netduino.helpers.Hardware {
             Input.EnableInterrupt();
         }
 
+        public InterruptPort Input { get; set; }
+
+        public bool IsPressed {
+            get { return _state; }
+        }
+
         /// <summary>
         /// Internal interrupt handler used when no user-defined handler is provided in the constructor.
         /// Handles disabling / enabling the interrupt and calls the OnButtonStateChange() method.
         /// </summary>
         protected void InternalInterruptHandler(UInt32 port, UInt32 state, DateTime time) {
             Input.DisableInterrupt();
+            _state = state != 0;
             OnButtonStateChange(port, state, time);
+            Input.ClearInterrupt();
             Input.EnableInterrupt();
         }
 

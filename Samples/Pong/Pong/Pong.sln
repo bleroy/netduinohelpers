@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pong", "Pong.csproj", "{40CD76CE-194C-47C8-B78D-C1907981029A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "netduino.helpers", "G:\Projects\codeplex\netduino.helpers.csproj", "{D15C30B3-3FDE-475F-AB25-7EA65DE56911}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "netduino.helpers", "..\..\..\netduino.helpers.csproj", "{D15C30B3-3FDE-475F-AB25-7EA65DE56911}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

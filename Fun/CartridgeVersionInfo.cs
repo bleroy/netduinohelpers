@@ -30,6 +30,8 @@ namespace netduino.helpers.Fun {
             Matrix,
             Speaker,
             SDResourceLoader,
+            ButtonLeft,
+            ButtonRight,
             Size
         }
     }

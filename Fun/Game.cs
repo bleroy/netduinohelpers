@@ -1,8 +1,6 @@
 using System;
 using System.Threading;
 using netduino.helpers.Imaging;
-using netduino.helpers.Hardware;
-using SecretLabs.NETMF.Hardware.Netduino;
 
 namespace netduino.helpers.Fun {
     /*

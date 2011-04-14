@@ -30,11 +30,13 @@ namespace netduino.helpers.Fun {
 
         public int Version { get; private set; }
 
-        public AnalogJoystick JoystickLeft;
-        public AnalogJoystick JoystickRight;
-        public Max72197221 Matrix;
-        public PWM Speaker;
-        public SDResourceLoader Resources;
+        public AnalogJoystick JoystickLeft { get; set; }
+        public AnalogJoystick JoystickRight { get; set; }
+        public Max72197221 Matrix { get; set; }
+        public PWM Speaker { get; set; }
+        public SDResourceLoader Resources { get; set; }
+        public PushButton LeftButton { get; set; }
+        public PushButton RightButton { get; set; }
 
         public ConsoleHardwareConfig(object[] args) {
             Version = (int)args[(int)CartridgeVersionInfo.LoaderArgumentsVersion100.Version];
@@ -45,7 +47,10 @@ namespace netduino.helpers.Fun {
                 Matrix = (Max72197221)args[(int)CartridgeVersionInfo.LoaderArgumentsVersion100.Matrix];
                 Speaker = (PWM)args[(int)CartridgeVersionInfo.LoaderArgumentsVersion100.Speaker];
                 Resources = (SDResourceLoader)args[(int)CartridgeVersionInfo.LoaderArgumentsVersion100.SDResourceLoader];
-            } else {
+                LeftButton = (PushButton)args[(int)CartridgeVersionInfo.LoaderArgumentsVersion100.ButtonLeft];
+                RightButton = (PushButton)args[(int)CartridgeVersionInfo.LoaderArgumentsVersion100.ButtonRight];
+            }
+            else {
                 throw new ArgumentException("args");
             }
         }

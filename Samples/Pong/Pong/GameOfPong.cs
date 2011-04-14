@@ -1,6 +1,6 @@
+using System;
 using netduino.helpers.Fun;
 using netduino.helpers.Imaging;
-using netduino.helpers.Sound;
 using System.Threading;
 
 namespace Pong {
@@ -26,6 +26,17 @@ namespace Pong {
     THE SOFTWARE.
     */
     public class GameOfPong : Game {
+        private const int ScreenSize = 8;
+        private const int StickActiveZoneSize = 300;
+        private const int StickRange = 1024;
+        private const uint BeepFrequency = 10000;
+        private const uint BoopFrequency = 3000;
+        private const int PaddleAmplitude = ScreenSize - Paddle.Size;
+        private const int StickActiveAmplitude = StickActiveZoneSize - Paddle.Size*StickActiveZoneSize/ScreenSize;
+        private const int StickMin = (StickRange - StickActiveAmplitude)/2;
+        private const int StickMax = (StickRange + StickActiveAmplitude)/2;
+        private const int MaxScore = 1;
+
         bool _ballGoingDown;
 
         public int LeftScore;
@@ -38,7 +49,7 @@ namespace Pong {
         public Paddle RightPaddle { get; private set; }
 
         public GameOfPong(ConsoleHardwareConfig config) : base(config) {
-            World = new Composition(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 }, 8, 8);
+            World = new Composition(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 }, ScreenSize, ScreenSize);
             Ball = new PlayerMissile("ball", 0, 0, World);
             LeftPaddle = new Paddle(Side.Left, this);
             RightPaddle = new Paddle(Side.Right, this);
@@ -47,41 +58,71 @@ namespace Pong {
         }
 
         public override void Loop() {
-            LeftPaddle.Y = Hardware.JoystickLeft.Y / 128;
-            RightPaddle.Y = Hardware.JoystickRight.Y / 128;
+            var effectiveLeftPaddleY = Hardware.JoystickLeft.Y < StickMin
+                                           ? StickMin
+                                           : Hardware.JoystickLeft.Y > StickMax
+                                                 ? StickMax
+                                                 : Hardware.JoystickLeft.Y;
+            LeftPaddle.Y = (effectiveLeftPaddleY - StickMin) * PaddleAmplitude / StickActiveAmplitude;
+            var effectiveRightPaddleY = Hardware.JoystickRight.Y < StickMin
+                                           ? StickMin
+                                           : Hardware.JoystickRight.Y > StickMax
+                                                 ? StickMax
+                                                 : Hardware.JoystickRight.Y;
+            RightPaddle.Y = (effectiveRightPaddleY - StickMin) * PaddleAmplitude / StickActiveAmplitude;
 
             Ball.X += BallGoingRight ? 1 : -1;
             if (Ball.X < 0) {
                 RightScore++;
+                DisplayScores(LeftScore, RightScore);
                 ResetBall();
             }
             if (Ball.X >= 8) {
                 LeftScore++;
+                DisplayScores(LeftScore, RightScore);
                 ResetBall();
             }
             Ball.Y += _ballGoingDown ? 1 : -1;
             if (Ball.Y < 0) {
                 Ball.Y = 1;
                 _ballGoingDown = true;
-                Beep(10000);
+                Beep(BeepFrequency);
             }
             if (Ball.Y >= 8) {
                 Ball.Y = 7;
                 _ballGoingDown = false;
-                Beep(10000);
+                Beep(BeepFrequency);
             }
          }
+
+        private void DisplayScores(int leftScore, int rightScore) {
+            Hardware.Matrix.Display(SmallChars.ToBitmap(leftScore, rightScore));
+            if (leftScore >= MaxScore || rightScore >= MaxScore) {
+                WaitForClick();
+                LeftScore = 0;
+                RightScore = 0;
+            }
+            else {
+                Thread.Sleep(2000);
+            }
+        }
+
+        private void WaitForClick() {
+            while(!(Hardware.LeftButton.IsPressed || Hardware.RightButton.IsPressed)) {
+                Thread.Sleep(100);
+            }
+        }
 
         public void ResetBall() {
             Ball.X = 0;
             Ball.Y = Random.Next(8);
             BallGoingRight = true;
             _ballGoingDown = Random.Next(2) == 0;
-            Beep(3000);
+            Beep(BoopFrequency);
         }
 
         public void Beep(uint frequency) {
-            var period = (uint)(1000000 / frequency); 
+            var period = 1000000 / frequency; 
             Hardware.Speaker.SetPulse(period, period / 2);
             Thread.Sleep(50);
             Hardware.Speaker.SetPulse(0, 0);
