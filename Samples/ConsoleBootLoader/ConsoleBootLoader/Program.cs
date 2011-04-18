@@ -2,6 +2,7 @@
 
 using System.IO;
 using System.Threading;
+using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware;
 using netduino.helpers.Hardware;
 using netduino.helpers.Helpers;
@@ -43,11 +44,15 @@ namespace ConsoleBootLoader {
         public static AnalogJoystick JoystickRight = new AnalogJoystick(Pins.GPIO_PIN_7, Pins.GPIO_PIN_8);
         public static Max72197221 Matrix = new Max72197221(chipSelect: Pins.GPIO_PIN_17);
         public static PWM Speaker = new PWM(Pins.GPIO_PIN_18);
+        public static PushButton ButtonLeft = new PushButton(Pins.GPIO_PIN_19, Port.InterruptMode.InterruptEdgeLevelLow, null, Port.ResistorMode.PullUp);
+        public static PushButton ButtonRight = new PushButton(Pins.GPIO_PIN_20, Port.InterruptMode.InterruptEdgeLevelLow, null, Port.ResistorMode.PullUp);
 #else
         public static AnalogJoystick JoystickLeft = new AnalogJoystick(Pins.GPIO_PIN_A0, Pins.GPIO_PIN_A1);
         public static AnalogJoystick JoystickRight = new AnalogJoystick(Pins.GPIO_PIN_A2, Pins.GPIO_PIN_A3);
         public static Max72197221 Matrix = new Max72197221(chipSelect: Pins.GPIO_PIN_D8);
         public static PWM Speaker = new PWM(Pins.GPIO_PIN_D5);
+        public static PushButton ButtonLeft = new PushButton(Pins.GPIO_PIN_D0, Port.InterruptMode.InterruptEdgeLevelLow, null, Port.ResistorMode.PullUp);
+        public static PushButton ButtonRight = new PushButton(Pins.GPIO_PIN_D1, Port.InterruptMode.InterruptEdgeLevelLow, null, Port.ResistorMode.PullUp);
 #endif
 
         public static SDResourceLoader ResourceLoader = new SDResourceLoader();
@@ -63,6 +68,8 @@ namespace ConsoleBootLoader {
                 args[index++] = Matrix;
                 args[index++] = Speaker;
                 args[index++] = ResourceLoader;
+                args[index++] = ButtonLeft;
+                args[index] = ButtonRight;
 
                 Matrix.Shutdown(Max72197221.ShutdownRegister.NormalOperation);
                 Matrix.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);

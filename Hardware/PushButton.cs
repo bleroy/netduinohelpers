@@ -32,8 +32,6 @@ namespace netduino.helpers.Hardware {
     /// </summary>
     public class PushButton : IDisposable
     {
-        private bool _state;
-
         /// <summary>
         /// The interrupt fires on a high edge when the button is pressed by default.
         /// If using a button other than the built-in one, you should connect pull-down resistors to the switch.
@@ -65,19 +63,13 @@ namespace netduino.helpers.Hardware {
 
         public InterruptPort Input { get; set; }
 
-        public bool IsPressed {
-            get { return _state; }
-        }
-
         /// <summary>
         /// Internal interrupt handler used when no user-defined handler is provided in the constructor.
         /// Handles disabling / enabling the interrupt and calls the OnButtonStateChange() method.
         /// </summary>
         protected void InternalInterruptHandler(UInt32 port, UInt32 state, DateTime time) {
             Input.DisableInterrupt();
-            _state = state != 0;
             OnButtonStateChange(port, state, time);
-            Input.ClearInterrupt();
             Input.EnableInterrupt();
         }
 

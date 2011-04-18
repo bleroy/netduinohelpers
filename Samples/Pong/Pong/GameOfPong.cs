@@ -35,7 +35,9 @@ namespace Pong {
         private const int StickActiveAmplitude = StickActiveZoneSize - Paddle.Size*StickActiveZoneSize/ScreenSize;
         private const int StickMin = (StickRange - StickActiveAmplitude)/2;
         private const int StickMax = (StickRange + StickActiveAmplitude)/2;
-        private const int MaxScore = 1;
+        private const int MaxScore = 9;
+        private bool LeftButtonClicked = false;
+        private bool RightButtonClicked = false;
 
         bool _ballGoingDown;
 
@@ -49,6 +51,13 @@ namespace Pong {
         public Paddle RightPaddle { get; private set; }
 
         public GameOfPong(ConsoleHardwareConfig config) : base(config) {
+            Hardware.LeftButton.Input.DisableInterrupt();
+            Hardware.RightButton.Input.DisableInterrupt();
+            Hardware.LeftButton.Input.OnInterrupt += OnLeftButtonClick;
+            Hardware.RightButton.Input.OnInterrupt += OnRightButtonClick;
+            Hardware.LeftButton.Input.EnableInterrupt();
+            Hardware.RightButton.Input.EnableInterrupt();
+
             World = new Composition(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 }, ScreenSize, ScreenSize);
             Ball = new PlayerMissile("ball", 0, 0, World);
             LeftPaddle = new Paddle(Side.Left, this);
@@ -108,9 +117,20 @@ namespace Pong {
         }
 
         private void WaitForClick() {
-            while(!(Hardware.LeftButton.IsPressed || Hardware.RightButton.IsPressed)) {
+            LeftButtonClicked = false;
+            RightButtonClicked = false;
+
+            while (!(LeftButtonClicked || RightButtonClicked)) {
                 Thread.Sleep(100);
             }
+        }
+
+        private void OnLeftButtonClick(UInt32 port, UInt32 state, DateTime time) {
+            LeftButtonClicked = true;
+        }
+
+        private void OnRightButtonClick(UInt32 port, UInt32 state, DateTime time) {
+            RightButtonClicked = true;
         }
 
         public void ResetBall() {
