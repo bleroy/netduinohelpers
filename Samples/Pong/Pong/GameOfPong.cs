@@ -58,12 +58,40 @@ namespace Pong {
             Hardware.LeftButton.Input.EnableInterrupt();
             Hardware.RightButton.Input.EnableInterrupt();
 
+            DisplaySplashScreen();
+
             World = new Composition(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 }, ScreenSize, ScreenSize);
             Ball = new PlayerMissile("ball", 0, 0, World);
             LeftPaddle = new Paddle(Side.Left, this);
             RightPaddle = new Paddle(Side.Right, this);
-            BallGoingRight = true;
-            ResetBall();
+            
+            ResetBall(true);
+        }
+
+        public void DisplaySplashScreen() {
+            var charSet = new CharSet(); 
+            var splashScreen = charSet.StringToBitmap("Pong!");
+
+            LeftButtonClicked = false;
+            RightButtonClicked = false;
+
+            while (!(LeftButtonClicked || RightButtonClicked)) {
+                var x = 0;
+                for (; x < splashScreen.Width; x++) {
+                    Hardware.Matrix.Display(splashScreen.GetFrame(x, 0));
+                    if (LeftButtonClicked || RightButtonClicked) {
+                        break;
+                    }
+                    Thread.Sleep(50);
+                }
+                for (; x != 0; x--) {
+                    if (LeftButtonClicked || RightButtonClicked) {
+                        break;
+                    }
+                    Hardware.Matrix.Display(splashScreen.GetFrame(x, 0));
+                    Thread.Sleep(50);
+                }
+            }
         }
 
         public override void Loop() {
@@ -84,12 +112,12 @@ namespace Pong {
             if (Ball.X < 0) {
                 RightScore++;
                 DisplayScores(LeftScore, RightScore);
-                ResetBall();
+                ResetBall(true);
             }
             if (Ball.X >= 8) {
                 LeftScore++;
                 DisplayScores(LeftScore, RightScore);
-                ResetBall();
+                ResetBall(false);
             }
             Ball.Y += _ballGoingDown ? 1 : -1;
             if (Ball.Y < 0) {
@@ -133,10 +161,14 @@ namespace Pong {
             RightButtonClicked = true;
         }
 
-        public void ResetBall() {
-            Ball.X = 0;
+        public void ResetBall(bool ballGoingRight) {
+            BallGoingRight = ballGoingRight;
+            if (BallGoingRight) {
+                Ball.X = 0;
+            } else {
+                Ball.X = 7;
+            }
             Ball.Y = Random.Next(8);
-            BallGoingRight = true;
             _ballGoingDown = Random.Next(2) == 0;
             Beep(BoopFrequency);
         }
