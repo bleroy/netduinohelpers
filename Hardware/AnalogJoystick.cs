@@ -1,4 +1,6 @@
 using System;
+using netduino.helpers.Math;
+using Math = Microsoft.SPOT.Math;
 using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware;
 
@@ -126,6 +128,14 @@ namespace netduino.helpers.Hardware {
 
                 return Direction.Center;
             }
+        }
+
+        public double Angle {
+            get { return Trigo.Atan2(Y, X); }
+        }
+
+        public double Amplitude {
+            get { return Trigo.Sqrt(X*X + Y*Y); }
         }
 
         /// <summary>
