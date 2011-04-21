@@ -36,13 +36,13 @@ namespace Pong {
         private const int StickMin = (StickRange - StickActiveAmplitude)/2;
         private const int StickMax = (StickRange + StickActiveAmplitude)/2;
         private const int MaxScore = 9;
-        private bool LeftButtonClicked = false;
-        private bool RightButtonClicked = false;
+        private bool _leftButtonClicked;
+        private bool _rightButtonClicked;
 
         bool _ballGoingDown;
 
-        public int LeftScore;
-        public int RightScore;
+        public int LeftScore { get; set; }
+        public int RightScore { get; set; }
 
         public bool BallGoingRight { get; set; }
 
@@ -72,20 +72,20 @@ namespace Pong {
             var charSet = new CharSet(); 
             var splashScreen = charSet.StringToBitmap("Pong!");
 
-            LeftButtonClicked = false;
-            RightButtonClicked = false;
+            _leftButtonClicked = false;
+            _rightButtonClicked = false;
 
-            while (!(LeftButtonClicked || RightButtonClicked)) {
+            while (!(_leftButtonClicked || _rightButtonClicked)) {
                 var x = 0;
                 for (; x < splashScreen.Width; x++) {
                     Hardware.Matrix.Display(splashScreen.GetFrame(x, 0));
-                    if (LeftButtonClicked || RightButtonClicked) {
+                    if (_leftButtonClicked || _rightButtonClicked) {
                         break;
                     }
                     Thread.Sleep(50);
                 }
                 for (; x != 0; x--) {
-                    if (LeftButtonClicked || RightButtonClicked) {
+                    if (_leftButtonClicked || _rightButtonClicked) {
                         break;
                     }
                     Hardware.Matrix.Display(splashScreen.GetFrame(x, 0));
@@ -130,7 +130,8 @@ namespace Pong {
                 _ballGoingDown = false;
                 Beep(BeepFrequency);
             }
-         }
+            Hardware.Matrix.Display(World.GetFrame(0, 0));
+        }
 
         private void DisplayScores(int leftScore, int rightScore) {
             Hardware.Matrix.Display(SmallChars.ToBitmap(leftScore, rightScore));
@@ -145,29 +146,25 @@ namespace Pong {
         }
 
         private void WaitForClick() {
-            LeftButtonClicked = false;
-            RightButtonClicked = false;
+            _leftButtonClicked = false;
+            _rightButtonClicked = false;
 
-            while (!(LeftButtonClicked || RightButtonClicked)) {
+            while (!(_leftButtonClicked || _rightButtonClicked)) {
                 Thread.Sleep(100);
             }
         }
 
         private void OnLeftButtonClick(UInt32 port, UInt32 state, DateTime time) {
-            LeftButtonClicked = true;
+            _leftButtonClicked = true;
         }
 
         private void OnRightButtonClick(UInt32 port, UInt32 state, DateTime time) {
-            RightButtonClicked = true;
+            _rightButtonClicked = true;
         }
 
         public void ResetBall(bool ballGoingRight) {
             BallGoingRight = ballGoingRight;
-            if (BallGoingRight) {
-                Ball.X = 0;
-            } else {
-                Ball.X = 7;
-            }
+            Ball.X = BallGoingRight ? 0 : 7;
             Ball.Y = Random.Next(8);
             _ballGoingDown = Random.Next(2) == 0;
             Beep(BoopFrequency);

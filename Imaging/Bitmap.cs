@@ -139,5 +139,37 @@ namespace netduino.helpers.Imaging {
 
             return frame;
         }
+
+        public byte[] GetToricFrame(int x, int y) {
+            x %= Width;
+            y %= Height;
+            var xOffset = x % FrameSize; // Determine the amount of horizontal scrolling required to show the frame at this position
+            var bitmapX = x / FrameSize; // Divide x by frameSize to determine where the x coordinate lands in the bitmap
+
+            var frame = new byte[FrameSize]; // Create the final frame
+
+            for (int line = y,
+                     frameLine = 0,
+                     index = bitmapX + y * WidthModuloSize;
+                 frameLine < FrameSize;
+                 line = (line + 1) % Height,
+                 frameLine++,
+                 index = (index + WidthModuloSize) % BitmapData.Length) { // Build the frame one line at a time
+
+                if (xOffset == 0) {
+                    frame[frameLine] = BitmapData[index];
+                }
+                else {
+                    // we need to merge / scroll two graphics to make one line
+                    var merged = (byte)(BitmapData[index] << (byte) (xOffset));
+                    merged |= (byte)((x + FrameSize >= Width ?
+                        BitmapData[index - WidthModuloSize + 1] :
+                        BitmapData[index + 1]) >> (byte) (FrameSize - xOffset));
+                    frame[frameLine] = merged;
+                }
+            }
+
+            return frame;
+}
     }
 }

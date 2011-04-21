@@ -58,7 +58,6 @@ namespace netduino.helpers.Fun {
         private void LoopOverLoop() {
             while (true) {
                 Loop();
-                Hardware.Matrix.Display(World.GetFrame(0, 0));
                 Thread.Sleep(DisplayDelay);
             }
         }

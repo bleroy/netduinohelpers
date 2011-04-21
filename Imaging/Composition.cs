@@ -68,6 +68,10 @@ namespace netduino.helpers.Imaging {
             ClearCache();
         }
 
+        //public byte[] GetToricFrame(int offsetX, int offsetY) {
+            
+        //}
+
         public byte[] GetFrame(int offsetX, int offsetY) {
             if (_frameCache != null && offsetX == _frameCacheX && offsetY == _frameCacheY) {
                 return _frameCache;

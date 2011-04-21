@@ -6,7 +6,7 @@ using netduino.helpers.Helpers;
 using SecretLabs.NETMF.Hardware;
 using SecretLabs.NETMF.Hardware.Netduino;
 
-namespace Pong {
+namespace MeteorsFromOuterSpace {
     /*
     Copyright (C) 2011 by Bertrand Le Roy & Fabien Royer
 
@@ -29,17 +29,6 @@ namespace Pong {
     THE SOFTWARE.
     */
 
-    /// <summary>
-    /// The project is a simple game of Pong.
-    /// It is intended to demonstrate how to build a game with the netduino.helpers and how to turn your game into a 'cartridge' on an SD card.
-    /// To use the game as a cartridge, deploy the \Sample\ConsoleBootLoader to your netduino first. It will bootstrap the game from an SD card.
-    /// Place the .pe file (\Samples\Pong\Pong\bin\Debug\le\Pong.pe or \Samples\Pong\Pong\bin\Release\le\Pong.pe) at the root of an SD card.
-    /// Place a text file named 'cartridge.txt' at the root of the SD card.
-    /// Inside of 'cartridge.txt', write the following line of text:
-    /// assembly:file=Pong.pe;name=Pong;version=1.0.0.0;class=Pong.Program;method=Run
-    /// The ConsoleBootLoader will use the content of 'cartridge.txt' to find the entry point of the game and it will start it.
-    /// Refer to the 'SD Card Resources' folders for a complete example.
-    /// </summary>
     public class Program {
         /// <summary>
         /// During development, Main() acts as the ConsoleBootLoader, making it easy to debug the game.
@@ -80,7 +69,7 @@ namespace Pong {
         /// </summary>
         /// <param name="args">Array of object references to the hardware features</param>
         public static void Run(object[] args) {
-            var thread = new GameOfPong(new ConsoleHardwareConfig(args)).Run();
+            var thread = new GameOfMeteors(new ConsoleHardwareConfig(args)).Run();
             thread.Join();
         }
     }
