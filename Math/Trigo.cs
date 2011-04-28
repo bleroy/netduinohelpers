@@ -4,15 +4,14 @@ namespace netduino.helpers.Math {
     /// <summary>
     /// Math Library for Micro Framework
     /// Compatible with full .NET Framework System.Math
-    /// 
     /// (C)opyright 2009 Elze Kool, http://www.microframework.nl
-    /// 
     /// This Sourcecode is Public Domain. You are free to use this class Non-Commercialy and Commercialy.
+    /// This sourcecode is provided AS-IS. I take no responsibility for direct or indirect damage caused by this program/class. 
     /// 
-    /// This sourcecode is provided AS-IS. I take no responsibility for direct or indirect
-    /// damage coused by this program/class. 
+    /// Changes by Fabien Royer:
     /// 
     /// Converted all double precision operations to float operations for performance reasons on the netduino platform.
+    /// Included fixes for issues discussed here: http://www.microframework.nl/2009/01/15/math-library-compatible-with-full-net/comment-page-1/
     /// 
     /// </summary>
     public static class Trigo
@@ -37,13 +36,21 @@ namespace netduino.helpers.Math {
 
         /// <summary>
         /// PI
+        /// Redefined from the original value due to issue discussed here: http://www.microframework.nl/2009/01/15/math-library-compatible-with-full-net/comment-page-1/#comment-3790
         /// </summary>
-        public static readonly float Pi = 3.14159265358979323846F;
+        public static readonly float Pi = 3.1415926535897931F;
 
         /// <summary>
         /// Natural base E
         /// </summary>
         public static readonly float E = 2.71828182845904523536F;
+
+        /// <summary>
+        /// Epsilon definition
+        /// Addresses the issue discussed here: http://forums.netduino.com/index.php?/topic/972-whats-going-on-with-the-operator/page__gopid__7052
+        /// and here: http://www.microframework.nl/2009/01/15/math-library-compatible-with-full-net/comment-page-1/#comment-4713
+        /// </summary>
+        public static readonly float Epsilon = 2.22045e-16F;
 
         /// <summary>
         /// Returns the absolute value 
@@ -324,7 +331,7 @@ namespace netduino.helpers.Math {
 
             x *= x;
 
-            while (partial >= (float) double.Epsilon) {
+            while (partial >= Trigo.Epsilon) {
                 if (x >= newBase) {
                     fractional += partial;
                     x = x / newBase;
