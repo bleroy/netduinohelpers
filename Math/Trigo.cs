@@ -20,7 +20,7 @@ namespace netduino.helpers.Math {
         const float Sq2M1 = .414213562373095048802e0F;
         const float Pio2 = 1.570796326794896619231e0F;
         const float Pio4 = .785398163397448309615e0F;
-        const float Log2e = 1.4426950408889634073599247F;
+        const float Log2E = 1.4426950408889634073599247F;
         const float Sqrt2 = 1.4142135623730950488016887F;
         const float Ln2 = 6.93147180559945286227e-01F;
         const float AtanP4 = .161536412982230228262e2F;
@@ -71,7 +71,7 @@ namespace netduino.helpers.Math {
             if ((x > 1.0F) || (x < -1.0F))
                 throw new ArgumentOutOfRangeException("x");
 
-            return (float) (Pio2 - Asin(x));
+            return Pio2 - Asin(x);
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace netduino.helpers.Math {
         /// <param name="x">A number representing a sine</param>
         /// <returns>An angle</returns>
         public static float Asin(float x) {
-            float sign = 1.0F;
+            var sign = 1.0F;
 
             if (x < 0.0F) {
                 x = -x;
@@ -163,21 +163,21 @@ namespace netduino.helpers.Math {
             byte quadrand = 0;
 
             // Quadrand 1, Pi/2 -- Pi
-            if ((x > (Trigo.Pi / 2F)) & (x < (Trigo.Pi))) {
+            if ((x > (Pi / 2F)) & (x < (Pi))) {
                 quadrand = 1;
-                x = Trigo.Pi - x;
+                x = Pi - x;
             }
 
             // Quadrand 2, Pi -- 3Pi/2
-            if ((x > (Trigo.Pi)) & (x < ((3F * Trigo.Pi) / 2))) {
+            if ((x > (Pi)) & (x < ((3F * Pi) / 2))) {
                 quadrand = 2;
-                x = Trigo.Pi - x;
+                x = Pi - x;
             }
 
             // Quadrand 3 - 3Pi/2 -->
-            if ((x > ((3F * Trigo.Pi) / 2))) {
+            if ((x > ((3F * Pi) / 2))) {
                 quadrand = 3;
-                x = (float)(2F * Trigo.Pi) - x;
+                x = 2F * Pi - x;
             }
 
             // Constants used for approximation
@@ -229,9 +229,9 @@ namespace netduino.helpers.Math {
         /// <param name="x">A number specifying a power</param>
         /// <returns>e raised to x</returns>
         public static float Exp(float x) {
-            int n = 1;
-            float ex = 1F;
-            float m = 1F;
+            var n = 1;
+            var ex = 1F;
+            var m = 1F;
 
             // exp(x+y) = exp(x) * exp(y)
             // http://www.quinapalus.com/efunc.html
@@ -260,7 +260,7 @@ namespace netduino.helpers.Math {
         /// <param name="y">number that specifies a power</param>
         /// <returns>x raised to the power y</returns>
         public static float Pow(float x, float y) {
-            float temp = 0F;
+            var temp = 0F;
 
             if (x <= 0.0F) {
                 if (x == 0.0F) {
@@ -299,7 +299,7 @@ namespace netduino.helpers.Math {
         /// <param name="x">a Number</param>
         /// <returns>Logaritmic of x</returns>
         public static float Log(float x) {
-            return Log(x, Trigo.E);
+            return Log(x, E);
         }
 
         /// <summary>
@@ -312,9 +312,9 @@ namespace netduino.helpers.Math {
         {
             // Based on Python sourcecode from: http://en.literateprograms.org/Logarithm_Function_%28Python%29
 
-            float partial = 0.5F;
-            float integer = 0F;
-            float fractional = 0.0F;
+            var partial = 0.5F;
+            var integer = 0F;
+            var fractional = 0.0F;
 
             if (x == 0.0F) return (float) double.NegativeInfinity;
             if ((x < 1.0F) & (newBase < 1.0F)) throw new ArgumentOutOfRangeException("x");
@@ -331,7 +331,7 @@ namespace netduino.helpers.Math {
 
             x *= x;
 
-            while (partial >= Trigo.Epsilon) {
+            while (partial >= Epsilon) {
                 if (x >= newBase) {
                     fractional += partial;
                     x = x / newBase;
@@ -403,7 +403,7 @@ namespace netduino.helpers.Math {
         /// <param name="x">Value</param>
         /// <returns>Sinus of Value</returns>
         public static float Sin(float x) {
-            return Cos((Trigo.Pi / 2.0F) - x);
+            return Cos((Pi / 2.0F) - x);
         }
 
         /// (C)opyright 2011 Mario Vernari, http://highfieldtales.wordpress.com/
@@ -422,7 +422,7 @@ namespace netduino.helpers.Math {
             }
 
             // here is a kind of base-10 logarithm so that the argument will fall between 1 and 100, where the convergence is fast
-            float exp = 1.0f;
+            var exp = 1.0f;
 
             while (x < 1.0f) {
                  x *= 100.0f;

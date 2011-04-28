@@ -1,41 +1,63 @@
-using System;
 using System.Collections;
 using netduino.helpers.Fun;
+using netduino.helpers.Hardware;
 using netduino.helpers.Imaging;
 
 namespace MeteorsFromOuterSpace {
     public class GameOfMeteors : Game {
-        private const int WorldSize = 24;
-        private const int NumberOfMeteors = 10;
-        private const float EnginePower = 0.001f;
+        public const int WorldSize = 8;
+        public const int NumberOfMeteors = 3;
+        private const float EnginePower = 0.3f;
 
-        public ArrayList Meteors { get; private set; }
-        public ArrayList Figs { get; private set; }
+        public Meteor[] Meteors { get; private set; }
+        public PlayerMissile Pruneau { get; private set; }
         public PlayerMissile Ship { get; private set; }
-        public float HorizontalSpeed { get; set; }
-        public float VerticalSpeed { get; set; }
         public float ShipX { get; set; }
         public float ShipY { get; set; }
+        public float PruneauX { get; set; }
+        public float PruneauY { get; set; }
+        public AnalogJoystick.Direction PruneauDirX { get; set; }
+        public AnalogJoystick.Direction PruneauDirY { get; set; }
 
         public GameOfMeteors(ConsoleHardwareConfig config)
             : base(config) {
-            Meteors = new ArrayList();
-            Figs = new ArrayList();
-            World = new Composition(new byte[72], 24, 24);
-            Ship = new PlayerMissile("ship", 12, 12, World);
+            World = new Composition(new byte[WorldSize * WorldSize / 8], WorldSize, WorldSize);
+            Ship = new PlayerMissile("ship", WorldSize / 2, WorldSize / 2, World);
+            ShipX = WorldSize / 2;
+            ShipY = WorldSize / 2;
+            Pruneau = new PlayerMissile() {
+                Name = "Pruneau",
+                Owner = World,
+                IsVisible = false
+            };
+            Meteors = new Meteor[NumberOfMeteors];
+            for (var i = 0; i < NumberOfMeteors; i++) {
+                Meteors[i] = new Meteor(this, i,
+                    new[] {0, WorldSize - 2, 0, WorldSize - 2} [i],
+                    new[] {0, 0, WorldSize - 2, WorldSize - 2} [i]);
+            }
+            DisplayDelay = 0;
         }
 
         public override void Loop() {
-            HorizontalSpeed += (Hardware.JoystickLeft.X - 512) * EnginePower;
-            VerticalSpeed += (Hardware.JoystickLeft.Y - 512) * EnginePower;
+            ShipX += (float)Hardware.JoystickLeft.XDirection * EnginePower;
+            ShipY += (float)Hardware.JoystickLeft.YDirection * EnginePower;
 
-            ShipX += HorizontalSpeed;
-            ShipY += VerticalSpeed;
+            if (ShipX < 0) ShipX += WorldSize;
+            if (ShipY < 0) ShipY += WorldSize;
+            if (ShipX >= WorldSize) ShipX -= WorldSize;
+            if (ShipY >= WorldSize) ShipY -= WorldSize;
 
             Ship.X = (int)ShipX;
             Ship.Y = (int)ShipY;
 
-            Hardware.Matrix.Display(World.GetFrame(Ship.X - 3, Ship.Y - 3));
+            foreach (var meteor in Meteors) {
+                meteor.Move();
+            }
+
+            
+
+            Hardware.Matrix.Display(World.GetFrame(0, 0));
         }
     }
 }

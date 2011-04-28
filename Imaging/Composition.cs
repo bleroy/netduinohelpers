@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 
 namespace netduino.helpers.Imaging {
@@ -38,12 +37,7 @@ namespace netduino.helpers.Imaging {
             string name,
             int x = 0,
             int y = 0) {
-            var missile = new PlayerMissile(
-                name: name,
-                x: x,
-                y: y,
-                owner: this
-                );
+            var missile = new PlayerMissile(name, x, y, this);
             _missiles.Add(missile);
             ClearCache();
             return missile;
@@ -81,6 +75,7 @@ namespace netduino.helpers.Imaging {
             _frameCacheY = offsetY;
 
             foreach (PlayerMissile missile in _missiles) {
+                if (!missile.IsVisible) continue;
                 var relX = missile.X - offsetX;
                 var relY = missile.Y - offsetY;
                 if (relY < 0 || relX < 0 || relX >= Bitmap.FrameSize || relY >= Bitmap.FrameSize) continue;
@@ -95,8 +90,10 @@ namespace netduino.helpers.Imaging {
         private void CheckForCollisions() {
             for (var i = 0; i < _missiles.Count; i++) {
                 var missile1 = (PlayerMissile)_missiles[i];
+                if (!missile1.IsVisible) continue;
                 for (var j = i + 1; j < _missiles.Count; j++) {
                     var missile2 = (PlayerMissile)_missiles[j];
+                    if (!missile2.IsVisible) continue;
                     if (missile1.X == missile2.X && missile1.Y == missile2.Y) {
                         OnCoinc(new CoincEventArgs(missile1, missile2));
                     }

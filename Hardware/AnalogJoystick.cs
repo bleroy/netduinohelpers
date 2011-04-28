@@ -131,11 +131,17 @@ namespace netduino.helpers.Hardware {
         }
 
         public double Angle {
-            get { return Trigo.Atan2(Y, X); }
+            get {
+                return Trigo.Atan2(Y - 512, X - 512);
+            }
         }
 
         public double Amplitude {
-            get { return Trigo.Sqrt(X*X + Y*Y); }
+            get {
+                var x = X - 512;
+                var y = Y - 512;
+                return Trigo.Sqrt(x*x + y*y);
+            }
         }
 
         /// <summary>
