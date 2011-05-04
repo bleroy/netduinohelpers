@@ -1,4 +1,3 @@
-using System.Collections;
 using netduino.helpers.Fun;
 using netduino.helpers.Hardware;
 using netduino.helpers.Imaging;
@@ -25,7 +24,7 @@ namespace MeteorsFromOuterSpace {
             Ship = new PlayerMissile("ship", WorldSize / 2, WorldSize / 2, World);
             ShipX = WorldSize / 2;
             ShipY = WorldSize / 2;
-            Pruneau = new PlayerMissile() {
+            Pruneau = new PlayerMissile {
                 Name = "Pruneau",
                 Owner = World,
                 IsVisible = false
@@ -54,8 +53,6 @@ namespace MeteorsFromOuterSpace {
             foreach (var meteor in Meteors) {
                 meteor.Move();
             }
-
-            
 
             Hardware.Matrix.Display(World.GetFrame(0, 0));
         }

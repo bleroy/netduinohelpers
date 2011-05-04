@@ -45,7 +45,7 @@ namespace netduino.helpers.Imaging {
 
         public PlayerMissile AddMissile(PlayerMissile missile) {
             _missiles.Add(missile);
-            missile.Owner = this;
+            if (missile.Owner != this) missile.Owner = this;
             ClearCache();
             return missile;
         }
