@@ -5,25 +5,21 @@ using netduino.helpers.Imaging;
 namespace MeteorsFromOuterSpace {
     public class GameOfMeteors : Game {
         public const int WorldSize = 8;
-        public const int NumberOfMeteors = 3;
+        public const int NumberOfMeteors = 1;
         private const float EnginePower = 0.3f;
+        private const float PruneauSpeed = 1f;
 
         public Meteor[] Meteors { get; private set; }
         public PlayerMissile Pruneau { get; private set; }
         public PlayerMissile Ship { get; private set; }
-        public float ShipX { get; set; }
-        public float ShipY { get; set; }
-        public float PruneauX { get; set; }
-        public float PruneauY { get; set; }
-        public AnalogJoystick.Direction PruneauDirX { get; set; }
-        public AnalogJoystick.Direction PruneauDirY { get; set; }
 
         public GameOfMeteors(ConsoleHardwareConfig config)
             : base(config) {
             World = new Composition(new byte[WorldSize * WorldSize / 8], WorldSize, WorldSize);
+            World.Coinc += WorldCoinc;
             Ship = new PlayerMissile("ship", WorldSize / 2, WorldSize / 2, World);
-            ShipX = WorldSize / 2;
-            ShipY = WorldSize / 2;
+            Ship.X = WorldSize / 2;
+            Ship.Y = WorldSize / 2;
             Pruneau = new PlayerMissile {
                 Name = "Pruneau",
                 Owner = World,
@@ -38,23 +34,77 @@ namespace MeteorsFromOuterSpace {
             DisplayDelay = 0;
         }
 
+        void WorldCoinc(object sender, CoincEventArgs e) {
+            if (e.Missile1 == Pruneau || e.Missile2 == Pruneau) {
+                // Explode rock or meteor
+                var rock = e.Missile1 == Pruneau ? e.Missile2 : e.Missile1;
+                // Does this rock belong to a meteor?
+                foreach (var meteor in Meteors) {
+                    if (meteor.Has(rock)) {
+                        if (meteor.IsExploded) {
+                            rock.IsVisible = false;
+                        }
+                        else {
+                            meteor.Explode();
+                        }
+                        Pruneau.IsVisible = false;
+                        return;
+                    }
+                }
+            }
+            if (e.Missile1 == Ship || e.Missile2 == Ship) {
+                // You lose
+            }
+        }
+
         public override void Loop() {
-            ShipX += (float)Hardware.JoystickLeft.XDirection * EnginePower;
-            ShipY += (float)Hardware.JoystickLeft.YDirection * EnginePower;
+            // Ship
+            Ship.HorizontalSpeed = (float)Hardware.JoystickLeft.XDirection * EnginePower;
+            Ship.VerticalSpeed = (float)Hardware.JoystickLeft.YDirection * EnginePower;
+            Ship.Move();
 
-            if (ShipX < 0) ShipX += WorldSize;
-            if (ShipY < 0) ShipY += WorldSize;
-            if (ShipX >= WorldSize) ShipX -= WorldSize;
-            if (ShipY >= WorldSize) ShipY -= WorldSize;
+            var ship = Ship;
+            ApplyToreGeometry(ship);
 
-            Ship.X = (int)ShipX;
-            Ship.Y = (int)ShipY;
-
+            // Meteors
             foreach (var meteor in Meteors) {
                 meteor.Move();
             }
 
+            // Pruneau
+            if (Pruneau.IsVisible) {
+                Pruneau.Move();
+                if (Pruneau.ExactX < 0 ||
+                    Pruneau.ExactY < 0 ||
+                    Pruneau.ExactX >= WorldSize ||
+                    Pruneau.ExactY >= WorldSize) {
+
+                    Pruneau.IsVisible = false;
+                }
+            }
+            else {
+                var shootXDir = Hardware.JoystickRight.XDirection;
+                var shootYDir = Hardware.JoystickRight.YDirection;
+                if (shootXDir != AnalogJoystick.Direction.Center ||
+                    shootYDir != AnalogJoystick.Direction.Center) {
+
+                    Pruneau.ExactX = Ship.ExactX;
+                    Pruneau.ExactY = Ship.ExactY;
+                    Pruneau.HorizontalSpeed = (float) shootXDir*PruneauSpeed;
+                    Pruneau.VerticalSpeed = (float) shootYDir*PruneauSpeed;
+                    Pruneau.IsVisible = true;
+                }
+            }
+
+            // Display
             Hardware.Matrix.Display(World.GetFrame(0, 0));
+        }
+
+        public static void ApplyToreGeometry(PlayerMissile missile) {
+            if (missile.ExactX < 0) missile.ExactX += WorldSize;
+            if (missile.ExactY < 0) missile.ExactY += WorldSize;
+            if (missile.ExactX >= WorldSize) missile.ExactX -= WorldSize;
+            if (missile.ExactY >= WorldSize) missile.ExactY -= WorldSize;
         }
     }
 }

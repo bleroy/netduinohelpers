@@ -1,15 +1,15 @@
 namespace netduino.helpers.Imaging {
     public class PlayerMissile {
-        private float _x;
-        private float _y;
+        public float ExactX;
+        public float ExactY;
         private Composition _owner;
 
         public PlayerMissile() : this(null, 0, 0) {}
 
-        public PlayerMissile(string name, int x, int y, Composition owner = null) {
+        public PlayerMissile(string name, int exactX, int exactY, Composition owner = null) {
             Name = name;
-            _x = x;
-            _y = y;
+            ExactX = exactX;
+            ExactY = exactY;
             HorizontalSpeed = 0;
             VerticalSpeed = 0;
             IsVisible = true;
@@ -20,9 +20,9 @@ namespace netduino.helpers.Imaging {
         public string Name { get; set; }
 
         public int X {
-            get { return (int)_x; }
+            get { return (int)ExactX; }
             set {
-                _x = value;
+                ExactX = value;
                 if (Owner != null) {
                     Owner.NotifyChange();
                 }
@@ -30,9 +30,9 @@ namespace netduino.helpers.Imaging {
         }
         
         public int Y {
-            get { return (int)_y; }
+            get { return (int)ExactY; }
             set {
-                _y = value;
+                ExactY = value;
                  if (Owner != null) {
                     Owner.NotifyChange();
                 }
@@ -56,8 +56,8 @@ namespace netduino.helpers.Imaging {
         }
 
         public void Move() {
-            _x += HorizontalSpeed;
-            _y += VerticalSpeed;
+            ExactX += HorizontalSpeed;
+            ExactY += VerticalSpeed;
             if (Owner != null) {
                 Owner.NotifyChange();
             }

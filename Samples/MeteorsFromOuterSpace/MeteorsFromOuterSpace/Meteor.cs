@@ -16,14 +16,15 @@ namespace MeteorsFromOuterSpace {
         private readonly PlayerMissile[] _rocks = new PlayerMissile[3];
         private readonly byte[] _rockXOffsets = new byte[3];
         private readonly byte[] _rockYOffsets = new byte[3];
+        private readonly Random _rnd;
+
+        public bool IsExploded { get; set; }
 
         public Meteor(GameOfMeteors game, int index, int x, int y) {
-            var rnd = new Random();
-            var dir = (float)rnd.NextDouble() * 2 * Trigo.Pi;
-            var hSpeed = Trigo.Cos(dir) * MeteorSpeed;
-            var vSpeed = Trigo.Sin(dir) * MeteorSpeed;
+            _rnd = new Random();
+            var speed = GetRandomSpeed();
             var j = 0;
-            var skip = rnd.Next(4);
+            var skip = _rnd.Next(4);
             for (var i = 0; i < 4; i++) {
                 if (i == skip) continue;
                 _rockXOffsets[j] = _rockOffsets[i*2];
@@ -32,22 +33,46 @@ namespace MeteorsFromOuterSpace {
                                                   Name = "Meteor" + index + ":" + j,
                                                   X = x + _rockXOffsets[j],
                                                   Y = y + _rockYOffsets[j],
-                                                  HorizontalSpeed = hSpeed,
-                                                  VerticalSpeed = vSpeed,
+                                                  HorizontalSpeed = speed.X,
+                                                  VerticalSpeed = speed.Y,
                                                   Owner = game.World
                                               };
                 j++;
             }
         }
 
+        private Vector2D GetRandomSpeed() {
+            var dir = (float)_rnd.NextDouble() * 2 * Trigo.Pi;
+            return new Vector2D {
+                                    X = Trigo.Cos(dir)*MeteorSpeed,
+                                    Y = Trigo.Sin(dir)*MeteorSpeed
+                                };
+        }
+
         public void Move() {
             for(var i = 0; i < _rocks.Length; i++) {
+                if (!_rocks[i].IsVisible) continue;
                 _rocks[i].Move();
-                if (_rocks[i].X < 0) _rocks[i].X += GameOfMeteors.WorldSize;
-                if (_rocks[i].Y < 0) _rocks[i].Y += GameOfMeteors.WorldSize;
-                if (_rocks[i].X >= GameOfMeteors.WorldSize) _rocks[i].X -= GameOfMeteors.WorldSize;
-                if (_rocks[i].Y >= GameOfMeteors.WorldSize) _rocks[i].Y -= GameOfMeteors.WorldSize;
+                GameOfMeteors.ApplyToreGeometry(_rocks[i]);
             }
+        }
+
+        public bool Has(PlayerMissile someRock) {
+            foreach (var rock in _rocks) {
+                if (rock == someRock && rock.IsVisible) return true;
+            }
+            return false;
+        }
+
+        public void Explode() {
+            _rocks[1].IsVisible = false;
+            var speed = GetRandomSpeed();
+            _rocks[0].HorizontalSpeed = speed.X;
+            _rocks[0].VerticalSpeed = speed.Y;
+            speed = GetRandomSpeed();
+            _rocks[2].HorizontalSpeed = speed.X;
+            _rocks[2].VerticalSpeed = speed.Y;
+            IsExploded = true;
         }
     }
 }
