@@ -7,27 +7,6 @@ using SecretLabs.NETMF.IO;
 using Microsoft.SPOT.Hardware;
 
 namespace netduino.helpers.Helpers {
-    /*
-    Copyright (C) 2011 by Fabien Royer
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in
-    all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-    THE SOFTWARE.
-    */
     /// <summary>
     /// General-purpose resource management class supporting bitmaps, strings and assemblies
     /// </summary>
@@ -77,44 +56,49 @@ namespace netduino.helpers.Helpers {
         {
             StorageDevice.MountSD(SdMountPoint, spiModule, chipSelect);
             try {
-                // Read the content of the resource manifest and build the corresponding resources
-                using (var reader = new StreamReader(SdMountPoint + @"\" + resourceManifest)) {
-                    string line;
-
-                    // Parse each line of the manifest and build the corresponding resource object
-                    while ((line = reader.ReadLine()).Length != 0) {
-                        Debug.Print(line);
-
-                        // Skip any line starting with a '*'
-                        if (line[0] == '*') {
-                            continue;
-                        }
-
-                        // Split the line on the colon delimiter to obtain the type of the resource
-                        string[] list = line.Split(':');
-
-                        Hashtable hash = Parse(list[1]);
-
-                        if (list[0] == "bitmap") {
-                            BuildBitmapResource(Int32.Parse((string)hash["width"]),
-                                                Int32.Parse((string)hash["height"]), (string)hash["name"]);
-                        }
-                        else if (list[0] == "string") {
-                            Strings.Add(hash["name"], hash["value"]);
-                        }
-                        else if (list[0] == "rttl") {
-                            BuildRttlResource((string)hash["name"]);
-                        }
-                        else if (list[0] == "assembly") {
-                            LoadAssembly(hash, args);
-                        }
-                    }
-                }
+                Load(resourceManifest, args);
             }
             finally {
                 StorageDevice.Unmount(SdMountPoint);
             }
         }
+
+        public void Load(string resourceManifest = "resources.txt", object[] args = null) {
+            // Read the content of the resource manifest and build the corresponding resources
+            using (var reader = new StreamReader(SdMountPoint + @"\" + resourceManifest)) {
+                string line;
+
+                // Parse each line of the manifest and build the corresponding resource object
+                while ((line = reader.ReadLine()).Length != 0) {
+                    //Debug.Print(line);
+
+                    // Skip any line starting with a '*'
+                    if (line[0] == '*') {
+                        continue;
+                    }
+
+                    // Split the line on the colon delimiter to obtain the type of the resource
+                    string[] list = line.Split(':');
+
+                    Hashtable hash = Parse(list[1]);
+
+                    if (list[0] == "bitmap") {
+                        BuildBitmapResource(Int32.Parse((string)hash["width"]),
+                                            Int32.Parse((string)hash["height"]), (string)hash["name"]);
+                    }
+                    else if (list[0] == "string") {
+                        Strings.Add(hash["name"], hash["value"]);
+                    }
+                    else if (list[0] == "rttl") {
+                        BuildRttlResource((string)hash["name"]);
+                    }
+                    else if (list[0] == "assembly") {
+                        LoadAssembly(hash, args);
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Loads an assembly in little-endian PE format and invokes the entry point method if provided
         /// </summary>

@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("ConsoleBootLoader")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Pix6T4 Console Bootloader")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Microsoft")]
-[assembly: AssemblyProduct("ConsoleBootLoader")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2011")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("Pix6T4 Console BootLoader")]
+[assembly: AssemblyCopyright("Copyright © Fabien Royer 2011")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

@@ -72,11 +72,10 @@
     <Reference Include="Microsoft.SPOT.Native">
     </Reference>
     <Reference Include="SecretLabs.NETMF.Hardware, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL" />
-    <Reference Include="SecretLabs.NETMF.Hardware.Netduino, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL" />
-    <Reference Include="SecretLabs.NETMF.IO">
-      <HintPath>SecretLabs\SecretLabs.NETMF.IO.dll</HintPath>
-    </Reference>
+    <Reference Include="SecretLabs.NETMF.IO, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="System.IO" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="License.txt" />
+  </ItemGroup>
 </Project>

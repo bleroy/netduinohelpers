@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("ASSM")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Test assembly used to test dynamic loading")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Microsoft IT")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("ASSM")]
-[assembly: AssemblyCopyright("Copyright © Microsoft IT 2011")]
+[assembly: AssemblyCopyright("Copyright © Fabien Royer 2011")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
