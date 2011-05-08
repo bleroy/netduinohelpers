@@ -81,7 +81,10 @@ namespace PIPBoy3000 {
                 }
             }
             
-            Thread.Sleep(10);
+            // TO DO: 
+            // Remove delay.
+            // Use a small capacitor instead (value?) on the pin reading the pulses from the geiger counter.
+            Thread.Sleep(14);
 
             _geigerCounter.EnableInterrupt();
         }

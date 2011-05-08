@@ -135,6 +135,7 @@ namespace PIPBoy3000 {
 
         private static void InitializeLCDScreen() {
             Port.Open();
+            Thread.Sleep(5000);
             WriteLCD(LcdCommandSetGeometry);
             Thread.Sleep(200);
             WriteLCD(LcdCommandClearScreen);
