@@ -1,4 +1,5 @@
-﻿#define dev
+﻿//#define dev
+
 using Microsoft.SPOT.Hardware;
 using netduino.helpers.Fun;
 using netduino.helpers.Hardware;

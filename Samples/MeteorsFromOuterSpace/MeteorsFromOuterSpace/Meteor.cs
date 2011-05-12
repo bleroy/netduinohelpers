@@ -2,7 +2,7 @@ using System;
 using netduino.helpers.Imaging;
 using netduino.helpers.Math;
 
-namespace MeteorsFromOuterSpace {
+namespace Meteors {
     public class Meteor {
         public const float MeteorSpeed = 0.1f;
 

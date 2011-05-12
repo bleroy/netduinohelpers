@@ -1,16 +1,27 @@
-﻿using System;
+﻿#define NETDUINO
+
+using System;
 using System.Collections;
 using System.Threading;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
-using SecretLabs.NETMF.Hardware;
+using SecretLabs.NETMF.IO;
+
+#if NETDUINO_MINI
+using SecretLabs.NETMF.Hardware.NetduinoMini;
+#else
 using SecretLabs.NETMF.Hardware.Netduino;
+#endif
+
+using SecretLabs.NETMF.Hardware;
 using netduino.helpers.Sound;
 using netduino.helpers.Helpers;
 
 namespace RingToneTest {
     public class Program {
         static PWM _channel = new PWM(Pins.GPIO_PIN_D5);
+        public static readonly string SDMountPoint = @"SD";
+
         public static void Main() {
             AsynchronousPlay();
 
@@ -43,14 +54,24 @@ namespace RingToneTest {
         /// Play a set of RTTL songs synchronously, loaded from SD card resources
         /// </summary>
         public static void PlayFromResource(){
+#if NETDUINO_MINI
+            StorageDevice.MountSD(SDMountPoint, SPI.SPI_module.SPI1, Pins.GPIO_PIN_13);
+#else
+            StorageDevice.MountSD(SDMountPoint, SPI.SPI_module.SPI1, Pins.GPIO_PIN_D10);
+#endif
             var sd = new SDResourceLoader();
-            sd.Load(Pins.GPIO_PIN_D10);
+            sd.Load();
+
             foreach(string songName in sd.RTTLSongs.Keys) {
                 RttlSong song = (RttlSong) sd.RTTLSongs[songName];
                 Debug.Print("Playing: " + song.Name);
                 song.Play(_channel);
                 Thread.Sleep(1500);
             }
+
+#if NETDUINO_MINI || NETDUINO
+            StorageDevice.Unmount(SDMountPoint);
+#endif
         }
     }
 }

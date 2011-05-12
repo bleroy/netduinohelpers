@@ -1,10 +1,18 @@
-﻿using System;
+﻿#define NETDUINO
+
+using System;
 using System.IO;
 using System.Threading;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.IO;
+
+#if NETDUINO_MINI
+using SecretLabs.NETMF.Hardware.NetduinoMini;
+#else
 using SecretLabs.NETMF.Hardware.Netduino;
+#endif
+
 using netduino.helpers.Hardware;
 using netduino.helpers.Imaging;
 using netduino.helpers.Helpers;
@@ -18,6 +26,7 @@ namespace BeyondHelloWorld
         protected static int Y = 0;
         protected static PushButton JoystickButton;
         protected static AnalogJoystick Joystick;
+        public static readonly string SDMountPoint = @"SD";
 
         public static void Main()
         {
@@ -29,10 +38,19 @@ namespace BeyondHelloWorld
             JoystickButton = new PushButton(pin: Pins.ONBOARD_SW1, target: new NativeEventHandler(ButtonEventHandler));
 
             try {
+#if NETDUINO_MINI
+                StorageDevice.MountSD(SDMountPoint, SPI.SPI_module.SPI1, Pins.GPIO_PIN_13);
+#else
+                StorageDevice.MountSD(SDMountPoint, SPI.SPI_module.SPI1, Pins.GPIO_PIN_D10);
+#endif
                 // Load the resources from the SD card 
                 // Place the content of the "SD Card Resources" folder at the root of an SD card
                 rsc = new SDResourceLoader();
-                rsc.Load(Pins.GPIO_PIN_D10);
+                rsc.Load();
+
+#if NETDUINO_MINI || NETDUINO
+                StorageDevice.Unmount(SDMountPoint);
+#endif
             }
             catch (IOException) {
                 ShowNoSDPresent();

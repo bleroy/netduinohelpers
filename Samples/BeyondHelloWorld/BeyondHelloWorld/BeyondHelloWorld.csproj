@@ -44,6 +44,8 @@
     </Reference>
     <Reference Include="SecretLabs.NETMF.Hardware" />
     <Reference Include="SecretLabs.NETMF.Hardware.Netduino" />
-    <Reference Include="SecretLabs.NETMF.IO, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL" />
+    <Reference Include="SecretLabs.NETMF.IO">
+      <HintPath>..\..\..\SecretLabs\SecretLabs.NETMF.IO.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

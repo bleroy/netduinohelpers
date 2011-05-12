@@ -2,7 +2,7 @@ using netduino.helpers.Fun;
 using netduino.helpers.Hardware;
 using netduino.helpers.Imaging;
 
-namespace MeteorsFromOuterSpace {
+namespace Meteors {
     public class GameOfMeteors : Game {
         public const int WorldSize = 8;
         public const int NumberOfMeteors = 1;

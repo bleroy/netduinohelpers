@@ -72,7 +72,6 @@
     <Reference Include="Microsoft.SPOT.Native">
     </Reference>
     <Reference Include="SecretLabs.NETMF.Hardware, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL" />
-    <Reference Include="SecretLabs.NETMF.IO, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="System.IO" />
   </ItemGroup>
   <ItemGroup>

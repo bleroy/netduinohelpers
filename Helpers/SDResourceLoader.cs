@@ -3,7 +3,6 @@ using System.IO;
 using Microsoft.SPOT;
 using System.Collections;
 using System.Reflection;
-using SecretLabs.NETMF.IO;
 using Microsoft.SPOT.Hardware;
 
 namespace netduino.helpers.Helpers {
@@ -16,15 +15,16 @@ namespace netduino.helpers.Helpers {
         public Hashtable Bitmaps;
         public Hashtable RTTLSongs;
 
-        const string SdMountPoint = @"SD";
+        public string Path { get; set; }
 
         public SDResourceLoader() {
+            Path = @"SD";
             Strings = new Hashtable();
             Bitmaps = new Hashtable();
             RTTLSongs = new Hashtable();
         }
 
-        // Mounts an SD card and reads the content of the manifest to instantiate the corresponding objects.
+        // Reads the content of the manifest to instantiate the corresponding objects.
         // By default, the resources to need to be loaded are in a file named 'resources.txt' at the root of the SD card.
         // Filenames referenced in the manifest can be placed in subdirectories relative to the SD card mount point.
         //
@@ -43,29 +43,16 @@ namespace netduino.helpers.Helpers {
         // Only provide a method as the entry point to be called once all the other assemblies have been loaded.
         // 
         // Note: bitmap resources are expected to be a 1-bit depth images in binary format.
-        
+        //
         /// <summary>
         /// Load resources from an SD card.
         /// Load and bootstrap assemblies.
         /// </summary>
-        /// <param name="chipSelect">As of firmware 4.1.1.b1, this is always the hardware SPI CS (netduino: pin 10, mini: pin13)</param>
         /// <param name="resourceManifest">Filename referencing the resources to be loaded</param>
-        /// <param name="spiModule">SPI interface to use</param>
         /// <param name="args">An array of objects to be passed as arguments for dynamically loaded assemblies with a declared 'method' parameter</param>
-        public void Load(Cpu.Pin chipSelect, string resourceManifest = "resources.txt", SPI.SPI_module spiModule = SPI.SPI_module.SPI1, object[] args = null)
-        {
-            StorageDevice.MountSD(SdMountPoint, spiModule, chipSelect);
-            try {
-                Load(resourceManifest, args);
-            }
-            finally {
-                StorageDevice.Unmount(SdMountPoint);
-            }
-        }
-
         public void Load(string resourceManifest = "resources.txt", object[] args = null) {
             // Read the content of the resource manifest and build the corresponding resources
-            using (var reader = new StreamReader(SdMountPoint + @"\" + resourceManifest)) {
+            using (var reader = new StreamReader(Path + @"\" + resourceManifest)) {
                 string line;
 
                 // Parse each line of the manifest and build the corresponding resource object
@@ -98,13 +85,31 @@ namespace netduino.helpers.Helpers {
                 }
             }
         }
+        /// <summary>
+        /// Returns a list of folders. 
+        /// This function expects the SD card to be mounted.
+        /// </summary>
+        /// <param name="currentFolder">Current folder to enumerate from</param>
+        /// <returns>List of folders</returns>
+        public string[] GetFolderList(string currentFolder = null) {
+            string[] folders;
+
+            if (currentFolder != null && currentFolder.Length != 0) {
+                folders = Directory.GetDirectories(currentFolder);
+            } else {
+                currentFolder = Directory.GetCurrentDirectory();
+                folders = Directory.GetDirectories(currentFolder);
+            }
+
+            return folders;
+        }
 
         /// <summary>
         /// Loads an assembly in little-endian PE format and invokes the entry point method if provided
         /// </summary>
         /// <param name="resourceParams">A hash table providing the parameters needed to load/execute the assembly</param>
         protected void LoadAssembly(Hashtable resourceParams, object[] args) {
-            using (var assmfile = new FileStream(SdMountPoint + @"\" + resourceParams["file"], FileMode.Open, FileAccess.Read, FileShare.None)) {
+            using (var assmfile = new FileStream(Path + @"\" + resourceParams["file"], FileMode.Open, FileAccess.Read, FileShare.None)) {
                 var assmbytes = new byte[(int) assmfile.Length];
                 assmfile.Read(assmbytes, 0, (int) assmfile.Length);
                 var assm = Assembly.Load(assmbytes);
@@ -143,7 +148,7 @@ namespace netduino.helpers.Helpers {
         /// <param name="heightinPixels">Height of the bitmap in pixels</param>
         /// <param name="filename">Filename containing the binary data defining the bitmap</param>
         protected void BuildBitmapResource(int widthinPixels, int heightinPixels, string filename) {
-            using (var bmpfile = new FileStream(SdMountPoint + @"\" + filename, FileMode.Open, FileAccess.Read, FileShare.None)) {
+            using (var bmpfile = new FileStream(Path + @"\" + filename, FileMode.Open, FileAccess.Read, FileShare.None)) {
                 // Note: don't exceed the amount of RAM available in the netduino by loading files that are too large!
                 // This will result in an out-of-memory exception.
                 var bitmapdata = new byte[(int) bmpfile.Length];
@@ -159,7 +164,7 @@ namespace netduino.helpers.Helpers {
         /// <param name="filename">Name of the file with the RTTL encoded strings</param>
         protected void BuildRttlResource(string filename) {
             // Read the content of the resource manifest and build the corresponding resources
-            using (TextReader reader = new StreamReader(SdMountPoint + @"\" + filename)) {
+            using (TextReader reader = new StreamReader(Path + @"\" + filename)) {
                 string rttlData;
                 while ((rttlData = reader.ReadLine()).Length != 0) {
                     var song = new Sound.RttlSong(rttlData);

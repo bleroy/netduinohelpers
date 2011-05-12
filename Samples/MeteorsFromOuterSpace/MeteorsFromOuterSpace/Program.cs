@@ -1,4 +1,4 @@
-﻿#define dev
+﻿//#define dev
 using Microsoft.SPOT.Hardware;
 using netduino.helpers.Fun;
 using netduino.helpers.Hardware;
@@ -6,7 +6,7 @@ using netduino.helpers.Helpers;
 using SecretLabs.NETMF.Hardware;
 using SecretLabs.NETMF.Hardware.Netduino;
 
-namespace MeteorsFromOuterSpace {
+namespace Meteors {
     public class Program {
         /// <summary>
         /// During development, Main() acts as the ConsoleBootLoader, making it easy to debug the game.

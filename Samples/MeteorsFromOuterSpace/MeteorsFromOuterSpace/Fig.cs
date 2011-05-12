@@ -1,4 +1,4 @@
-namespace MeteorsFromOuterSpace {
+namespace Meteors {
     public class Fig {
     }
 }

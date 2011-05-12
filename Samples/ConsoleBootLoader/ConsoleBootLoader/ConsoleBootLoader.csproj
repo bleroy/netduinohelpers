@@ -38,6 +38,9 @@
     <Reference Include="Microsoft.SPOT.Native" />
     <Reference Include="SecretLabs.NETMF.Hardware" />
     <Reference Include="SecretLabs.NETMF.Hardware.Netduino, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL" />
+    <Reference Include="SecretLabs.NETMF.IO">
+      <HintPath>..\..\..\SecretLabs\SecretLabs.NETMF.IO.dll</HintPath>
+    </Reference>
     <Reference Include="System.IO" />
   </ItemGroup>
   <ItemGroup>
