@@ -1,3 +1,4 @@
+using System.Threading;
 using netduino.helpers.Fun;
 using netduino.helpers.Hardware;
 using netduino.helpers.Imaging;
@@ -46,6 +47,7 @@ namespace Meteors {
                         }
                         else {
                             meteor.Explode();
+                            MakeExplosionSound();
                         }
                         Pruneau.IsVisible = false;
                         return;
@@ -54,6 +56,12 @@ namespace Meteors {
             }
             if (e.Missile1 == Ship || e.Missile2 == Ship) {
                 // You lose
+            }
+        }
+
+        public void MakeExplosionSound() {
+            for (uint frequency = 6000; frequency < 1000; frequency -= 500) {
+                Beep(frequency, 20);
             }
         }
 
@@ -93,6 +101,8 @@ namespace Meteors {
                     Pruneau.HorizontalSpeed = (float) shootXDir*PruneauSpeed;
                     Pruneau.VerticalSpeed = (float) shootYDir*PruneauSpeed;
                     Pruneau.IsVisible = true;
+                    Beep(2000, 20);
+                    Beep(1000, 20);
                 }
             }
 
@@ -105,6 +115,13 @@ namespace Meteors {
             if (missile.ExactY < 0) missile.ExactY += WorldSize;
             if (missile.ExactX >= WorldSize) missile.ExactX -= WorldSize;
             if (missile.ExactY >= WorldSize) missile.ExactY -= WorldSize;
+        }
+
+        public void Beep(uint frequency, int delayms) {
+            var period = 1000000 / frequency;
+            Hardware.Speaker.SetPulse(period, period / 2);
+            Thread.Sleep(delayms);
+            Hardware.Speaker.SetPulse(0, 0);
         }
     }
 }

@@ -19,6 +19,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -27,6 +28,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <Import Project="$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets" />
   <ItemGroup>
@@ -36,6 +38,7 @@
     <Compile Include="Fun\GameLoop.cs" />
     <Compile Include="Hardware\AdaFruitILI9328.cs" />
     <Compile Include="Hardware\AdaFruitSSD1306.cs" />
+    <Compile Include="Hardware\AdaFruitST7735.cs" />
     <Compile Include="Hardware\AnalogJoystick.cs" />
     <Compile Include="Hardware\DS1307.cs" />
     <Compile Include="Hardware\ExtendedSpiConfiguration.cs">

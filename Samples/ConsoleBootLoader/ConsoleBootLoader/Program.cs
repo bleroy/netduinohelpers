@@ -1,4 +1,4 @@
-﻿#define NETDUINO
+﻿#define NETDUINO_MINI
 
 using System;
 using System.IO;
@@ -23,8 +23,8 @@ namespace ConsoleBootLoader {
 
 #if NETDUINO_MINI
         // Use this document to see the pin map of the mini: http://www.netduino.com/netduinomini/schematic.pdf
-        public static AnalogJoystick JoystickLeft = new AnalogJoystick(Pins.GPIO_PIN_5, Pins.GPIO_PIN_6, centerDeadZoneRadius: 20);
-        public static AnalogJoystick JoystickRight = new AnalogJoystick(Pins.GPIO_PIN_7, Pins.GPIO_PIN_8, centerDeadZoneRadius: 20);
+        public static AnalogJoystick JoystickLeft = new AnalogJoystick(Pins.GPIO_PIN_5, Pins.GPIO_PIN_6, minRange: 1023, maxRange: 0, centerDeadZoneRadius: 20);
+        public static AnalogJoystick JoystickRight = new AnalogJoystick(Pins.GPIO_PIN_7, Pins.GPIO_PIN_8, minRange: 1023, maxRange: 0, centerDeadZoneRadius: 20);
         public static Max72197221 Matrix = new Max72197221(chipSelect: Pins.GPIO_PIN_17);
         public static PWM Speaker = new PWM(Pins.GPIO_PIN_18);
         public static PushButton ButtonLeft = new PushButton(Pins.GPIO_PIN_19, Port.InterruptMode.InterruptEdgeLevelLow, null, Port.ResistorMode.PullUp);
@@ -56,10 +56,14 @@ namespace ConsoleBootLoader {
                 args[index++] = ButtonLeft;
                 args[index] = ButtonRight;
 
+                // This small delay ensures that the netduino has the time to settle down upon powering up.
+                // Upon power-up the pins of the netduino turn to high for a moment, which interferes with setting up the matrix.
+                Thread.Sleep(1500);
+
                 Matrix.Shutdown(Max72197221.ShutdownRegister.NormalOperation);
                 Matrix.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);
                 Matrix.SetDigitScanLimit(7);
-                Matrix.SetIntensity(8);
+                Matrix.SetIntensity(7);
 
                 Matrix.Display(new byte[] { 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55 });
 
