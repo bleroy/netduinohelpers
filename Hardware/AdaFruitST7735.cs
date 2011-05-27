@@ -63,6 +63,9 @@ namespace netduino.helpers.Hardware {
         }
 
         public AdaFruitST7735(Cpu.Pin chipSelect, Cpu.Pin dc, Cpu.Pin reset, SPI.SPI_module spiModule = SPI.SPI_module.SPI1, uint speedKHz = (uint)9500) {
+
+            AutoRefreshScreen = false;
+
             DataCommand = new OutputPort(dc, false);
             Reset = new OutputPort(reset, true);
 
@@ -243,7 +246,7 @@ namespace netduino.helpers.Hardware {
             DataCommand.Write(Data);
         }
 
-        protected void SetAddressWindow(byte x0, byte y0, byte x1, byte y1)
+        private void SetAddressWindow(byte x0, byte y0, byte x1, byte y1)
         {
             DataCommand.Write(Command);
             Write((byte)LcdCommand.CASET);  // column addr set
@@ -265,24 +268,140 @@ namespace netduino.helpers.Hardware {
             Write((byte)LcdCommand.RAMWR);  // write to RAM
         }
 
-        public void DrawPixel(byte x, byte y, ushort color) {
-          if ((x >= Width) || (y >= Height)) return;
+        public void DrawPixel(int x, int y, ushort color) {
+            SetPixel(x, y, color);
+            if (AutoRefreshScreen) {
+                Refresh();
+            }
         }
 
-        public void FillScreen(ushort color) {
-            for(ushort I = 0; I < SpiBuffer.Length; I+=2){
-                SpiBuffer[I] = (byte) (color >> 8);
-                SpiBuffer[I+1] = (byte)(color);
+        // Bresenham's algorithm: http://en.wikipedia.org/wiki/Bresenham's_line_algorithm
+        public void DrawLine(int startX, int startY, int endX, int endY, ushort color) {
+            int steep = (System.Math.Abs(endY - startY) > System.Math.Abs(endX - startX)) ? 1 : 0;
+
+            if (steep != 0) {
+                Swap(ref startX, ref startY);
+                Swap(ref endX, ref endY);
             }
+
+            if (startX > endX) {
+                Swap(ref startX, ref endX);
+                Swap(ref startY, ref endY);
+            }
+
+            int dx, dy;
+            dx = endX - startX;
+            dy = System.Math.Abs(endY - startY);
+
+            int err = dx / 2;
+            int ystep = 0;
+
+            if (startY < endY) {
+                ystep = 1;
+            } else {
+                ystep = -1;
+            }
+
+            for (; startX < endX; startX++) {
+                if (steep != 0) {
+                    SetPixel(startY, startX, color);
+                } else {
+                    SetPixel(startX, startY, color);
+                }
+                err -= dy;
+                if (err < 0) {
+                    startY += ystep;
+                    err += dx;
+                }
+            }
+            if (AutoRefreshScreen) {
+                Refresh();
+            }
+        }
+
+        public void DrawCircle(int centerX, int centerY, int radius, ushort color) {
+            int f = 1 - radius;
+            int ddF_x = 1;
+            int ddF_y = -2 * radius;
+            int x = 0;
+            int y = radius;
+
+            SetPixel(centerX, centerY + radius, color);
+            SetPixel(centerX, centerY - radius, color);
+            SetPixel(centerX + radius, centerY, color);
+            SetPixel(centerX - radius, centerY, color);
+
+            while (x < y) {
+                if (f >= 0) {
+                    y--;
+                    ddF_y += 2;
+                    f += ddF_y;
+                }
+
+                x++;
+                ddF_x += 2;
+                f += ddF_x;
+
+                SetPixel(centerX + x, centerY + y, color);
+                SetPixel(centerX - x, centerY + y, color);
+                SetPixel(centerX + x, centerY - y, color);
+                SetPixel(centerX - x, centerY - y, color);
+
+                SetPixel(centerX + y, centerY + x, color);
+                SetPixel(centerX - y, centerY + x, color);
+                SetPixel(centerX + y, centerY - x, color);
+                SetPixel(centerX - y, centerY - x, color);
+            }
+            if (AutoRefreshScreen) {
+                Refresh();
+            }
+        }
+
+        public void ClearScreen(ushort color = (ushort) Colors.Black) {
+            var filler = new byte[16];
+            var high = (byte) (color >> 8);
+            var low = (byte) color;
+            var index = 0;
+
+            filler[index++] = high;
+            filler[index++] = low;
+            filler[index++] = high;
+            filler[index++] = low;
+            filler[index++] = high;
+            filler[index++] = low;
+            filler[index++] = high;
+            filler[index++] = low;
+            filler[index++] = high;
+            filler[index++] = low;
+            filler[index++] = high;
+            filler[index++] = low;
+            filler[index++] = high;
+            filler[index++] = low;
+            filler[index++] = high;
+            filler[index++] = low;
+
+            var length = SpiBuffer.Length / filler.Length;
+
+            for (var I = 0; I < length; I += filler.Length) {
+                Array.Copy(filler, 0, SpiBuffer, I, filler.Length);
+            }
+
+            if (AutoRefreshScreen) {
+                Refresh();
+            }
+        }
+
+        private void SetPixel(int x, int y, ushort color) {
+            if ((x < 0) || (x >= Width) || (y < 0) || (y >= Height)) return;
+            var index = ((y * Width) + x) * sizeof(ushort);
+            SpiBuffer[index] = (byte) (color >> 8);
+            SpiBuffer[++index] = (byte)(color);
+        }
+
+        public bool AutoRefreshScreen { get; set; }
+
+        public void Refresh() {
             Spi.Write(SpiBuffer);
-        }
-
-        unsafe public void SetPixel(byte x, byte y, ushort color) {
-            fixed (byte* pSpiBuffer = SpiBuffer)
-            {
-                ushort* pSpiShortBuffer = (ushort*)pSpiBuffer + (((y * Width) + x) * sizeof(ushort));
-                *pSpiShortBuffer = color;
-            }
         }
 
         private const bool Data = true;
@@ -298,6 +417,10 @@ namespace netduino.helpers.Hardware {
             Spi = null;
             DataCommand = null;
             Reset = null;
+        }
+
+        private void Swap(ref int a, ref int b) {
+            var t = a; a = b; b = t;
         }
 
         public readonly byte[] SpiBuffer = new byte[Width*Height*sizeof(ushort)];
