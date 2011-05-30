@@ -23,6 +23,22 @@ namespace AdaFruitST7735Test {
 
             tft.ClearScreen();
             DisplayLines();
+
+            DisplayColorFlow();
+        }
+
+        public static void DisplayColorFlow() {
+#if NETDUINO_MINI
+            StorageDevice.MountSD("SD", SPI.SPI_module.SPI1, Pins.GPIO_PIN_13);
+#else
+            StorageDevice.MountSD("SD", SPI.SPI_module.SPI1, Pins.GPIO_PIN_D10);
+#endif
+            while (true) {
+                ReadPicture(@"SD\Pictures\ColorFlow1.bmp.24.bin", 0);
+                ReadPicture(@"SD\Pictures\ColorFlow2.bmp.24.bin", 0);
+                ReadPicture(@"SD\Pictures\ColorFlow3.bmp.24.bin", 0);
+                ReadPicture(@"SD\Pictures\ColorFlow4.bmp.24.bin", 0);
+            }
         }
 
         public static void DisplayPicture() {
@@ -39,11 +55,11 @@ namespace AdaFruitST7735Test {
             StorageDevice.Unmount("SD");
         }
 
-        public static void ReadPicture(string filename) {
+        public static void ReadPicture(string filename, int delay = 1000) {
             using (var filestream = new FileStream(filename, FileMode.Open)) {
                 filestream.Read(tft.SpiBuffer, 0, tft.SpiBuffer.Length);
                 tft.Refresh();
-                Thread.Sleep(1000);
+                Thread.Sleep(delay);
             }
         }
 
