@@ -10,65 +10,54 @@ namespace netduino.helpers.Hardware {
     /// http://www.adafruit.com/index.php?main_page=product_info&cPath=37&products_id=326
     /// The code is an adaptation of the Arduino library written by Limor Fried: https://github.com/adafruit/SSD1306
     /// </summary>
-    public class AdaFruitSSD1306 : IDisposable
-    {
+    public class AdaFruitSSD1306 : IDisposable {
         public enum Color {
-            BLACK,
-            WHITE
+            Black,
+            White
         }
 
-        public enum Dimension {
-            SSD1306_LCDWIDTH = 128,
-            SSD1306_LCDHEIGHT = 64
-        }
+        public const int Width = 128;
+        public const int Height = 64;
 
-        public enum Command
-        {
-            SSD1306_SETCONTRAST = 0x81,
-            SSD1306_DISPLAYALLON_RESUME = 0xA4,
-            SSD1306_DISPLAYALLON = 0xA5,
-            SSD1306_NORMALDISPLAY = 0xA6,
-            SSD1306_INVERTDISPLAY = 0xA7,
-            SSD1306_DISPLAYOFF = 0xAE,
-            SSD1306_DISPLAYON = 0xAF,
-            SSD1306_SETDISPLAYOFFSET = 0xD3,
-            SSD1306_SETCOMPINS = 0xDA,
-            SSD1306_SETVCOMDETECT = 0xDB,
-            SSD1306_SETDISPLAYCLOCKDIV = 0xD5,
-            SSD1306_SETPRECHARGE = 0xD9,
-            SSD1306_SETMULTIPLEX = 0xA8,
-            SSD1306_SETLOWCOLUMN = 0x00,
-            SSD1306_SETHIGHCOLUMN = 0x10,
-            SSD1306_SETSTARTLINE = 0x40,
-            SSD1306_MEMORYMODE = 0x20,
-            SSD1306_COMSCANINC = 0xC0,
-            SSD1306_COMSCANDEC = 0xC8,
-            SSD1306_SEGREMAP = 0xA0,
-            SSD1306_CHARGEPUMP = 0x8D
+        public enum Command {
+            SETCONTRAST = 0x81,
+            DISPLAYALLON_RESUME = 0xA4,
+            DISPLAYALLON = 0xA5,
+            NORMALDISPLAY = 0xA6,
+            INVERTDISPLAY = 0xA7,
+            DISPLAYOFF = 0xAE,
+            DISPLAYON = 0xAF,
+            SETDISPLAYOFFSET = 0xD3,
+            SETCOMPINS = 0xDA,
+            SETVCOMDETECT = 0xDB,
+            SETDISPLAYCLOCKDIV = 0xD5,
+            SETPRECHARGE = 0xD9,
+            SETMULTIPLEX = 0xA8,
+            SETLOWCOLUMN = 0x00,
+            SETHIGHCOLUMN = 0x10,
+            SETSTARTLINE = 0x40,
+            MEMORYMODE = 0x20,
+            COMSCANINC = 0xC0,
+            COMSCANDEC = 0xC8,
+            SEGREMAP = 0xA0,
+            CHARGEPUMP = 0x8D
         }
 
         public enum VccType {
-            SSD1306_EXTERNALVCC = 0x1,
-            SSD1306_SWITCHCAPVCC = 0x2
+            EXTERNALVCC = 0x1,
+            SWITCHCAPVCC = 0x2
         }
 
-        protected delegate void DisplayWriteMethod(byte data);
+        private const bool Data = true;
+        private const bool DisplayCommand = false;
 
-        public AdaFruitSSD1306(Cpu.Pin DATA, Cpu.Pin CLOCK, Cpu.Pin DC, Cpu.Pin RESET, Cpu.Pin CHIPSELECT) {
-            dataPin = new OutputPort(DATA, false);
-            clockPin = new OutputPort(CLOCK, false);
-            dcPin = new OutputPort(DC, false);
-            resetPin = new OutputPort(RESET, false);
-            chipSelectPin = new OutputPort(CHIPSELECT, false);
+        public AdaFruitSSD1306(Cpu.Pin dc, Cpu.Pin reset, Cpu.Pin chipSelect, SPI.SPI_module spiModule = SPI.SPI_module.SPI1, uint speedKHz = 10000) {
 
-            DisplayWrite = new DisplayWriteMethod(BitBangWrite);
-        }
+            AutoRefreshScreen = false;
 
-        public AdaFruitSSD1306(Cpu.Pin DC, Cpu.Pin RESET, Cpu.Pin CHIPSELECT, SPI.SPI_module spiModule = SPI.SPI_module.SPI1, uint speedKHz = 1000)
-        {
             var spiConfig = new SPI.Configuration(
                 SPI_mod: spiModule,
-                ChipSelect_Port: CHIPSELECT,
+                ChipSelect_Port: chipSelect,
                 ChipSelect_ActiveState: false,
                 ChipSelect_SetupTime: 0,
                 ChipSelect_HoldTime: 0,
@@ -79,12 +68,22 @@ namespace netduino.helpers.Hardware {
 
             Spi = new SPI(spiConfig);
 
-            dcPin = new OutputPort(DC, false);
-            resetPin = new OutputPort(RESET, false);
+            dcPin = new OutputPort(dc, false);
+            resetPin = new OutputPort(reset, false);
+        }
 
-            SpiBuffer = new byte[1];
+        public bool AutoRefreshScreen { get; set; }
 
-            DisplayWrite = new DisplayWriteMethod(SpiWrite);
+        public void InvertDisplay(bool cmd) {
+            dcPin.Write(DisplayCommand);
+
+            if (cmd) {
+                SendCommand(Command.INVERTDISPLAY);
+            } else {
+                SendCommand(Command.NORMALDISPLAY);
+            }
+
+            dcPin.Write(Data);
         }
 
         public void DrawBitmap(int x, int y, ref byte[] bitmap, int w, int h, Color color) {
@@ -97,6 +96,9 @@ namespace netduino.helpers.Hardware {
                     }
                 }
             }
+            if (AutoRefreshScreen) {
+                Refresh();
+            }
         }
 
         public void DrawString(int x, int line, string str) {
@@ -105,28 +107,29 @@ namespace netduino.helpers.Hardware {
 
                 x += 6; // 6 pixels wide
 
-                if (x + 6 >= (int) Dimension.SSD1306_LCDWIDTH) {
+                if (x + 6 >= Width) {
                     x = 0;    // ran out of this line
                     line++;
                 }
                 
-                if (line >= ((int)Dimension.SSD1306_LCDHEIGHT / 8))
-                {
+                if (line >= Height / 8) {
                     return;        // ran out of space :(
                 }
             }
+            if (AutoRefreshScreen) {
+                Refresh();
+            }
         }
 
-        public void DrawCharacter(int x, int line, Char c) 
-        {
+        protected void DrawCharacter(int x, int line, Char c)  {
             for (int i =0; i<5; i++ ) {
-                buffer[x + (line*128) ] = Font[(c*5)+i];
+                displayBuffer[x + (line*128) ] = Font[(c*5)+i];
                 x++;
             }
         }
 
         // bresenham's algorithm - thx wikipedia
-        void DrawLine(int x0, int y0, int x1, int y1, Color color) {
+        public void DrawLine(int x0, int y0, int x1, int y1, Color color) {
             int steep = (System.Math.Abs(y1 - y0) > System.Math.Abs(x1 - x0)) ? 1 : 0;
           
             if (steep != 0) {
@@ -168,10 +171,13 @@ namespace netduino.helpers.Hardware {
                     err += dx;
                 }
             }
+
+            if (AutoRefreshScreen) {
+                Refresh();
+            }
         }
 
         public void DrawRectangle(int x, int y, int w, int h, Color color) {
-            // stupidest version - just pixels - but fast with internal buffer!
             for (int i=x; i<x+w; i++) {
                 SetPixel(i, y, color);
                 SetPixel(i, y+h-1, color);
@@ -179,15 +185,20 @@ namespace netduino.helpers.Hardware {
             for (int i=y; i<y+h; i++) {
                 SetPixel(x, i, color);
                 SetPixel(x+w-1, i, color);
-            } 
+            }
+            if (AutoRefreshScreen) {
+                Refresh();
+            }
         }
 
-        void FillRectangle(int x, int y, int w, int h, Color color) {
-            // stupidest version - just pixels - but fast with internal buffer!
+        public void FillRectangle(int x, int y, int w, int h, Color color) {
             for (int i=x; i<x+w; i++) {
                 for (int j=y; j<y+h; j++) {
                     SetPixel(i, j, color);
                 }
+            }
+            if (AutoRefreshScreen) {
+                Refresh();
             }
         }
 
@@ -224,6 +235,9 @@ namespace netduino.helpers.Hardware {
                 SetPixel(x0 + y, y0 - x, color);
                 SetPixel(x0 - y, y0 - x, color);    
             }
+            if (AutoRefreshScreen) {
+                Refresh();
+            }
         }
 
         public void FillCircle(int x0, int y0, int r, Color color) {
@@ -258,221 +272,153 @@ namespace netduino.helpers.Hardware {
                     SetPixel(x0-y, i, color);
                 }    
             }
+            if (AutoRefreshScreen) {
+                Refresh();
+            }
         }
 
         public void SetPixel(int x, int y, Color color) {
-            if ((x >= (int)Dimension.SSD1306_LCDWIDTH) || (y >= (int)Dimension.SSD1306_LCDHEIGHT)) {
+            if ((x >= Width) || (y >= Height)) {
                 return;
             }
 
-            if (color == Color.WHITE) {
-                buffer[x + (y / 8) * 128] |= (byte) (1 << (y % 8));
+            if (color == Color.White) {
+                displayBuffer[x + (y / 8) * 128] |= (byte) (1 << (y % 8));
             }
             else {
-                buffer[x + (y / 8) * 128] &= (byte) ~(1 << (y % 8));
+                displayBuffer[x + (y / 8) * 128] &= (byte) ~(1 << (y % 8));
             }
         }
 
-        public void Select(bool select)
-        {
-            if (chipSelectPin != null) {
-                chipSelectPin.Write(!select);
+        protected void SendCommand(Command cmd) {
+            SpiBuffer[0] = (byte)cmd;
+            Spi.Write(SpiBuffer);
+        }
+
+        public void Refresh() {
+            Spi.Write(displayBuffer);
+        }
+
+        public void ClearScreen() {
+            displayBuffer[0] = 0;
+            displayBuffer[1] = 0;
+            displayBuffer[2] = 0;
+            displayBuffer[3] = 0;
+            displayBuffer[4] = 0;
+            displayBuffer[5] = 0;
+            displayBuffer[6] = 0;
+            displayBuffer[7] = 0;
+            displayBuffer[8] = 0;
+            displayBuffer[9] = 0;
+            displayBuffer[10] = 0;
+            displayBuffer[11] = 0;
+            displayBuffer[12] = 0;
+            displayBuffer[13] = 0;
+            displayBuffer[14] = 0;
+            displayBuffer[15] = 0;
+            Array.Copy(displayBuffer, 0, displayBuffer, 16, 16);
+            Array.Copy(displayBuffer, 0, displayBuffer, 32, 32);
+            Array.Copy(displayBuffer, 0, displayBuffer, 64, 64);
+            Array.Copy(displayBuffer, 0, displayBuffer, 128, 128);
+            Array.Copy(displayBuffer, 0, displayBuffer, 256, 256);
+            Array.Copy(displayBuffer, 0, displayBuffer, 512, 512);
+
+            if (AutoRefreshScreen) {
+                Refresh();
             }
         }
 
-        public void Initialize(VccType vcctype = VccType.SSD1306_SWITCHCAPVCC) {
+        public void Dispose() {
+            dcPin.Dispose();
+            resetPin.Dispose();
+            Spi.Dispose();
+
+            dcPin = null;
+            resetPin = null;
+            Spi = null;
+            SpiBuffer = null;
+            displayBuffer = null;
+        }
+
+        public void Initialize(VccType vcctype = VccType.SWITCHCAPVCC) {
             resetPin.Write(true);
             Thread.Sleep(1); // VDD (3.3V) goes high at start, lets just chill for a ms
             resetPin.Write(false); // bring reset low
             Thread.Sleep(10); // wait 10ms
             resetPin.Write(true); // bring out of reset
 
-            SendCommand(Command.SSD1306_DISPLAYOFF);  // 0xAE
-            SendCommand(Command.SSD1306_SETLOWCOLUMN | (Command) 0x0);  // low col = 0
-            SendCommand(Command.SSD1306_SETHIGHCOLUMN | (Command) 0x0);  // hi col = 0
+            dcPin.Write(DisplayCommand);
 
-            SendCommand(Command.SSD1306_SETSTARTLINE | (Command) 0x0); // line #0
+            SendCommand(Command.DISPLAYOFF);  // 0xAE
+            SendCommand(Command.SETLOWCOLUMN | (Command)0x0);  // low col = 0
+            SendCommand(Command.SETHIGHCOLUMN | (Command)0x0);  // hi col = 0
+            SendCommand(Command.SETSTARTLINE | (Command)0x0); // line #0
+            SendCommand(Command.SETCONTRAST);  // 0x81
 
-            SendCommand(Command.SSD1306_SETCONTRAST);  // 0x81
-
-            if (vcctype == VccType.SSD1306_EXTERNALVCC) {
-                SendCommand((Command) 0x9F);  // external 9V
-            }
-            else {
-                SendCommand((Command) 0xCF);  // chargepump
-            }
-
-            SendCommand((Command) 0xA1);  // setment remap 95 to 0 (?)
-
-            SendCommand(Command.SSD1306_NORMALDISPLAY); // 0xA6
-
-            SendCommand(Command.SSD1306_DISPLAYALLON_RESUME); // 0xA4
-
-            SendCommand(Command.SSD1306_SETMULTIPLEX); // 0xA8
-            SendCommand((Command) 0x3F);  // 0x3F 1/64 duty
-
-            SendCommand(Command.SSD1306_SETDISPLAYOFFSET); // 0xD3
-            SendCommand((Command) 0x0); // no offset
-
-            SendCommand(Command.SSD1306_SETDISPLAYCLOCKDIV);  // 0xD5
-            SendCommand((Command) 0x80);  // the suggested ratio 0x80
-
-            SendCommand(Command.SSD1306_SETPRECHARGE); // 0xd9
-            if (vcctype == VccType.SSD1306_EXTERNALVCC) {
-                SendCommand((Command) 0x22); // external 9V
-            }
-            else {
-                SendCommand((Command) 0xF1); // DC/DC
+            if (vcctype == VccType.EXTERNALVCC) {
+                SendCommand((Command)0x9F);  // external 9V
+            } else {
+                SendCommand((Command)0xCF);  // chargepump
             }
 
-            SendCommand(Command.SSD1306_SETCOMPINS); // 0xDA
-            SendCommand((Command) 0x12); // disable COM left/right remap
+            SendCommand((Command)0xA1);  // setment remap 95 to 0 (?)
+            SendCommand(Command.NORMALDISPLAY); // 0xA6
+            SendCommand(Command.DISPLAYALLON_RESUME); // 0xA4
+            SendCommand(Command.SETMULTIPLEX); // 0xA8
+            SendCommand((Command)0x3F);  // 0x3F 1/64 duty
+            SendCommand(Command.SETDISPLAYOFFSET); // 0xD3
+            SendCommand((Command)0x0); // no offset
+            SendCommand(Command.SETDISPLAYCLOCKDIV);  // 0xD5
+            SendCommand((Command)0x80);  // the suggested ratio 0x80
+            SendCommand(Command.SETPRECHARGE); // 0xd9
 
-            SendCommand(Command.SSD1306_SETVCOMDETECT); // 0xDB
-            SendCommand((Command) 0x40); // 0x20 is default?
+            if (vcctype == VccType.EXTERNALVCC) {
+                SendCommand((Command)0x22); // external 9V
+            } else {
+                SendCommand((Command)0xF1); // DC/DC
+            }
 
-            SendCommand(Command.SSD1306_MEMORYMODE); // 0x20
-            SendCommand((Command) 0x00); // 0x0 act like ks0108
+            SendCommand(Command.SETCOMPINS); // 0xDA
+            SendCommand((Command)0x12); // disable COM left/right remap
+
+            SendCommand(Command.SETVCOMDETECT); // 0xDB
+            SendCommand((Command)0x40); // 0x20 is default?
+
+            SendCommand(Command.MEMORYMODE); // 0x20
+            SendCommand((Command)0x00); // 0x0 act like ks0108
 
             // left to right scan
-            SendCommand(Command.SSD1306_SEGREMAP | (Command) 0x1);
+            SendCommand(Command.SEGREMAP | (Command)0x1);
 
-            SendCommand(Command.SSD1306_COMSCANDEC);
+            SendCommand(Command.COMSCANDEC);
 
-            SendCommand(Command.SSD1306_CHARGEPUMP); //0x8D
-            if (vcctype == VccType.SSD1306_EXTERNALVCC) {
-                SendCommand((Command) 0x10);  // disable
+            SendCommand(Command.CHARGEPUMP); //0x8D
+            if (vcctype == VccType.EXTERNALVCC) {
+                SendCommand((Command)0x10);  // disable
+            } else {
+                SendCommand((Command)0x14);  // disable    
             }
-            else {
-                SendCommand((Command) 0x14);  // disable    
-            }
 
-            SendCommand(Command.SSD1306_DISPLAYON);//--turn on oled panel
+            SendCommand(Command.DISPLAYON);//--turn on oled panel
+
+            // Switch to 'data' mode
+            dcPin.Write(Data);
         }
 
-        public void Invert(bool cmd) {
-            if (cmd) {
-                SendCommand(Command.SSD1306_INVERTDISPLAY);
-            }
-            else {
-                SendCommand(Command.SSD1306_NORMALDISPLAY);
-            }
-        }
-
-        public void SendCommand(Command cmd) {
-            dcPin.Write(false);
-            DisplayWrite((byte) cmd);
-        }
-
-        public void SendData(byte data) {
-            dcPin.Write(true);
-            DisplayWrite(data);
-        }
-
-        protected void BitBangWrite(byte data) {
-            byte i = 8;
-            int mask;
-
-            while (i > 0)
-            {
-                mask = (1 << i - 1);
-                clockPin.Write(false);
-                if (((int)data & mask) == 0)
-                    dataPin.Write(false);
-                else
-                    dataPin.Write(true);
-                clockPin.Write(true);
-                --i;
-            }
-        }
-
-        protected void SpiWrite(byte data) {
-            SpiBuffer[0] = data;
-            Spi.Write(SpiBuffer);
-        }
-
-        public void Display() {
-          SendCommand(Command.SSD1306_SETLOWCOLUMN | (Command) 0x0);  // low col = 0
-          SendCommand(Command.SSD1306_SETHIGHCOLUMN | (Command) 0x0);  // hi col = 0
-          SendCommand(Command.SSD1306_SETSTARTLINE | (Command) 0x0); // line #0
-
-          foreach (byte b in buffer) {
-              SendData(b);
-          }
-        }
-
-        public void Clear() {
-            for (int I = 0; I < buffer.Length; I++) {
-                buffer[I] = 0;
-            }
-        }
-
-        private void Swap(ref int a, ref int b) {
+        protected void Swap(ref int a, ref int b) {
             var t = a; a = b; b = t;
-        }
-
-        public void Dispose()
-        {
-            if (dcPin != null)
-            {
-                dcPin.Dispose();
-            }
-
-            if (resetPin != null)
-            {
-                resetPin.Dispose();
-            }
-
-            if (clockPin != null)
-            {
-                clockPin.Dispose();
-            }
-
-            if (dataPin != null)
-            {
-                dataPin.Dispose();
-            }
-
-            if (chipSelectPin != null)
-            {
-                chipSelectPin.Dispose();
-            }
-
-            if (Spi != null)
-            {
-                Spi.Dispose();
-            }
-
-            dcPin = null;
-            resetPin = null;
-            clockPin = null;
-            dataPin = null;
-            chipSelectPin = null;
-
-            Spi = null;
-            SpiBuffer = null;
-            DisplayWrite = null;
-
-            buffer = null;
-            Font = null;
         }
 
         protected OutputPort dcPin;
         protected OutputPort resetPin;
-        protected OutputPort clockPin;
-        protected OutputPort dataPin;
-        protected OutputPort chipSelectPin;
 
         protected SPI Spi;
-        protected byte[] SpiBuffer;
+        protected byte[] SpiBuffer = new byte[1];
 
-        protected DisplayWriteMethod DisplayWrite;
+        public const int bufferSize = 1024;
+        public byte[] displayBuffer = new byte[bufferSize];
 
-        public const int SSD1306_BUFFER_SIZE = 1024;
-
-        protected byte[] buffer = new byte[SSD1306_BUFFER_SIZE];
-
-        protected static byte[] Font = new byte[] {
+        public static readonly byte[] Font = new byte[] {
             0x00, 0x00, 0x00, 0x00, 0x00,   
 	        0x3E, 0x5B, 0x4F, 0x5B, 0x3E, 	
 	        0x3E, 0x6B, 0x4F, 0x6B, 0x3E, 	

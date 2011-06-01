@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Threading;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
@@ -6,47 +7,195 @@ using SecretLabs.NETMF.Hardware;
 using SecretLabs.NETMF.Hardware.Netduino;
 using netduino.helpers.Hardware;
 
-namespace AdaFruitOLED
-{
-    public class Program
-    {
-        public static void Main()
-        {
-            var oled = new AdaFruitSSD1306(
-                CHIPSELECT: Pins.GPIO_PIN_D10,
-                RESET: Pins.GPIO_PIN_D9,
-                DC: Pins.GPIO_PIN_D8,
-                CLOCK: Pins.GPIO_PIN_D13,
-                DATA: Pins.GPIO_PIN_D11);
-            
-            oled.Select(true);
-            
+namespace AdaFruitOLED {
+    public class CropCircleLocation {
+        public int x { get; set; }
+        public int y { get; set; }
+        private int _speedX;
+        private int _speedY;
+        private int _direction;
+        public CropCircleLocation(Random rand, int maxX, int maxY) {
+            x = rand.Next(maxX);
+            y = rand.Next(maxY);
+            _speedX = rand.Next(5) + 1;
+            _speedY = rand.Next(5) + 1;
+            _direction = rand.Next(2);
+            if (_direction == 0) {
+                _direction = -1;
+            }
+        }
+
+        public void Move(int maxX, int maxY) {
+            x += (_speedX * _direction);
+            if (x < 0) {
+                x = maxX - 1;
+            } else if (x > maxX) {
+                x = 0;
+            }
+
+            y += (_speedY * _direction);
+            if (y < 0) {
+                y = maxY - 1;
+            } else if (y >= maxY) {
+                y = 0;
+            }
+        }
+    }
+
+    public class Program {
+        public static AdaFruitSSD1306 oled = new AdaFruitSSD1306(
+            chipSelect: Pins.GPIO_PIN_D10,
+            reset: Pins.GPIO_PIN_D9,
+            dc: Pins.GPIO_PIN_D8,
+            speedKHz: 40000);
+
+        public static void Main() {                        
             oled.Initialize();
 
             while (true) {
-                oled.Clear();
-                oled.DrawBitmap(0, 0, ref netduino, 128, 64, AdaFruitSSD1306.Color.WHITE);
-
-                oled.Display();
-                oled.Clear();
-
-                int line = 1;
-
-                oled.DrawString(0, line++, "######################");
-                oled.DrawString(0, line++, "   Ada Fruit OLED");
-                oled.DrawString(0, line++, "  SSD1306 Display");
-                oled.DrawString(0, line++, " & netduino helpers");
-                oled.DrawString(0, line++, "   by Fabien Royer");
-                oled.DrawString(0, line++, " http://codeplex.com");
-                oled.DrawString(0, line++, "######################");
-
-                oled.Display();
+                DisplayNetduinoBitmap();
+                BlinkTest();
+                DisplayText();
+                DisplayLines();
+                DisplayCircles();
+                DisplaySquares();
+                DisplaySpaceInvaders();
             }
-            
-            //oled.Select(false);
         }
 
-        protected static byte[] netduino = new byte[AdaFruitSSD1306.SSD1306_BUFFER_SIZE] {
+        public static void DisplaySpaceInvaders() {
+            var random = new Random((int)DateTime.Now.Ticks);
+            var cropCircles = new ArrayList();
+            var maxSpaceInvaders = 5;
+            for (var count = 0; count < maxSpaceInvaders; count++) {
+                cropCircles.Add(new CropCircleLocation(random, AdaFruitSSD1306.Width, AdaFruitSSD1306.Height));
+            }
+
+            while (true) {
+                oled.ClearScreen(); 
+                foreach (CropCircleLocation loc in cropCircles) {
+                    loc.Move(AdaFruitSSD1306.Width, AdaFruitSSD1306.Height);
+                    oled.DrawBitmap(loc.x, loc.y, ref spaceInvader, 16, 16, AdaFruitSSD1306.Color.White);
+                }
+                oled.Refresh();
+            }
+        }
+
+        public static void DisplaySquares() {
+            var y = AdaFruitSSD1306.Height / 2;
+            for (var I = 0; I < 2; I++) {
+                var dimension = 1;
+                for (; dimension < 32; dimension++) {
+                    oled.ClearScreen();
+                    var x = 32;
+                    oled.DrawRectangle(x - (dimension / 2), y - (dimension / 2), dimension, dimension, AdaFruitSSD1306.Color.White);
+                    x += 32;
+                    oled.DrawRectangle(x - (dimension / 2), y - (dimension / 2), dimension, dimension, AdaFruitSSD1306.Color.White);
+                    x += 32;
+                    oled.DrawRectangle(x - (dimension / 2), y - (dimension / 2), dimension, dimension, AdaFruitSSD1306.Color.White);
+                    oled.Refresh();
+                }
+                for (; dimension > 0; dimension--) {
+                    oled.ClearScreen();
+                    var x = 32;
+                    oled.DrawRectangle(x - (dimension / 2), y - (dimension / 2), dimension, dimension, AdaFruitSSD1306.Color.White);
+                    x += 32;
+                    oled.DrawRectangle(x - (dimension / 2), y - (dimension / 2), dimension, dimension, AdaFruitSSD1306.Color.White);
+                    x += 32;
+                    oled.DrawRectangle(x - (dimension / 2), y - (dimension / 2), dimension, dimension, AdaFruitSSD1306.Color.White);
+                    oled.Refresh();
+                }
+            }
+        }
+
+        public static void DisplayCircles() {
+            var y = AdaFruitSSD1306.Height / 2;
+            var x = 0;
+            var r = 1;
+            for (var I = 0; I < 2; I++) {
+                for (; r < 31; r++) {
+                    oled.ClearScreen();
+                    oled.DrawCircle(x + 32, y, r, AdaFruitSSD1306.Color.White);
+                    oled.DrawCircle(x + 64, y, r, AdaFruitSSD1306.Color.White);
+                    oled.DrawCircle(x + 96, y, r, AdaFruitSSD1306.Color.White);
+                    oled.Refresh();
+                }
+                for (; r > 0; r--) {
+                    oled.ClearScreen();
+                    oled.DrawCircle(x + 32, y, r, AdaFruitSSD1306.Color.White);
+                    oled.DrawCircle(x + 64, y, r, AdaFruitSSD1306.Color.White);
+                    oled.DrawCircle(x + 96, y, r, AdaFruitSSD1306.Color.White);
+                    oled.Refresh();
+                }
+            }
+        }
+
+        public static void DisplayLines() {
+            oled.AutoRefreshScreen = true;
+            var x1 = 0;
+            for (; x1 < AdaFruitSSD1306.Width; x1++) {
+                oled.DrawLine(0, AdaFruitSSD1306.Height - 1, x1, 0, AdaFruitSSD1306.Color.White);
+            }
+            for (; x1 > 0; x1--) {
+                oled.DrawLine(AdaFruitSSD1306.Width - 1, 0, x1, AdaFruitSSD1306.Height - 1, AdaFruitSSD1306.Color.White);
+            }
+            oled.AutoRefreshScreen = false;
+            Thread.Sleep(1000);
+        }
+
+        public static void DisplayText() {
+            oled.ClearScreen();
+
+            int line = 1;
+
+            oled.DrawString(0, line++, "######################");
+            oled.DrawString(0, line++, "   Ada Fruit OLED");
+            oled.DrawString(0, line++, "  SSD1306 Display");
+            oled.DrawString(0, line++, " & netduino helpers");
+            oled.DrawString(0, line++, "   by Fabien Royer");
+            oled.DrawString(0, line++, " http://codeplex.com");
+            oled.DrawString(0, line++, "######################");
+            oled.Refresh();
+
+            Thread.Sleep(1000);
+        }
+
+        public static void BlinkTest() {
+            for (var I = 0; I < 6; I++) {
+                oled.InvertDisplay(true);
+                Thread.Sleep(100);
+                oled.InvertDisplay(false);
+                Thread.Sleep(100);
+            }
+        }
+
+        public static void DisplayNetduinoBitmap() {
+            oled.ClearScreen();
+            oled.DrawBitmap(0, 0, ref netduino, 128, 64, AdaFruitSSD1306.Color.White);
+            oled.Refresh();
+            Thread.Sleep(1000);
+        }
+
+        public static byte[] spaceInvader = new byte[32] {
+                0xFF,0xFF,
+                0xFF,0xFF,
+                0xFF,0xFF,
+                0xFF,0xFF,
+                0xFF,0xFF,
+                0xFF,0xFF,
+                0xFF,0xFF,
+                0xFF,0xFF,
+                0xFF,0xFF,
+                0xFF,0xFF,
+                0xFF,0xFF,
+                0xFF,0xFF,
+                0xFF,0xFF,
+                0xFF,0xFF,
+                0xFF,0xFF,
+                0xFF,0xFF
+        };
+
+        public static byte[] netduino = new byte[AdaFruitSSD1306.bufferSize] {
                 0x00, 0x00, 0x00, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8, 0xF8,
                 0xF8, 0xF8, 0xF8, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
                 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
