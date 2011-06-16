@@ -20,7 +20,6 @@ using SecretLabs.NETMF.Hardware.Netduino;
 
 namespace ConsoleBootLoader {
     public class Program {
-
 #if NETDUINO_MINI
         // Use this document to see the pin map of the mini: http://www.netduino.com/netduinomini/schematic.pdf
         public static AnalogJoystick JoystickLeft = new AnalogJoystick(Pins.GPIO_PIN_5, Pins.GPIO_PIN_6, minRange: 1023, maxRange: 0, centerDeadZoneRadius: 20);
@@ -55,10 +54,6 @@ namespace ConsoleBootLoader {
                 args[index++] = ResourceLoader;
                 args[index++] = ButtonLeft;
                 args[index] = ButtonRight;
-
-                // This small delay ensures that the netduino has the time to settle down upon powering up.
-                // Upon power-up the pins of the netduino turn to high for a moment, which interferes with setting up the matrix.
-                Thread.Sleep(1500);
 
                 Matrix.Shutdown(Max72197221.ShutdownRegister.NormalOperation);
                 Matrix.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);
@@ -99,8 +94,10 @@ namespace ConsoleBootLoader {
             ArrayList iconFiles = new ArrayList();
             foreach (string folder in folders) {
                 var game = folder.Substring(folder.LastIndexOf(@"\"));
-                var iconFile = folder + game + @".bmp.bin";
-                iconFiles.Add(iconFile);
+                if (CartridgeFileExists(folder + @"\cartridge.txt")) {
+                    var iconFile = folder + game + @".bmp.bin";
+                    iconFiles.Add(iconFile);
+                }
             }
 
             var current = 0;
@@ -135,6 +132,16 @@ namespace ConsoleBootLoader {
             ButtonLeft.Input.EnableInterrupt();
 
             return folders[current];
+        }
+
+        private static bool CartridgeFileExists(string cartridgeFilePath) {
+            try {
+                using (var cartridgefile = new FileStream(cartridgeFilePath, FileMode.Open, FileAccess.Read, FileShare.None)) {
+                    return true;
+                }
+            } catch (IOException e) {
+                return false;
+            }
         }
 
         private static void DisplayIcon(string iconFilePath, byte[] matrixFrame, byte[] defaultIcon) {
