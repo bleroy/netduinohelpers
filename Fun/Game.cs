@@ -11,6 +11,7 @@ namespace netduino.helpers.Fun {
         public int DisplayDelay { get; set; }
         public Random Random { get { return _random; } }
         public ConsoleHardwareConfig Hardware { get; private set; }
+        public bool IsSpinning { get; set; }
 
         public abstract void Loop();
 
@@ -25,17 +26,17 @@ namespace netduino.helpers.Fun {
 
         public Thread Run() {
             _thread = new Thread(LoopOverLoop);
+            IsSpinning = true;
             _thread.Start();
             return _thread;
         }
 
         public void Stop() {
-            _thread.Abort();
-            _thread = null;
+            IsSpinning = false;
         }
 
         private void LoopOverLoop() {
-            while (true) {
+            while (IsSpinning) {
                 Loop();
                 Thread.Sleep(DisplayDelay);
             }

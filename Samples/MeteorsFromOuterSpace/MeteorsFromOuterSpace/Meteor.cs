@@ -19,25 +19,19 @@ namespace Meteors {
         private readonly Random _rnd;
 
         public bool IsExploded { get; set; }
+        public int Index { get; private set; }
+        public GameOfMeteors Owner { get; private set; }
 
-        public Meteor(GameOfMeteors game, int index, int x, int y) {
+        public Meteor(GameOfMeteors game, int index) {
             _rnd = new Random();
-            var speed = GetRandomSpeed();
-            var j = 0;
-            var skip = _rnd.Next(4);
-            for (var i = 0; i < 4; i++) {
-                if (i == skip) continue;
-                _rockXOffsets[j] = _rockOffsets[i*2];
-                _rockYOffsets[j] = _rockOffsets[i*2 + 1];
-                _rocks[j] = new PlayerMissile {
-                                                  Name = "Meteor" + index + ":" + j,
-                                                  X = x + _rockXOffsets[j],
-                                                  Y = y + _rockYOffsets[j],
-                                                  HorizontalSpeed = speed.X,
-                                                  VerticalSpeed = speed.Y,
+            Owner = game;
+            Index = index;
+            for (var i = 0; i < 3; i++) {
+                _rocks[i] = new PlayerMissile {
+                                                  Name = "Meteor" + index + ":" + i,
+                                                  IsVisible = false,
                                                   Owner = game.World
                                               };
-                j++;
             }
         }
 
@@ -73,6 +67,28 @@ namespace Meteors {
             _rocks[2].HorizontalSpeed = speed.X;
             _rocks[2].VerticalSpeed = speed.Y;
             IsExploded = true;
+        }
+
+        public void Respawn(int x, int y) {
+            var speed = GetRandomSpeed();
+            var j = 0;
+            var skip = _rnd.Next(4);
+            for (var i = 0; i < 4; i++) {
+                if (i == skip) continue;
+                _rockXOffsets[j] = _rockOffsets[i * 2];
+                _rockYOffsets[j] = _rockOffsets[i * 2 + 1];
+                _rocks[j] = new PlayerMissile {
+                    Name = "Meteor" + Index + ":" + j,
+                    X = x + _rockXOffsets[j],
+                    Y = y + _rockYOffsets[j],
+                    HorizontalSpeed = speed.X,
+                    VerticalSpeed = speed.Y,
+                    Owner = Owner.World,
+                    IsVisible = true
+                };
+                j++;
+            }
+            IsExploded = false;
         }
     }
 }

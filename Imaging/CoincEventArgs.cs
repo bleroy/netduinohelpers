@@ -9,5 +9,6 @@ namespace netduino.helpers.Imaging {
 
         public PlayerMissile Missile1 { get; private set; }
         public PlayerMissile Missile2 { get; private set; }
+        public bool CancelCollisionDetection { get; set; }
     }
 }

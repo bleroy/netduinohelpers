@@ -6,13 +6,16 @@ using netduino.helpers.Imaging;
 namespace Meteors {
     public class GameOfMeteors : Game {
         public const int WorldSize = 8;
-        public const int NumberOfMeteors = 1;
+        public const int StartingNumberOfMeteors = 1;
+        public const int WinningNumberOfMeteors = 8;
         private const float EnginePower = 0.3f;
         private const float PruneauSpeed = 1f;
 
         public Meteor[] Meteors { get; private set; }
         public PlayerMissile Pruneau { get; private set; }
         public PlayerMissile Ship { get; private set; }
+        public int NumberOfMeteors { get; private set; }
+        public int RemainingRocks { get; private set; }
 
         public GameOfMeteors(ConsoleHardwareConfig config)
             : base(config) {
@@ -26,37 +29,70 @@ namespace Meteors {
                 Owner = World,
                 IsVisible = false
             };
-            Meteors = new Meteor[NumberOfMeteors];
-            for (var i = 0; i < NumberOfMeteors; i++) {
-                Meteors[i] = new Meteor(this, i,
-                    new[] {0, WorldSize - 2, 0, WorldSize - 2} [i],
-                    new[] {0, 0, WorldSize - 2, WorldSize - 2} [i]);
+            Meteors = new Meteor[WinningNumberOfMeteors];
+            for (var i = 0; i < Meteors.Length; i++) {
+                Meteors[i] = new Meteor(this, i);
             }
+            NumberOfMeteors = StartingNumberOfMeteors;
+            SpawnMeteors();
             DisplayDelay = 0;
+        }
+
+        private void SpawnMeteors() {
+            for (int i = 0; i < NumberOfMeteors; i++) {
+                Meteors[i].Respawn(new[] {0, WorldSize - 2, 0, WorldSize - 2}[i%4],
+                                   new[] {0, 0, WorldSize - 2, WorldSize - 2}[i%4]);
+            }
+            RemainingRocks = NumberOfMeteors*2;
         }
 
         void WorldCoinc(object sender, CoincEventArgs e) {
             if (e.Missile1 == Pruneau || e.Missile2 == Pruneau) {
                 // Explode rock or meteor
                 var rock = e.Missile1 == Pruneau ? e.Missile2 : e.Missile1;
+                var meteor = GetOwner(rock);
                 // Does this rock belong to a meteor?
-                foreach (var meteor in Meteors) {
-                    if (meteor.Has(rock)) {
-                        if (meteor.IsExploded) {
-                            rock.IsVisible = false;
+                if (meteor != null) {
+                    if (meteor.IsExploded) {
+                        rock.IsVisible = false;
+                        RemainingRocks--;
+                        if (RemainingRocks == 0) {
+                            Hardware.Matrix.Display(SmallChars.ToBitmap(0, NumberOfMeteors));
+                            Thread.Sleep(1000);
+                            NumberOfMeteors++;
+                            if (NumberOfMeteors >= WinningNumberOfMeteors) {
+                                Stop();
+                            }
+                            else {
+                                SpawnMeteors();
+                                e.CancelCollisionDetection = true;
+                            }
                         }
-                        else {
-                            meteor.Explode();
-                            MakeExplosionSound();
-                        }
-                        Pruneau.IsVisible = false;
-                        return;
                     }
+                    else {
+                        meteor.Explode();
+                        MakeExplosionSound();
+                    }
+                    Pruneau.IsVisible = false;
+                    return;
                 }
             }
-            if (e.Missile1 == Ship || e.Missile2 == Ship) {
-                // You lose
+            else if (e.Missile1 == Ship || e.Missile2 == Ship) {
+                MakeExplosionSound();
+                var gameOverBitmap = new CharSet().StringToBitmap("Game Over");
+                for (var i = -8; i < gameOverBitmap.Width; i++) {
+                    Hardware.Matrix.Display(gameOverBitmap.GetFrame(i, 0));
+                    Thread.Sleep(80);
+                }
+                Stop();
             }
+        }
+
+        private Meteor GetOwner(PlayerMissile rock) {
+            foreach (var meteor in Meteors) {
+                if (meteor.Has(rock)) return meteor;
+            }
+            return null;
         }
 
         public void MakeExplosionSound() {

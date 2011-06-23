@@ -70,6 +70,9 @@ namespace netduino.helpers.Imaging {
             if (_frameCache != null && offsetX == _frameCacheX && offsetY == _frameCacheY) {
                 return _frameCache;
             }
+
+            CheckForCollisions();
+
             _frameCache = Background.GetFrame(offsetX, offsetY);
             _frameCacheX = offsetX;
             _frameCacheY = offsetY;
@@ -81,8 +84,6 @@ namespace netduino.helpers.Imaging {
                 if (relY < 0 || relX < 0 || relX >= Bitmap.FrameSize || relY >= Bitmap.FrameSize) continue;
                 _frameCache[relY] |= Bitmap.ShiftMasks[relX];
             }
-
-            CheckForCollisions();
             
             return _frameCache;
         }
@@ -95,7 +96,9 @@ namespace netduino.helpers.Imaging {
                     var missile2 = (PlayerMissile)_missiles[j];
                     if (!missile2.IsVisible) continue;
                     if (missile1.X == missile2.X && missile1.Y == missile2.Y) {
-                        OnCoinc(new CoincEventArgs(missile1, missile2));
+                        var args = new CoincEventArgs(missile1, missile2);
+                        OnCoinc(args);
+                        if (args.CancelCollisionDetection) return;
                     }
                 }
             }
