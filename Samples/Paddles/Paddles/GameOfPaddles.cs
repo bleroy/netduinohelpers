@@ -30,13 +30,6 @@ namespace Paddles {
         public Paddle RightPaddle { get; private set; }
 
         public GameOfPaddles(ConsoleHardwareConfig config) : base(config) {
-            Hardware.LeftButton.Input.DisableInterrupt();
-            Hardware.RightButton.Input.DisableInterrupt();
-            Hardware.LeftButton.Input.OnInterrupt += OnLeftButtonClick;
-            Hardware.RightButton.Input.OnInterrupt += OnRightButtonClick;
-            Hardware.LeftButton.Input.EnableInterrupt();
-            Hardware.RightButton.Input.EnableInterrupt();
-
             DisplaySplashScreen();
 
             World = new Composition(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 }, ScreenSize, ScreenSize);
@@ -102,12 +95,12 @@ namespace Paddles {
             if (Ball.Y < 0) {
                 Ball.Y = 1;
                 _ballGoingDown = true;
-                Beep(BeepFrequency);
+                Beep(BeepFrequency, 50);
             }
             if (Ball.Y >= 8) {
                 Ball.Y = 7;
                 _ballGoingDown = false;
-                Beep(BeepFrequency);
+                Beep(BeepFrequency, 50);
             }
             Hardware.Matrix.Display(World.GetFrame(0, 0));
         }
@@ -133,11 +126,11 @@ namespace Paddles {
             }
         }
 
-        private void OnLeftButtonClick(UInt32 port, UInt32 state, DateTime time) {
+        protected override void OnLeftButtonClick(UInt32 port, UInt32 state, DateTime time) {
             _leftButtonClicked = true;
         }
 
-        private void OnRightButtonClick(UInt32 port, UInt32 state, DateTime time) {
+        protected override void OnRightButtonClick(UInt32 port, UInt32 state, DateTime time) {
             _rightButtonClicked = true;
         }
 
@@ -146,14 +139,7 @@ namespace Paddles {
             Ball.X = BallGoingRight ? 0 : 7;
             Ball.Y = Random.Next(8);
             _ballGoingDown = Random.Next(2) == 0;
-            Beep(BoopFrequency);
-        }
-
-        public void Beep(uint frequency) {
-            var period = 1000000 / frequency; 
-            Hardware.Speaker.SetPulse(period, period / 2);
-            Thread.Sleep(50);
-            Hardware.Speaker.SetPulse(0, 0);
+            Beep(BoopFrequency, 50);
         }
     }
 }

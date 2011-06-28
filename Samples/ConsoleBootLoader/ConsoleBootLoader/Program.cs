@@ -45,39 +45,39 @@ namespace ConsoleBootLoader {
 
         public static void Main() {
             try {
-                int index = 0;
-                args[index++] = CartridgeVersionInfo.CurrentVersion;
-                args[index++] = JoystickLeft;
-                args[index++] = JoystickRight;
-                args[index++] = Matrix;
-                args[index++] = Speaker;
-                args[index++] = ResourceLoader;
-                args[index++] = ButtonLeft;
-                args[index] = ButtonRight;
+                while (true) {
+                    int index = 0;
+                    args[index++] = CartridgeVersionInfo.CurrentVersion;
+                    args[index++] = JoystickLeft;
+                    args[index++] = JoystickRight;
+                    args[index++] = Matrix;
+                    args[index++] = Speaker;
+                    args[index++] = ResourceLoader;
+                    args[index++] = ButtonLeft;
+                    args[index] = ButtonRight;
 
-                Matrix.Shutdown(Max72197221.ShutdownRegister.NormalOperation);
-                Matrix.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);
-                Matrix.SetDigitScanLimit(7);
-                Matrix.SetIntensity(7);
+                    Matrix.Shutdown(Max72197221.ShutdownRegister.NormalOperation);
+                    Matrix.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);
+                    Matrix.SetDigitScanLimit(7);
+                    Matrix.SetIntensity(7);
 
-                Matrix.Display(new byte[] { 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55 });
-
+                    Matrix.Display(new byte[] { 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55 });
 #if NETDUINO_MINI
-                StorageDevice.MountSD(SDMountPoint, SPI.SPI_module.SPI1, Pins.GPIO_PIN_13);
+                    StorageDevice.MountSD(SDMountPoint, SPI.SPI_module.SPI1, Pins.GPIO_PIN_13);
 #else
-                StorageDevice.MountSD(SDMountPoint, SPI.SPI_module.SPI1, Pins.GPIO_PIN_D10);
+                    StorageDevice.MountSD(SDMountPoint, SPI.SPI_module.SPI1, Pins.GPIO_PIN_D10);
 #endif
-
-                ResourceLoader.Path = SelectCartridge();
-                ResourceLoader.Load(resourceManifest: "cartridge.txt", args: new object[] { args });
+                    ResourceLoader.Path = SelectCartridge();
+                    ResourceLoader.Load(resourceManifest: "cartridge.txt", args: new object[] { args });
+                    ResourceLoader.Dispose();
 
 #if NETDUINO_MINI || NETDUINO
-                StorageDevice.Unmount(SDMountPoint);
+                    StorageDevice.Unmount(SDMountPoint);
 #endif
+                    Debug.GC(true);
 
-                Matrix.Display(new byte[] { 0x7e, 0x42, 0x42, 0x42, 0x42, 0x42, 0x22, 0x1e });
-                Wait();
-
+                    ResourceLoader = new SDResourceLoader();
+                }
             } catch (IOException) {
                 Matrix.Display(new byte[] { 0x81, 0x42, 0x3c, 0x5a, 0x7e, 0x24, 0x5a, 0x81 });
                 Wait();
@@ -91,10 +91,13 @@ namespace ConsoleBootLoader {
             ButtonLeft.Input.EnableInterrupt();
 
             var folders = ResourceLoader.GetFolderList(SDMountPoint);
+            var foldersWithGames = new string[folders.Length];
+            var count = 0;
             ArrayList iconFiles = new ArrayList();
             foreach (string folder in folders) {
                 var game = folder.Substring(folder.LastIndexOf(@"\"));
-                if (CartridgeFileExists(folder + @"\cartridge.txt")) {
+                if (File.Exists(folder + @"\cartridge.txt")) {
+                    foldersWithGames[count++] = folder;
                     var iconFile = folder + game + @".bmp.bin";
                     iconFiles.Add(iconFile);
                 }
@@ -106,6 +109,8 @@ namespace ConsoleBootLoader {
             var questionMarkIcon = new byte[] { 0x1c, 0x22, 0x22, 0x04, 0x08, 0x08, 0x00, 0x08 };
 
             DisplayIcon((string)iconFiles[current], matrixFrame, questionMarkIcon);
+
+            _leftButtonClicked = false;
 
             while (!_leftButtonClicked) {
                 switch(JoystickLeft.YDirection) {
@@ -131,17 +136,7 @@ namespace ConsoleBootLoader {
             ButtonLeft.Input.OnInterrupt -= OnLeftButtonClick;
             ButtonLeft.Input.EnableInterrupt();
 
-            return folders[current];
-        }
-
-        private static bool CartridgeFileExists(string cartridgeFilePath) {
-            try {
-                using (var cartridgefile = new FileStream(cartridgeFilePath, FileMode.Open, FileAccess.Read, FileShare.None)) {
-                    return true;
-                }
-            } catch (IOException e) {
-                return false;
-            }
+            return foldersWithGames[current];
         }
 
         private static void DisplayIcon(string iconFilePath, byte[] matrixFrame, byte[] defaultIcon) {

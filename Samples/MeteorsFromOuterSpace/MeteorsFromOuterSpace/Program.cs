@@ -1,4 +1,4 @@
-﻿#define dev
+﻿//#define dev
 #define NETDUINO_MINI
 
 using Microsoft.SPOT.Hardware;

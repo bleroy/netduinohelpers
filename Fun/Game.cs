@@ -17,7 +17,21 @@ namespace netduino.helpers.Fun {
 
         protected Game(ConsoleHardwareConfig hardwareConfig) {
             Hardware = hardwareConfig;
+
+            Hardware.LeftButton.Input.DisableInterrupt();
+            Hardware.RightButton.Input.DisableInterrupt();
+            Hardware.LeftButton.Input.OnInterrupt += OnLeftButtonClick;
+            Hardware.RightButton.Input.OnInterrupt += OnRightButtonClick;
+            Hardware.LeftButton.Input.EnableInterrupt();
+            Hardware.RightButton.Input.EnableInterrupt(); 
+            
             DisplayDelay = 80;
+        }
+
+        protected virtual void OnLeftButtonClick(UInt32 port, UInt32 state, DateTime time) {
+        }
+
+        protected virtual void OnRightButtonClick(UInt32 port, UInt32 state, DateTime time) {
         }
 
         public virtual void Dispose() {
@@ -33,6 +47,13 @@ namespace netduino.helpers.Fun {
 
         public void Stop() {
             IsSpinning = false;
+        }
+
+        public void Beep(uint frequency, int delayMS) {
+            var period = 1000000 / frequency;
+            Hardware.Speaker.SetPulse(period, period / 2);
+            Thread.Sleep(delayMS);
+            Hardware.Speaker.SetPulse(0, 0);
         }
 
         private void LoopOverLoop() {

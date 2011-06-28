@@ -17,6 +17,9 @@ namespace Meteors {
         public int NumberOfMeteors { get; private set; }
         public int RemainingRocks { get; private set; }
 
+        private bool _LeftButtonPressed = false;
+        private bool _RightButtonPressed = false;
+
         public GameOfMeteors(ConsoleHardwareConfig config)
             : base(config) {
             World = new Composition(new byte[WorldSize * WorldSize / 8], WorldSize, WorldSize);
@@ -79,13 +82,40 @@ namespace Meteors {
             }
             else if (e.Missile1 == Ship || e.Missile2 == Ship) {
                 MakeExplosionSound();
-                var gameOverBitmap = new CharSet().StringToBitmap("Game Over");
-                for (var i = -8; i < gameOverBitmap.Width; i++) {
-                    Hardware.Matrix.Display(gameOverBitmap.GetFrame(i, 0));
-                    Thread.Sleep(80);
+                var gameOverBitmap = new CharSet().StringToBitmap(" Game Over!");
+
+                _LeftButtonPressed = false;
+                _RightButtonPressed = false;
+                
+                var x = 0;
+
+                while (!_LeftButtonPressed && !_RightButtonPressed) {
+                    for (; x < gameOverBitmap.Width; x++) {
+                        Hardware.Matrix.Display(gameOverBitmap.GetFrame(x, 0));
+                        Thread.Sleep(80);
+                        if (_LeftButtonPressed || _RightButtonPressed) {
+                            break;
+                        }
+                    }
+                    for (; x > 0; x--) {
+                        Hardware.Matrix.Display(gameOverBitmap.GetFrame(x, 0));
+                        Thread.Sleep(80);
+                        if (_LeftButtonPressed || _RightButtonPressed) {
+                            break;
+                        }
+                    }
                 }
+
                 Stop();
             }
+        }
+
+        protected override void OnLeftButtonClick(uint port, uint state, System.DateTime time) {
+            _LeftButtonPressed = true;
+        }
+
+        protected override void OnRightButtonClick(uint port, uint state, System.DateTime time) {
+            _RightButtonPressed = true;
         }
 
         private Meteor GetOwner(PlayerMissile rock) {
@@ -96,9 +126,8 @@ namespace Meteors {
         }
 
         public void MakeExplosionSound() {
-            for (uint frequency = 6000; frequency < 1000; frequency -= 500) {
-                Beep(frequency, 20);
-            }
+            Beep(3000, 10);
+            Beep(1000, 10);
         }
 
         public override void Loop() {
@@ -151,13 +180,6 @@ namespace Meteors {
             if (missile.ExactY < 0) missile.ExactY += WorldSize;
             if (missile.ExactX >= WorldSize) missile.ExactX -= WorldSize;
             if (missile.ExactY >= WorldSize) missile.ExactY -= WorldSize;
-        }
-
-        public void Beep(uint frequency, int delayms) {
-            var period = 1000000 / frequency;
-            Hardware.Speaker.SetPulse(period, period / 2);
-            Thread.Sleep(delayms);
-            Hardware.Speaker.SetPulse(0, 0);
         }
     }
 }
