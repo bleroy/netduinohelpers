@@ -16,6 +16,7 @@ namespace netduino.helpers.Imaging {
             Owner = owner;
         }
 
+        public bool IsEnemy { get; set; }
         public bool IsVisible { get; set; }
         public string Name { get; set; }
 

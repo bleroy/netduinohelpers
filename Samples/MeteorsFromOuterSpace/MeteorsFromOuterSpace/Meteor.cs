@@ -30,7 +30,8 @@ namespace Meteors {
                 _rocks[i] = new PlayerMissile {
                                                   Name = "Meteor" + index + ":" + i,
                                                   IsVisible = false,
-                                                  Owner = game.World
+                                                  Owner = game.World,
+                                                  IsEnemy = true
                                               };
             }
         }
@@ -77,15 +78,11 @@ namespace Meteors {
                 if (i == skip) continue;
                 _rockXOffsets[j] = _rockOffsets[i * 2];
                 _rockYOffsets[j] = _rockOffsets[i * 2 + 1];
-                _rocks[j] = new PlayerMissile {
-                    Name = "Meteor" + Index + ":" + j,
-                    X = x + _rockXOffsets[j],
-                    Y = y + _rockYOffsets[j],
-                    HorizontalSpeed = speed.X,
-                    VerticalSpeed = speed.Y,
-                    Owner = Owner.World,
-                    IsVisible = true
-                };
+                _rocks[j].X = x + _rockXOffsets[j];
+                _rocks[j].Y = y + _rockYOffsets[j];
+                _rocks[j].HorizontalSpeed = speed.X;
+                _rocks[j].VerticalSpeed = speed.Y;
+                _rocks[j].IsVisible = true;
                 j++;
             }
             IsExploded = false;

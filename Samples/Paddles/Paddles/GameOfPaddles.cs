@@ -33,7 +33,13 @@ namespace Paddles {
             DisplaySplashScreen();
 
             World = new Composition(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 }, ScreenSize, ScreenSize);
-            Ball = new PlayerMissile("ball", 0, 0, World);
+            Ball = new PlayerMissile() {
+                Name = "ball",
+                X = 0,
+                Y = 0,
+                Owner = World,
+                IsEnemy = true
+            };
             LeftPaddle = new Paddle(Side.Left, this);
             RightPaddle = new Paddle(Side.Right, this);
             

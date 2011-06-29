@@ -91,10 +91,10 @@ namespace netduino.helpers.Imaging {
         private void CheckForCollisions() {
             for (var i = 0; i < _missiles.Count; i++) {
                 var missile1 = (PlayerMissile)_missiles[i];
-                if (!missile1.IsVisible) continue;
-                for (var j = i + 1; j < _missiles.Count; j++) {
+                if (missile1.IsEnemy || !missile1.IsVisible) continue;
+                for (var j = 0; j < _missiles.Count; j++) {
                     var missile2 = (PlayerMissile)_missiles[j];
-                    if (!missile2.IsVisible) continue;
+                    if (!missile2.IsEnemy || !missile2.IsVisible) continue;
                     if (missile1.X == missile2.X && missile1.Y == missile2.Y) {
                         var args = new CoincEventArgs(missile1, missile2);
                         OnCoinc(args);
