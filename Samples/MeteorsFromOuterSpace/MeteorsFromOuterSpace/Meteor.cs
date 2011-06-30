@@ -1,4 +1,3 @@
-using System;
 using netduino.helpers.Imaging;
 using netduino.helpers.Math;
 
@@ -16,14 +15,12 @@ namespace Meteors {
         private readonly PlayerMissile[] _rocks = new PlayerMissile[3];
         private readonly byte[] _rockXOffsets = new byte[3];
         private readonly byte[] _rockYOffsets = new byte[3];
-        private readonly Random _rnd;
 
         public bool IsExploded { get; set; }
         public int Index { get; private set; }
         public GameOfMeteors Owner { get; private set; }
 
         public Meteor(GameOfMeteors game, int index) {
-            _rnd = new Random();
             Owner = game;
             Index = index;
             for (var i = 0; i < 3; i++) {
@@ -37,7 +34,7 @@ namespace Meteors {
         }
 
         private Vector2D GetRandomSpeed() {
-            var dir = (float)_rnd.NextDouble() * 2 * Trigo.Pi;
+            var dir = (float)Owner.Random.NextDouble() * 2 * Trigo.Pi;
             return new Vector2D {
                                     X = Trigo.Cos(dir)*MeteorSpeed,
                                     Y = Trigo.Sin(dir)*MeteorSpeed
@@ -73,7 +70,7 @@ namespace Meteors {
         public void Respawn(int x, int y) {
             var speed = GetRandomSpeed();
             var j = 0;
-            var skip = _rnd.Next(4);
+            var skip = Owner.Random.Next(4);
             for (var i = 0; i < 4; i++) {
                 if (i == skip) continue;
                 _rockXOffsets[j] = _rockOffsets[i * 2];

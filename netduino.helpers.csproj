@@ -58,7 +58,6 @@
     <Compile Include="Imaging\Bitmap.cs" />
     <Compile Include="Imaging\CharSet.cs" />
     <Compile Include="Imaging\CoincEventHandler.cs" />
-    <Compile Include="Imaging\CoincEventArgs.cs" />
     <Compile Include="Imaging\Composition.cs" />
     <Compile Include="Imaging\PlayerMissile.cs" />
     <Compile Include="Imaging\SmallChars.cs" />

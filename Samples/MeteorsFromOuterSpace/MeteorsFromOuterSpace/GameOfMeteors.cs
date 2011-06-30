@@ -17,16 +17,19 @@ namespace Meteors {
         public int NumberOfMeteors { get; private set; }
         public int RemainingRocks { get; private set; }
 
-        private bool _LeftButtonPressed = false;
-        private bool _RightButtonPressed = false;
+        private bool _leftButtonPressed;
+        private bool _rightButtonPressed;
 
         public GameOfMeteors(ConsoleHardwareConfig config)
             : base(config) {
             World = new Composition(new byte[WorldSize * WorldSize / 8], WorldSize, WorldSize);
             World.Coinc += WorldCoinc;
-            Ship = new PlayerMissile("ship", WorldSize / 2, WorldSize / 2, World);
-            Ship.X = WorldSize / 2;
-            Ship.Y = WorldSize / 2;
+            Ship = new PlayerMissile {
+                Name = "Ship",
+                Owner = World,
+                X = WorldSize/2,
+                Y = WorldSize/2
+            };
             Pruneau = new PlayerMissile {
                 Name = "Pruneau",
                 Owner = World,
@@ -49,10 +52,10 @@ namespace Meteors {
             RemainingRocks = NumberOfMeteors*2;
         }
 
-        void WorldCoinc(object sender, CoincEventArgs e) {
-            if (e.Missile1 == Pruneau || e.Missile2 == Pruneau) {
+        bool WorldCoinc(object sender, PlayerMissile missile1, PlayerMissile missile2) {
+            if (missile1 == Pruneau || missile2 == Pruneau) {
                 // Explode rock or meteor
-                var rock = e.Missile1 == Pruneau ? e.Missile2 : e.Missile1;
+                var rock = missile1 == Pruneau ? missile2 : missile1;
                 var meteor = GetOwner(rock);
                 // Does this rock belong to a meteor?
                 if (meteor != null) {
@@ -68,7 +71,8 @@ namespace Meteors {
                             }
                             else {
                                 SpawnMeteors();
-                                e.CancelCollisionDetection = true;
+                                Pruneau.IsVisible = false;
+                                return true;
                             }
                         }
                     }
@@ -77,30 +81,30 @@ namespace Meteors {
                         MakeExplosionSound();
                     }
                     Pruneau.IsVisible = false;
-                    return;
+                    return false;
                 }
             }
-            else if (e.Missile1 == Ship || e.Missile2 == Ship) {
+            else if (missile1 == Ship || missile2 == Ship) {
                 MakeExplosionSound();
                 var gameOverBitmap = new CharSet().StringToBitmap(" Game Over!");
 
-                _LeftButtonPressed = false;
-                _RightButtonPressed = false;
+                _leftButtonPressed = false;
+                _rightButtonPressed = false;
                 
                 var x = 0;
 
-                while (!_LeftButtonPressed && !_RightButtonPressed) {
+                while (!_leftButtonPressed && !_rightButtonPressed) {
                     for (; x < gameOverBitmap.Width; x++) {
                         Hardware.Matrix.Display(gameOverBitmap.GetFrame(x, 0));
                         Thread.Sleep(80);
-                        if (_LeftButtonPressed || _RightButtonPressed) {
+                        if (_leftButtonPressed || _rightButtonPressed) {
                             break;
                         }
                     }
                     for (; x > 0; x--) {
                         Hardware.Matrix.Display(gameOverBitmap.GetFrame(x, 0));
                         Thread.Sleep(80);
-                        if (_LeftButtonPressed || _RightButtonPressed) {
+                        if (_leftButtonPressed || _rightButtonPressed) {
                             break;
                         }
                     }
@@ -108,14 +112,15 @@ namespace Meteors {
 
                 Stop();
             }
+            return false;
         }
 
         protected override void OnLeftButtonClick(uint port, uint state, System.DateTime time) {
-            _LeftButtonPressed = true;
+            _leftButtonPressed = true;
         }
 
         protected override void OnRightButtonClick(uint port, uint state, System.DateTime time) {
-            _RightButtonPressed = true;
+            _rightButtonPressed = true;
         }
 
         private Meteor GetOwner(PlayerMissile rock) {

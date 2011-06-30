@@ -35,13 +35,14 @@ namespace Paddles {
                     _world);
             }
             _world.Coinc +=
-                (s, a) => {
+                (s, a, b) => {
                     if (_ball.X == 0 && _side == Side.Left) {
                         _game.BallGoingRight = true;
                     }
                     if (_ball.X == 7 && _side == Side.Right) {
                         _game.BallGoingRight = false;
                     }
+                    return false;
                 };
         }
     }

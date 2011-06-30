@@ -11,6 +11,8 @@ namespace netduino.helpers.Imaging {
         public static readonly byte[] ReverseShiftMasks =
             new byte[] { 0x7F, 0xBF, 0xDF, 0xEF, 0xF7, 0xFB, 0xFD, 0xFE };
 
+        private readonly byte[] _frame = new byte[FrameSize];
+
         /// <summary>
         /// Bitmap data in hex.
         /// </summary>
@@ -79,10 +81,10 @@ namespace netduino.helpers.Imaging {
         /// </summary>
         /// <returns>An 8*8 frame, whose upper left corner is x and y</returns>
         public byte[] GetFrame(int x, int y) {
+            // Reset frame data
+            for (var i = 0; i < FrameSize; i++) _frame[i] = 0;
             var bitmapX = x / FrameSize; // Divide x by frameSize to determine where the x coordinate lands in the bitmap
             var xOffset = x % FrameSize; // Determine the amount of horizontal scrolling required to show the frame at this position
-
-            var frame = new byte[FrameSize]; // Create the final frame
 
             var endLine = (y + FrameSize); // determine the ending line in the bitmap to create the final frame
 
@@ -91,12 +93,12 @@ namespace netduino.helpers.Imaging {
                  line++, frameLine++, index += WidthModuloSize) { // Build the frame one line at a time
 
                 if (line < 0 || line >= Height) {
-                    frame[frameLine] = 0x00;
+                    _frame[frameLine] = 0x00;
                 }
                 else if (xOffset == 0) {
                     if (x >= 0 && x + FrameSize < Width) {
                         // if no scrolling is required, stored the graphics as-is
-                        frame[frameLine] = BitmapData[index];
+                        _frame[frameLine] = BitmapData[index];
                     }
                 }
                 else {
@@ -112,11 +114,11 @@ namespace netduino.helpers.Imaging {
                         neighbor >>= (byte) (FrameSize - xOffset);
                     }
                     merged |= neighbor;
-                    frame[frameLine] = merged;
+                    _frame[frameLine] = merged;
                 }
             }
 
-            return frame;
+            return _frame;
         }
 
         public byte[] GetToricFrame(int x, int y) {

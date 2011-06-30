@@ -1,3 +1,3 @@
 namespace netduino.helpers.Imaging {
-    public delegate void CoincEventHandler(object sender, CoincEventArgs e);
+    public delegate bool CoincEventHandler(object sender, PlayerMissile missile1, PlayerMissile missile2);
 }

@@ -1,9 +1,7 @@
 using System;
 using System.IO;
-using Microsoft.SPOT;
 using System.Collections;
 using System.Reflection;
-using Microsoft.SPOT.Hardware;
 
 namespace netduino.helpers.Helpers {
     /// <summary>

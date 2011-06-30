@@ -8,12 +8,12 @@ namespace netduino.helpers.Helpers {
         private Char[] _unicodeAccumulator;
         private Stack _stack;
 
-        private bool _inString = false;
-        private bool _inStringSlash = false;
-        private bool _inValue = false;
-        private bool _inUnicodeCharacter = false;
-        private int _accumulatorIndex = 0;
-        private int _unicodeCharacterIndex = 0;
+        private bool _inString;
+        private bool _inStringSlash;
+        private bool _inValue;
+        private bool _inUnicodeCharacter;
+        private int _accumulatorIndex;
+        private int _unicodeCharacterIndex;
         
         public JSONParser(int maxStringCapacity = 512) {
             AutoCasting = true;
@@ -30,16 +30,16 @@ namespace netduino.helpers.Helpers {
                 ProcessCharacter((Char) stream.Read());
             }
 
-            var jsonObject = (JSONObject)Pop();
+            var jsonObject = Pop();
             return (Hashtable) jsonObject.Object;
         }
 
-        public Hashtable Parse(string jsonText) {   
+        public Hashtable Parse(string jsonText) {
             foreach (Char c in jsonText) {
                 ProcessCharacter(c);
             }
 
-            var jsonObject = (JSONObject) Pop();
+            var jsonObject = Pop();
             return (Hashtable) jsonObject.Object;
         }
 
@@ -48,23 +48,19 @@ namespace netduino.helpers.Helpers {
                 case '{':
                     Push(new Hashtable(), JSONObjectType.Object);
                     return;
-                    break;
                 case '}':
                     Push(_accumulator, JSONObjectType.String);
                     Store();
                     _inValue = false;
                     return;
-                    break;
                 case '[':
                     Push(new ArrayList(), JSONObjectType.Array);
                     return;
-                    break;
                 case ']':
                     Push(_accumulator, JSONObjectType.String);
                     Store();
                     _inValue = false;
                     return;
-                    break;
                 case '"':
                     if (!_inString) {
                         _inString = true;
@@ -78,7 +74,6 @@ namespace netduino.helpers.Helpers {
                         }
                     }
                     return;
-                    break;
                 case '\\':
                     if (_inString) {
                         if (_inUnicodeCharacter) {
@@ -93,7 +88,6 @@ namespace netduino.helpers.Helpers {
                         }
                     }
                     return;
-                    break;
                 case 'b':
                     if (_inString) {
                         if (_inStringSlash) {
@@ -241,7 +235,7 @@ namespace netduino.helpers.Helpers {
                 jsonObject = (JSONObject)_stack.Peek();
 
                 if (jsonObject.ObjectType == JSONObjectType.String) {
-                    var jsonObjectName = (JSONObject)Pop();
+                    var jsonObjectName = Pop();
                     jsonObject = (JSONObject)_stack.Peek();
                     var hashTable = (Hashtable)jsonObject.Object;
                     hashTable.Add(jsonObjectName.Object, valueObject.Object);
@@ -259,7 +253,7 @@ namespace netduino.helpers.Helpers {
                 var valueObject = Pop();
                 jsonObject = (JSONObject)_stack.Peek();
                 if (jsonObject.ObjectType == JSONObjectType.String) {
-                    var jsonObjectName = (JSONObject)Pop();
+                    var jsonObjectName = Pop();
                     jsonObject = (JSONObject)_stack.Peek();
                     var hashTable = (Hashtable)jsonObject.Object;
                     hashTable.Add(jsonObjectName.Object, valueObject.Object);
@@ -272,14 +266,11 @@ namespace netduino.helpers.Helpers {
                 var valueObject = Pop();
                 jsonObject = (JSONObject)_stack.Peek();
                 if (jsonObject.ObjectType == JSONObjectType.String) {
-                    var jsonObjectName = (JSONObject)Pop();
+                    var jsonObjectName = Pop();
                     jsonObject = (JSONObject)_stack.Peek();
                     var hashTable = (Hashtable)jsonObject.Object;
-                    if (AutoCasting) {
-                        hashTable.Add(jsonObjectName.Object, AutoCast((string) valueObject.Object));
-                    } else {
-                        hashTable.Add(jsonObjectName.Object, valueObject.Object);
-                    }
+                    hashTable.Add(jsonObjectName.Object,
+                                  AutoCasting ? AutoCast((string) valueObject.Object) : valueObject.Object);
                     return;
                 }
                 if (jsonObject.ObjectType == JSONObjectType.Array) {
@@ -301,14 +292,13 @@ namespace netduino.helpers.Helpers {
             if (data.ToLower() == "false") {
                 return false;
             }
-            
-            Double numericValue = 0.0;
-            
+
             if (IsNumeric(data)) {
                 try {
-                    numericValue = Double.Parse(data);
+                    var numericValue = Double.Parse(data);
                     return numericValue;
-                } catch (Exception e) {
+                }
+                catch (Exception) {
                     // Do nothing
                 }
             }
@@ -330,7 +320,7 @@ namespace netduino.helpers.Helpers {
             if (_accumulatorIndex < _accumulator.Length) {
                 _accumulator[_accumulatorIndex++] = c;
             } else {
-                throw new ArgumentOutOfRangeException("Char c");
+                throw new ArgumentOutOfRangeException("c");
             }
         }
 
@@ -338,7 +328,7 @@ namespace netduino.helpers.Helpers {
             if (_unicodeCharacterIndex < _unicodeAccumulator.Length) {
                 _unicodeAccumulator[_unicodeCharacterIndex++] = c;
             } else {
-                throw new ArgumentOutOfRangeException("Char c");
+                throw new ArgumentOutOfRangeException("c");
             }
         }
 
@@ -374,15 +364,15 @@ namespace netduino.helpers.Helpers {
                 if (AutoCasting) {
                     searchResult = (bool)hashTable[key];
                     return true;
-                } else {
-                    var result = (string)hashTable[key];
-                    if (result == "true") {
-                        searchResult = true;
-                        return true;
-                    } else if (result == "false") {
-                        searchResult = false;
-                        return true;
-                    }
+                }
+                var result = (string)hashTable[key];
+                if (result == "true") {
+                    searchResult = true;
+                    return true;
+                }
+                if (result == "false") {
+                    searchResult = false;
+                    return true;
                 }
             }
             searchResult = false;

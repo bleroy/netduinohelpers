@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 
 namespace netduino.helpers.Imaging {
@@ -27,10 +28,11 @@ namespace netduino.helpers.Imaging {
 
         public event CoincEventHandler Coinc;
 
-        protected virtual void OnCoinc(CoincEventArgs e) {
+        protected virtual bool OnCoinc(object sender, PlayerMissile missile1, PlayerMissile missile2) {
             if (Coinc != null) {
-                Coinc(this, e);
+                Coinc(this, missile1, missile2);
             }
+            return false;
         }
 
         public PlayerMissile AddMissile(
@@ -44,6 +46,7 @@ namespace netduino.helpers.Imaging {
         }
 
         public PlayerMissile AddMissile(PlayerMissile missile) {
+            if (missile == null) throw new ArgumentNullException("missile");
             _missiles.Add(missile);
             if (missile.Owner != this) missile.Owner = this;
             ClearCache();
@@ -61,10 +64,6 @@ namespace netduino.helpers.Imaging {
             }
             ClearCache();
         }
-
-        //public byte[] GetToricFrame(int offsetX, int offsetY) {
-            
-        //}
 
         public byte[] GetFrame(int offsetX, int offsetY) {
             if (_frameCache != null && offsetX == _frameCacheX && offsetY == _frameCacheY) {
@@ -95,11 +94,8 @@ namespace netduino.helpers.Imaging {
                 for (var j = 0; j < _missiles.Count; j++) {
                     var missile2 = (PlayerMissile)_missiles[j];
                     if (!missile2.IsEnemy || !missile2.IsVisible) continue;
-                    if (missile1.X == missile2.X && missile1.Y == missile2.Y) {
-                        var args = new CoincEventArgs(missile1, missile2);
-                        OnCoinc(args);
-                        if (args.CancelCollisionDetection) return;
-                    }
+                    if (missile1.X != missile2.X || missile1.Y != missile2.Y) continue;
+                    if (OnCoinc(this, missile1, missile2)) return;
                 }
             }
         }
