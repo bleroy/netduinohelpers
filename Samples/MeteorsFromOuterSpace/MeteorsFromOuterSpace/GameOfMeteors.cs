@@ -8,11 +8,13 @@ namespace Meteors {
         public const int WorldSize = 8;
         public const int StartingNumberOfMeteors = 1;
         public const int WinningNumberOfMeteors = 8;
+        private const int RottingAge = 5;
         private const float EnginePower = 0.3f;
         private const float PruneauSpeed = 1f;
 
         public Meteor[] Meteors { get; private set; }
         public PlayerMissile Pruneau { get; private set; }
+        public int AgeOfPruneau { get; set; }
         public PlayerMissile Ship { get; private set; }
         public int NumberOfMeteors { get; private set; }
         public int RemainingRocks { get; private set; }
@@ -45,7 +47,7 @@ namespace Meteors {
         }
 
         private void SpawnMeteors() {
-            for (int i = 0; i < NumberOfMeteors; i++) {
+            for (var i = 0; i < NumberOfMeteors; i++) {
                 Meteors[i].Respawn(new[] {0, WorldSize - 2, 0, WorldSize - 2}[i%4],
                                    new[] {0, 0, WorldSize - 2, WorldSize - 2}[i%4]);
             }
@@ -63,7 +65,7 @@ namespace Meteors {
                         rock.IsVisible = false;
                         RemainingRocks--;
                         if (RemainingRocks == 0) {
-                            Hardware.Matrix.Display(SmallChars.ToBitmap(0, NumberOfMeteors));
+                            Hardware.Matrix.Display(SmallChars.ToBitmap(-1, NumberOfMeteors));
                             Thread.Sleep(1000);
                             NumberOfMeteors++;
                             if (NumberOfMeteors >= WinningNumberOfMeteors) {
@@ -152,11 +154,8 @@ namespace Meteors {
             // Pruneau
             if (Pruneau.IsVisible) {
                 Pruneau.Move();
-                if (Pruneau.ExactX < 0 ||
-                    Pruneau.ExactY < 0 ||
-                    Pruneau.ExactX >= WorldSize ||
-                    Pruneau.ExactY >= WorldSize) {
-
+                ApplyToreGeometry(Pruneau);
+                if (AgeOfPruneau++ >= RottingAge) {
                     Pruneau.IsVisible = false;
                 }
             }
@@ -170,6 +169,7 @@ namespace Meteors {
                     Pruneau.ExactY = Ship.ExactY;
                     Pruneau.HorizontalSpeed = (float) shootXDir*PruneauSpeed;
                     Pruneau.VerticalSpeed = (float) shootYDir*PruneauSpeed;
+                    AgeOfPruneau = 0;
                     Pruneau.IsVisible = true;
                     Beep(2000, 20);
                     Beep(1000, 20);

@@ -30,7 +30,6 @@
   </PropertyGroup>
   <Import Project="$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets" />
   <ItemGroup>
-    <Compile Include="Fig.cs" />
     <Compile Include="GameOfMeteors.cs" />
     <Compile Include="Meteor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
