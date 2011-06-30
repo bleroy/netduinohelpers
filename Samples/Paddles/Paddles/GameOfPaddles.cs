@@ -15,8 +15,6 @@ namespace Paddles {
         private const int StickMin = (StickRange - StickActiveAmplitude)/2;
         private const int StickMax = (StickRange + StickActiveAmplitude)/2;
         private const int MaxScore = 9;
-        private bool _leftButtonClicked;
-        private bool _rightButtonClicked;
 
         bool _ballGoingDown;
 
@@ -30,8 +28,6 @@ namespace Paddles {
         public Paddle RightPaddle { get; private set; }
 
         public GameOfPaddles(ConsoleHardwareConfig config) : base(config) {
-            DisplaySplashScreen();
-
             World = new Composition(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 }, ScreenSize, ScreenSize);
             Ball = new PlayerMissile() {
                 Name = "ball",
@@ -46,30 +42,12 @@ namespace Paddles {
             ResetBall(true);
         }
 
-        public void DisplaySplashScreen() {
-            var charSet = new CharSet(); 
-            var splashScreen = charSet.StringToBitmap("  2 paddles and a ball");
+        protected override void OnGameStart() {
+            ScrollMessage(" 2 Paddles and a Ball");
+        }
 
-            _leftButtonClicked = false;
-            _rightButtonClicked = false;
-
-            while (!(_leftButtonClicked || _rightButtonClicked)) {
-                var x = 0;
-                for (; x < splashScreen.Width; x++) {
-                    Hardware.Matrix.Display(splashScreen.GetFrame(x, 0));
-                    if (_leftButtonClicked || _rightButtonClicked) {
-                        break;
-                    }
-                    Thread.Sleep(50);
-                }
-                for (; x != 0; x--) {
-                    if (_leftButtonClicked || _rightButtonClicked) {
-                        break;
-                    }
-                    Hardware.Matrix.Display(splashScreen.GetFrame(x, 0));
-                    Thread.Sleep(50);
-                }
-            }
+        protected override void OnGameEnd() {
+            ScrollMessage(" Game over!");
         }
 
         public override void Loop() {
@@ -115,8 +93,7 @@ namespace Paddles {
             Hardware.Matrix.Display(SmallChars.ToBitmap(leftScore, rightScore));
             if (leftScore >= MaxScore || rightScore >= MaxScore) {
                 WaitForClick();
-                LeftScore = 0;
-                RightScore = 0;
+                Stop();
             }
             else {
                 Thread.Sleep(2000);
@@ -124,20 +101,10 @@ namespace Paddles {
         }
 
         private void WaitForClick() {
-            _leftButtonClicked = false;
-            _rightButtonClicked = false;
-
-            while (!(_leftButtonClicked || _rightButtonClicked)) {
+            ResetButtonClicks();
+            while (!(IsLeftButtonClicked|| IsRightButtonClicked)) {
                 Thread.Sleep(100);
             }
-        }
-
-        protected override void OnLeftButtonClick(UInt32 port, UInt32 state, DateTime time) {
-            _leftButtonClicked = true;
-        }
-
-        protected override void OnRightButtonClick(UInt32 port, UInt32 state, DateTime time) {
-            _rightButtonClicked = true;
         }
 
         public void ResetBall(bool ballGoingRight) {

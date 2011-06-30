@@ -59,7 +59,7 @@ namespace ConsoleBootLoader {
                     Matrix.Shutdown(Max72197221.ShutdownRegister.NormalOperation);
                     Matrix.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);
                     Matrix.SetDigitScanLimit(7);
-                    Matrix.SetIntensity(7);
+                    Matrix.SetIntensity(4);
 
                     Matrix.Display(new byte[] { 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55 });
 #if NETDUINO_MINI

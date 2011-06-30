@@ -19,11 +19,7 @@ namespace Meteors {
         public int NumberOfMeteors { get; private set; }
         public int RemainingRocks { get; private set; }
 
-        private bool _leftButtonPressed;
-        private bool _rightButtonPressed;
-
-        public GameOfMeteors(ConsoleHardwareConfig config)
-            : base(config) {
+        public GameOfMeteors(ConsoleHardwareConfig config) : base(config) {
             World = new Composition(new byte[WorldSize * WorldSize / 8], WorldSize, WorldSize);
             World.Coinc += WorldCoinc;
             Ship = new PlayerMissile {
@@ -88,41 +84,9 @@ namespace Meteors {
             }
             else if (missile1 == Ship || missile2 == Ship) {
                 MakeExplosionSound();
-                var gameOverBitmap = new CharSet().StringToBitmap(" Game Over!");
-
-                _leftButtonPressed = false;
-                _rightButtonPressed = false;
-                
-                var x = 0;
-
-                while (!_leftButtonPressed && !_rightButtonPressed) {
-                    for (; x < gameOverBitmap.Width; x++) {
-                        Hardware.Matrix.Display(gameOverBitmap.GetFrame(x, 0));
-                        Thread.Sleep(80);
-                        if (_leftButtonPressed || _rightButtonPressed) {
-                            break;
-                        }
-                    }
-                    for (; x > 0; x--) {
-                        Hardware.Matrix.Display(gameOverBitmap.GetFrame(x, 0));
-                        Thread.Sleep(80);
-                        if (_leftButtonPressed || _rightButtonPressed) {
-                            break;
-                        }
-                    }
-                }
-
                 Stop();
             }
             return false;
-        }
-
-        protected override void OnLeftButtonClick(uint port, uint state, System.DateTime time) {
-            _leftButtonPressed = true;
-        }
-
-        protected override void OnRightButtonClick(uint port, uint state, System.DateTime time) {
-            _rightButtonPressed = true;
         }
 
         private Meteor GetOwner(PlayerMissile rock) {
@@ -135,6 +99,14 @@ namespace Meteors {
         public void MakeExplosionSound() {
             Beep(3000, 10);
             Beep(1000, 10);
+        }
+
+        protected override void OnGameStart() {
+            ScrollMessage(" Meteors");
+        }
+
+        protected override void OnGameEnd() {
+            ScrollMessage(" Game over!");
         }
 
         public override void Loop() {
