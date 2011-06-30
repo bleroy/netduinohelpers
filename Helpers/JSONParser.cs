@@ -3,6 +3,9 @@ using System.Collections;
 using System.IO;
 
 namespace netduino.helpers.Helpers {
+    /// <summary>
+    /// Implements a non-recursive, low-overhead JSON http://www.json.org/ stream parser.
+    /// </summary>
     public class JSONParser : IDisposable {
         private Char[] _accumulator;
         private Char[] _unicodeAccumulator;

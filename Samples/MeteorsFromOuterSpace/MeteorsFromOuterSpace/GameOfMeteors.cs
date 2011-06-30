@@ -17,11 +17,7 @@ namespace Meteors {
         public int NumberOfMeteors { get; private set; }
         public int RemainingRocks { get; private set; }
 
-        private bool _LeftButtonPressed = false;
-        private bool _RightButtonPressed = false;
-
-        public GameOfMeteors(ConsoleHardwareConfig config)
-            : base(config) {
+        public GameOfMeteors(ConsoleHardwareConfig config) : base(config) {
             World = new Composition(new byte[WorldSize * WorldSize / 8], WorldSize, WorldSize);
             World.Coinc += WorldCoinc;
             Ship = new PlayerMissile("ship", WorldSize / 2, WorldSize / 2, World);
@@ -82,40 +78,16 @@ namespace Meteors {
             }
             else if (e.Missile1 == Ship || e.Missile2 == Ship) {
                 MakeExplosionSound();
-                var gameOverBitmap = new CharSet().StringToBitmap(" Game Over!");
-
-                _LeftButtonPressed = false;
-                _RightButtonPressed = false;
-                
-                var x = 0;
-
-                while (!_LeftButtonPressed && !_RightButtonPressed) {
-                    for (; x < gameOverBitmap.Width; x++) {
-                        Hardware.Matrix.Display(gameOverBitmap.GetFrame(x, 0));
-                        Thread.Sleep(80);
-                        if (_LeftButtonPressed || _RightButtonPressed) {
-                            break;
-                        }
-                    }
-                    for (; x > 0; x--) {
-                        Hardware.Matrix.Display(gameOverBitmap.GetFrame(x, 0));
-                        Thread.Sleep(80);
-                        if (_LeftButtonPressed || _RightButtonPressed) {
-                            break;
-                        }
-                    }
-                }
-
                 Stop();
             }
         }
 
-        protected override void OnLeftButtonClick(uint port, uint state, System.DateTime time) {
-            _LeftButtonPressed = true;
+        protected virtual void OnGameStart() {
+            ScrollMessage(" Asteroids", 50, ScrollStopFunction);
         }
-
-        protected override void OnRightButtonClick(uint port, uint state, System.DateTime time) {
-            _RightButtonPressed = true;
+        
+        private void OnGameOver() {
+            ScrollMessage(" Game Over!", 50, ScrollStopFunction);
         }
 
         private Meteor GetOwner(PlayerMissile rock) {

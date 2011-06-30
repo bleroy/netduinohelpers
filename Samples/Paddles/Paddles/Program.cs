@@ -56,7 +56,7 @@ namespace Paddles {
             Matrix.Shutdown(Max72197221.ShutdownRegister.NormalOperation);
             Matrix.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);
             Matrix.SetDigitScanLimit(7);
-            Matrix.SetIntensity(8);
+            Matrix.SetIntensity(4);
 
             Run(args);
 #endif
