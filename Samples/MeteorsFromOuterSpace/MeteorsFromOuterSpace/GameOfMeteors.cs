@@ -102,7 +102,7 @@ namespace Meteors {
         }
 
         protected override void OnGameStart() {
-            ScrollMessage(" Meteors");
+            ScrollMessage(" Meteors From Outer Space!");
         }
 
         protected override void OnGameEnd() {

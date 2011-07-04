@@ -6,10 +6,10 @@ namespace netduino.helpers.Imaging {
 
         public PlayerMissile() : this(null, 0, 0) {}
 
-        public PlayerMissile(string name, int exactX, int exactY, Composition owner = null) {
+        public PlayerMissile(string name, int x, int y, Composition owner = null) {
             Name = name;
-            ExactX = exactX;
-            ExactY = exactY;
+            ExactX = x;
+            ExactY = y;
             HorizontalSpeed = 0;
             VerticalSpeed = 0;
             IsVisible = true;
@@ -42,7 +42,7 @@ namespace netduino.helpers.Imaging {
 
         public float HorizontalSpeed { get; set; }
         
-        public float VerticalSpeed { get;set; }
+        public float VerticalSpeed { get; set; }
 
         public Composition Owner {
             get {

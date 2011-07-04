@@ -1,4 +1,3 @@
-using System;
 using netduino.helpers.Fun;
 using netduino.helpers.Imaging;
 using System.Threading;
@@ -16,12 +15,8 @@ namespace Paddles {
         private const int StickMax = (StickRange + StickActiveAmplitude)/2;
         private const int MaxScore = 9;
 
-        bool _ballGoingDown;
-
         public int LeftScore { get; set; }
         public int RightScore { get; set; }
-
-        public bool BallGoingRight { get; set; }
 
         public PlayerMissile Ball { get; private set; }
         public Paddle LeftPaddle { get; private set; }
@@ -29,15 +24,19 @@ namespace Paddles {
 
         public GameOfPaddles(ConsoleHardwareConfig config) : base(config) {
             World = new Composition(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 }, ScreenSize, ScreenSize);
-            Ball = new PlayerMissile() {
+            Ball = new PlayerMissile {
                 Name = "ball",
-                X = 0,
-                Y = 0,
                 Owner = World,
                 IsEnemy = true
             };
             LeftPaddle = new Paddle(Side.Left, this);
             RightPaddle = new Paddle(Side.Right, this);
+
+            World.Coinc +=
+                (s, a, b) => {
+                    Ball.HorizontalSpeed = -Ball.HorizontalSpeed;
+                    return false;
+                };
             
             ResetBall(true);
         }
@@ -64,7 +63,7 @@ namespace Paddles {
                                                  : Hardware.JoystickRight.Y;
             RightPaddle.Y = (effectiveRightPaddleY - StickMin) * PaddleAmplitude / StickActiveAmplitude;
 
-            Ball.X += BallGoingRight ? 1 : -1;
+            Ball.Move();
             if (Ball.X < 0) {
                 RightScore++;
                 DisplayScores(LeftScore, RightScore);
@@ -75,15 +74,14 @@ namespace Paddles {
                 DisplayScores(LeftScore, RightScore);
                 ResetBall(false);
             }
-            Ball.Y += _ballGoingDown ? 1 : -1;
             if (Ball.Y < 0) {
                 Ball.Y = 1;
-                _ballGoingDown = true;
+                Ball.VerticalSpeed = 1;
                 Beep(BeepFrequency, 50);
             }
             if (Ball.Y >= 8) {
                 Ball.Y = 7;
-                _ballGoingDown = false;
+                Ball.VerticalSpeed = -1;
                 Beep(BeepFrequency, 50);
             }
             Hardware.Matrix.Display(World.GetFrame(0, 0));
@@ -108,10 +106,10 @@ namespace Paddles {
         }
 
         public void ResetBall(bool ballGoingRight) {
-            BallGoingRight = ballGoingRight;
-            Ball.X = BallGoingRight ? 0 : 7;
+            Ball.X = ballGoingRight ? 1 : 6;
             Ball.Y = Random.Next(8);
-            _ballGoingDown = Random.Next(2) == 0;
+            Ball.HorizontalSpeed = ballGoingRight ? 1 : -1;
+            Ball.VerticalSpeed = Random.Next(2) == 0 ? 1 : -1;
             Beep(BoopFrequency, 50);
         }
     }
