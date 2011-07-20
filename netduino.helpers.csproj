@@ -54,6 +54,7 @@
     <Compile Include="Helpers\SDResourceLoader.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Helpers\VirtualMemory.cs" />
     <Compile Include="Imaging\B.cs" />
     <Compile Include="Imaging\Bitmap.cs" />
     <Compile Include="Imaging\CharSet.cs" />
@@ -61,6 +62,7 @@
     <Compile Include="Imaging\Composition.cs" />
     <Compile Include="Imaging\PlayerMissile.cs" />
     <Compile Include="Imaging\SmallChars.cs" />
+    <Compile Include="Imaging\VirtualFrame.cs" />
     <Compile Include="Math\Trigo.cs" />
     <Compile Include="Math\Vector2D.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

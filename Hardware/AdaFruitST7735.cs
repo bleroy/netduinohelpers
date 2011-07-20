@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware;
+using netduino.helpers.Helpers;
 
 namespace netduino.helpers.Hardware {
     /// <summary>
@@ -9,8 +10,8 @@ namespace netduino.helpers.Hardware {
     /// </summary>
     public class AdaFruitST7735 : IDisposable {
 
-        public const byte Width = 128;
-        public const byte Height = 160;
+        public byte Width { get; set; }
+        public byte Height { get; set; }
 
         public enum LcdCommand {
             NOP = 0x0,
@@ -62,7 +63,16 @@ namespace netduino.helpers.Hardware {
             White = 0xFFFF
         }
 
-        public AdaFruitST7735(Cpu.Pin chipSelect, Cpu.Pin dc, Cpu.Pin reset, SPI.SPI_module spiModule = SPI.SPI_module.SPI1, uint speedKHz = (uint)9500) {
+        public AdaFruitST7735(
+            Cpu.Pin chipSelect, 
+            Cpu.Pin dc, 
+            Cpu.Pin reset, 
+            SPI.SPI_module spiModule = SPI.SPI_module.SPI1, 
+            uint speedKHz = (uint)9500, 
+            VirtualMemory vm = null) {
+
+            Width = 128;
+            Height = 160;
 
             AutoRefreshScreen = false;
 
@@ -82,13 +92,33 @@ namespace netduino.helpers.Hardware {
 
             Spi = new SPI(extendedSpiConfig);
 
+            if (vm == null) {
+                SpiBuffer = new byte[Width * Height * sizeof(ushort)];
+                MemoryWriteFunction = SpiBufferWrite;
+            } else {
+                VM = vm;
+                MemoryWriteFunction = VirtualMemoryWrite;
+            }
+
             Initialize();
         }
 
         public bool AutoRefreshScreen { get; set; }
 
         public void Refresh() {
-            Spi.Write(SpiBuffer);
+            if (VM == null) {
+                Spi.Write(SpiBuffer);
+            } else {
+                var address = 0;
+                var memorySegments = (VM.Stream.Length / VM.Buffer.Length);
+                var heightIncrement = Height / memorySegments;
+                for (var y0 = 0; y0 < Height; y0 += (byte)heightIncrement) {
+                    SetAddressWindow(0, (byte) y0, (byte)(Width-1), (byte) ((y0 + heightIncrement)-1));
+                    VM.ReadVM(address, 0);
+                    address += VM.Buffer.Length;
+                    Spi.Write(VM.Buffer);
+                }
+            }
         }
 
         public ushort GetRGBColor(byte red, byte green, byte blue){
@@ -197,38 +227,47 @@ namespace netduino.helpers.Hardware {
             var low = (byte)color;
             
             var index = 0;
-            SpiBuffer[index++] = high;
-            SpiBuffer[index++] = low;
-            SpiBuffer[index++] = high;
-            SpiBuffer[index++] = low;
-            SpiBuffer[index++] = high;
-            SpiBuffer[index++] = low;
-            SpiBuffer[index++] = high;
-            SpiBuffer[index++] = low;
-            SpiBuffer[index++] = high;
-            SpiBuffer[index++] = low;
-            SpiBuffer[index++] = high;
-            SpiBuffer[index++] = low;
-            SpiBuffer[index++] = high;
-            SpiBuffer[index++] = low;
-            SpiBuffer[index++] = high;
-            SpiBuffer[index++] = low;
 
-            Array.Copy(SpiBuffer, 0, SpiBuffer, 16, 16);
-            Array.Copy(SpiBuffer, 0, SpiBuffer, 32, 32);
-            Array.Copy(SpiBuffer, 0, SpiBuffer, 64, 64);
-            Array.Copy(SpiBuffer, 0, SpiBuffer, 128, 128);
-            Array.Copy(SpiBuffer, 0, SpiBuffer, 256, 256);
+            if (VM == null) {
+                SpiBuffer[index++] = high;
+                SpiBuffer[index++] = low;
+                SpiBuffer[index++] = high;
+                SpiBuffer[index++] = low;
+                SpiBuffer[index++] = high;
+                SpiBuffer[index++] = low;
+                SpiBuffer[index++] = high;
+                SpiBuffer[index++] = low;
+                SpiBuffer[index++] = high;
+                SpiBuffer[index++] = low;
+                SpiBuffer[index++] = high;
+                SpiBuffer[index++] = low;
+                SpiBuffer[index++] = high;
+                SpiBuffer[index++] = low;
+                SpiBuffer[index++] = high;
+                SpiBuffer[index++] = low;
 
-            index = 512;
-            var line = 0;
-            var Half = Height / 2;
-            while (++line < Half - 1) {
-                Array.Copy(SpiBuffer, 0, SpiBuffer, index, 256);
-                index += 256;
+                Array.Copy(SpiBuffer, 0, SpiBuffer, 16, 16);
+                Array.Copy(SpiBuffer, 0, SpiBuffer, 32, 32);
+                Array.Copy(SpiBuffer, 0, SpiBuffer, 64, 64);
+                Array.Copy(SpiBuffer, 0, SpiBuffer, 128, 128);
+                Array.Copy(SpiBuffer, 0, SpiBuffer, 256, 256);
+
+                index = 512;
+                var line = 0;
+                var Half = Height / 2;
+                while (++line < Half - 1) {
+                    Array.Copy(SpiBuffer, 0, SpiBuffer, index, 256);
+                    index += 256;
+                }
+
+                Array.Copy(SpiBuffer, 0, SpiBuffer, index, SpiBuffer.Length / 2);
+            } else {
+                for (; index < VM.Buffer.Length;) {
+                    VM.Buffer[index++] = high;
+                    VM.Buffer[index++] = low;
+                }
+                VM.FillFromBuffer();
             }
-
-            Array.Copy(SpiBuffer, 0, SpiBuffer, index, SpiBuffer.Length / 2);
 
             if (AutoRefreshScreen) {
                 Refresh();
@@ -237,9 +276,11 @@ namespace netduino.helpers.Hardware {
 
         public void Dispose() {
             Spi.Dispose();
+            SpiBuffer = null;
             Spi = null;
             DataCommand = null;
             Reset = null;
+            VM = null;
         }
 
         private void Initialize() {
@@ -398,38 +439,67 @@ namespace netduino.helpers.Hardware {
             Write((byte)LcdCommand.NORON);  // normal display on
             Thread.Sleep(10);
 
-            SetAddressWindow(0, 0, Width - 1, Height - 1);
-
             DataCommand.Write(Data);
         }
 
-        private void SetAddressWindow(byte x0, byte y0, byte x1, byte y1)
-        {
+        public enum ScreenOrientation {
+            Portrait = 0xC8,
+            Landscape = 0x68
+        }
+
+        private ScreenOrientation _orientation = ScreenOrientation.Portrait;
+
+        public ScreenOrientation Orientation {
+            get {
+                return _orientation;
+            }
+            set {
+                _orientation = value;
+                DataCommand.Write(Command);
+                Write((byte)LcdCommand.MADCTL);
+                DataCommand.Write(Data);
+                Write((byte)_orientation);
+
+                if (_orientation == ScreenOrientation.Portrait) {
+                    Width = 128;
+                    Height = 160;
+                } else {
+                    Width = 160;
+                    Height = 128;
+                }
+
+                SetAddressWindow(0, 0, (byte)(Width - 1), (byte)(Height - 1));
+            }
+        }
+
+        private void SetAddressWindow(byte x0, byte y0, byte x1, byte y1) {
             DataCommand.Write(Command);
             Write((byte)LcdCommand.CASET);  // column addr set
             DataCommand.Write(Data);
             Write(0x00);
-            Write((byte) (x0 + 2));   // XSTART 
+            Write((byte)(x0 + 1));   // XSTART 
             Write(0x00);
-            Write((byte) (x1 + 2));   // XEND
+            Write((byte)(x1 + 1));   // XEND
 
             DataCommand.Write(Command);
             Write((byte)LcdCommand.RASET);  // row addr set
             DataCommand.Write(Data);
             Write(0x00);
-            Write((byte) (y0 + 1));    // YSTART
+            Write((byte)(y0 + 2));    // YSTART
             Write(0x00);
-            Write((byte) (y1 + 1));    // YEND
+            Write((byte)(y1 + 2));    // YEND
 
             DataCommand.Write(Command);
             Write((byte)LcdCommand.RAMWR);  // write to RAM
+
+            DataCommand.Write(Data);
         }
 
         private void SetPixel(int x, int y, ushort color) {
             if ((x < 0) || (x >= Width) || (y < 0) || (y >= Height)) return;
             var index = ((y * Width) + x) * sizeof(ushort);
-            SpiBuffer[index] = (byte) (color >> 8);
-            SpiBuffer[++index] = (byte)(color);
+            MemoryWriteFunction(index, (byte) (color >> 8));
+            MemoryWriteFunction(++index, (byte)(color));
         }
 
         private const bool Data = true;
@@ -444,12 +514,22 @@ namespace netduino.helpers.Hardware {
             var t = a; a = b; b = t;
         }
 
-        public readonly byte[] SpiBuffer = new byte[Width*Height*sizeof(ushort)];
+        protected void VirtualMemoryWrite(long address, byte data) {
+            VM.WriteVM(address, data);
+        }
 
+        protected void SpiBufferWrite(long address, byte data) {
+            SpiBuffer[address] = data;
+        }
+
+        public byte[] SpiBuffer;
+        public VirtualMemory VM;
         protected readonly byte[] SpiBOneByteBuffer = new byte[1];
         protected OutputPort DataCommand;
         protected OutputPort Reset;
         protected SPI Spi;
+        protected MemoryWrite MemoryWriteFunction;
 
+        protected delegate void MemoryWrite(long address, byte data);
     }
 }
