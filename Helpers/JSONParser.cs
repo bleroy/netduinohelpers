@@ -327,6 +327,11 @@ namespace netduino.helpers.Helpers {
         protected void AccumulateUnicodeCharacter(Char c) {
             if (_unicodeCharacterIndex < _unicodeAccumulator.Length) {
                 _unicodeAccumulator[_unicodeCharacterIndex++] = c;
+                if (_unicodeCharacterIndex == _unicodeAccumulator.Length) {
+                    Accumulate(ConvertHexDigit());
+                    _inUnicodeCharacter = false;
+                    _unicodeCharacterIndex = 0;
+                }
             } else {
                 throw new ArgumentOutOfRangeException("c");
             }

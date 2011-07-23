@@ -17,6 +17,7 @@ namespace JSONParserTest {
             KloutTestInfluencedBy();
             KloutTestInfluencees();
             TestUnicodeCharacters();
+            // Requires connecting an SD card reader
             TestParsingFromStream();
         }
 
@@ -26,7 +27,7 @@ namespace JSONParserTest {
             StorageDevice.MountSD("SD", SPI.SPI_module.SPI1, Pins.GPIO_PIN_D10);
             
             var json = "{\"status\":200,\"users\":[{\"twitter_id\":\"29406026\",\"twitter_screen_name\":\"fabienroyer\",\"score\":{\"kscore\":40.8,\"slope\":0.11,\"description\":\"is effectively using social media to influence their network across a variety of topics\",\"kclass_id\":0,\"kclass\":\"Networker\",\"kclass_description\":\"You know how to connect to the right people and share what's important to your audience. You generously share your network to help your followers. You have a high level of engagement and an influential audience.\",\"kscore_description\":\"is effectively using social media to influence their network across a variety of topics\",\"network_score\":50.1,\"amplification_score\":19.24,\"true_reach\":71,\"delta_1day\":-0.02,\"delta_5day\":-1.4}},{\"twitter_id\":\"15602654\",\"twitter_screen_name\":\"bleroy\",\"score\":{\"kscore\":59.28,\"slope\":-0.02,\"description\":\"creates content that is spread throughout their network and drives discussions\",\"kclass_id\":11,\"kclass\":\"Specialist\",\"kclass_description\":\"You may not be a celebrity, but within your area of expertise your opinion is second to none. Your content is likely focused around a specific topic or industry with a focused, highly-engaged audience.\",\"kscore_description\":\"creates content that is spread throughout their network and drives discussions\",\"network_score\":66.85,\"amplification_score\":37.88,\"true_reach\":664,\"delta_1day\":0.33,\"delta_5day\":0.48}}]}";
-            
+
             using (var file = new StreamWriter(@"SD\jsonTest.txt")) {
                 file.WriteLine(json);
             }
@@ -123,7 +124,7 @@ namespace JSONParserTest {
         public static void TestUnicodeCharacters() {
             Trace("TestUnicodeCharacter");
 
-            var json = "{\"unicodeCharTest\":\"\\u00AA\\u00BB\\u00CC\\u00DD\\u00EE\\u00FF\\u19AF\\u1234\\u5678\\ubeef\\ub00b\\u0bad\\uc001\\ul337\"}";
+            var json = "{\"unicodeCharTest\":\"user\\u0040gmail.com\\u00AA\\u00BB\\u00CC\\u00DD\\u00EE\\u00FF\\u19AF\\u1234\\u5678\\ubeef\\ub00b\\u0bad\\uc001\\u1337\"}";
             var parser = new JSONParser();
             var results = parser.Parse(json);
             string unicodeCharTest;
