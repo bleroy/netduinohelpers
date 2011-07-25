@@ -388,7 +388,16 @@ namespace KloutKlock {
                 hostEntry = null;
                 Debug.GC(true);
 
-                while (socket.Available == 0) Thread.Sleep(10);
+                var maxTimeout = 3000;
+                while (socket.Available == 0 && maxTimeout != 0) {
+                    Thread.Sleep(10);
+                    maxTimeout -= 10;
+                }
+
+                if (maxTimeout == 0) {
+                    Debug.Print("Timeout waiting for server data!");
+                    return false;
+                }
 
                 try {
                     byte[] buffer = new byte[600];
@@ -399,6 +408,7 @@ namespace KloutKlock {
                         }
                     }
                 } catch (Exception e) {
+                    File.Delete(filename);
                     Debug.Print(e.Message);
                     return false;
                 }
