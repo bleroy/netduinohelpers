@@ -39,6 +39,7 @@
     <Compile Include="Hardware\AdaFruitILI9328.cs" />
     <Compile Include="Hardware\AdaFruitSSD1306.cs" />
     <Compile Include="Hardware\AdaFruitST7735.cs" />
+    <Compile Include="Hardware\AdaFruitVC0706.cs" />
     <Compile Include="Hardware\AnalogJoystick.cs" />
     <Compile Include="Hardware\DS1307.cs" />
     <Compile Include="Hardware\ExtendedSpiConfiguration.cs">
