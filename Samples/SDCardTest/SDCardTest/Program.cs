@@ -8,8 +8,14 @@ using SecretLabs.NETMF.Hardware;
 
 #if NETDUINO_MINI
 using SecretLabs.NETMF.Hardware.NetduinoMini;
-#else
+#endif
+
+#if NETDUINO
 using SecretLabs.NETMF.Hardware.Netduino;
+#endif
+
+#if NETDUINOPLUS
+using SecretLabs.NETMF.Hardware.NetduinoPlus;
 #endif
 
 using SecretLabs.NETMF.IO;
@@ -24,17 +30,10 @@ namespace SDCardTest
 
 #if NETDUINO_MINI
             StorageDevice.MountSD("SD", SPI.SPI_module.SPI1, Pins.GPIO_PIN_13);
-#else
+#endif
+#if NETDUINO
             StorageDevice.MountSD("SD", SPI.SPI_module.SPI1, Pins.GPIO_PIN_D10);
 #endif
-
-            using (var filestream = new FileStream(@"SD\resources.txt", FileMode.Open))
-            {
-                StreamReader reader = new StreamReader(filestream);
-                Debug.Print(reader.ReadToEnd());
-                reader.Close();
-            }
-
             using (var filestream = new FileStream(@"SD\dontpanic.txt", FileMode.Create))
             {
                 StreamWriter streamWriter = new StreamWriter(filestream);
@@ -42,7 +41,19 @@ namespace SDCardTest
                 streamWriter.Close();
             }
 
+            using (var filestream = new FileStream(@"SD\dontpanic.txt", FileMode.Open))
+            {
+                StreamReader reader = new StreamReader(filestream);
+                Debug.Print(reader.ReadToEnd());
+                reader.Close();
+            }
+
+#if NETDUINO_MINI
             StorageDevice.Unmount("SD");
+#endif
+#if NETDUINO
+            StorageDevice.Unmount("SD");
+#endif        
         }
     }
 }
