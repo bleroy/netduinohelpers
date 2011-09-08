@@ -28,6 +28,7 @@ namespace ConsoleBootLoader {
         public static PWM Speaker = new PWM(Pins.GPIO_PIN_18);
         public static PushButton ButtonLeft = new PushButton(Pins.GPIO_PIN_19, Port.InterruptMode.InterruptEdgeLevelLow, null, Port.ResistorMode.PullUp);
         public static PushButton ButtonRight = new PushButton(Pins.GPIO_PIN_20, Port.InterruptMode.InterruptEdgeLevelLow, null, Port.ResistorMode.PullUp);
+        public static OutputPort max7219PowerTransistor = new OutputPort(Pins.GPIO_PIN_9,false);
 #else
         public static AnalogJoystick JoystickLeft = new AnalogJoystick(Pins.GPIO_PIN_A0, Pins.GPIO_PIN_A1, centerDeadZoneRadius: 20);
         public static AnalogJoystick JoystickRight = new AnalogJoystick(Pins.GPIO_PIN_A2, Pins.GPIO_PIN_A3, centerDeadZoneRadius: 20);
@@ -35,6 +36,7 @@ namespace ConsoleBootLoader {
         public static PWM Speaker = new PWM(Pins.GPIO_PIN_D5);
         public static PushButton ButtonLeft = new PushButton(Pins.GPIO_PIN_D0, Port.InterruptMode.InterruptEdgeLevelLow, null, Port.ResistorMode.PullUp);
         public static PushButton ButtonRight = new PushButton(Pins.GPIO_PIN_D1, Port.InterruptMode.InterruptEdgeLevelLow, null, Port.ResistorMode.PullUp);
+        public static OutputPort max7219PowerTransistor = new OutputPort(Pins.GPIO_PIN_D7,false);
 #endif
         public static SDResourceLoader ResourceLoader = new SDResourceLoader();
         public static readonly string SDMountPoint = @"SD";

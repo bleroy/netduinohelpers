@@ -2,6 +2,7 @@
 using System.Threading;
 using netduino.helpers.Hardware;
 using SecretLabs.NETMF.Hardware.Netduino;
+using Microsoft.SPOT.Hardware;
 
 namespace Max72197221Test {
     public class Program {
@@ -10,6 +11,10 @@ namespace Max72197221Test {
         private static byte _intensity;
 
         public static void Main() {
+
+            var maxPowerControl = new OutputPort(Pins.GPIO_PIN_D0, false);
+            Thread.Sleep(5);
+
             InitializeSpinnerDisplay();
 
             _max = new Max72197221(chipSelect: Pins.GPIO_PIN_D8);
