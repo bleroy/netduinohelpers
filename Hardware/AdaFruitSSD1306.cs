@@ -48,8 +48,8 @@ namespace netduino.helpers.Hardware {
             SWITCHCAPVCC = 0x2
         }
 
-        private const bool Data = true;
-        private const bool DisplayCommand = false;
+        protected const bool Data = true;
+        protected const bool DisplayCommand = false;
 
         public AdaFruitSSD1306(Cpu.Pin dc, Cpu.Pin reset, Cpu.Pin chipSelect, SPI.SPI_module spiModule = SPI.SPI_module.SPI1, uint speedKHz = 10000) {
 
@@ -295,7 +295,7 @@ namespace netduino.helpers.Hardware {
             Spi.Write(SpiBuffer);
         }
 
-        public void Refresh() {
+        public virtual void Refresh() {
             Spi.Write(displayBuffer);
         }
 
