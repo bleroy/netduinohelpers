@@ -50,6 +50,7 @@
     <Compile Include="Hardware\Max72197221.cs" />
     <Compile Include="Hardware\PushButton.cs" />
     <Compile Include="Hardware\RGBLed.cs" />
+    <Compile Include="Hardware\SharpGP2Y0A21YK0F.cs" />
     <Compile Include="Hardware\ShiftRegister74HC595.cs" />
     <Compile Include="Helpers\BitReverseTable256.cs" />
     <Compile Include="Helpers\JSONObject.cs" />
