@@ -4,29 +4,43 @@ using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware;
 
 namespace netduino.helpers.Hardware {
-    public delegate void VoltageTriggerCallback(int averagedDistance, float mappedVoltage);
+    public delegate void VoltageTriggerCallback(int sensorID, int averagedDistance, float mappedVoltage);
 
     // Datasheet: http://sharp-world.com/products/device/lineup/data/pdf/datasheet/gp2y0a21yk_e.pdf
     public class SharpGP2Y0A21YK0F : IDisposable {
-        
-        protected AnalogInput DistanceSensor;
+        protected AnalogInput[] DistanceSensors;
         protected VoltageTriggerCallback VoltageTriggerProcedure;
         protected Thread DistanceSampler;
         protected bool DistanceSamplerStop;
 
-        public float VoltageThreshold { get; set; }
-        public int AverageMeasurementCount { get; set; }
-
-        public SharpGP2Y0A21YK0F(Cpu.Pin analogPin) {
-            DistanceSensor = new AnalogInput(analogPin);
-            DistanceSensor.SetRange(70, 970);
-            VoltageThreshold = 0;
-            AverageMeasurementCount = 10;
+        private float _voltageThreshold = 1.09f;
+        public float VoltageThreshold { 
+            get { return _voltageThreshold; } 
+            set { if (value < 0.25 || value > 3.5) throw new ArgumentOutOfRangeException("value");
+            _voltageThreshold = value;
+            } 
         }
 
-        public void Start(float voltageThreshold, VoltageTriggerCallback callback) {
+        private int _averageMeasurementCount = 2;
+        public int AverageMeasurementCount { 
+            get { return _averageMeasurementCount; } 
+            set { if (value == 0) throw new ArgumentOutOfRangeException("value");
+            _averageMeasurementCount = value;
+            } 
+        }
+
+        public SharpGP2Y0A21YK0F(Cpu.Pin[] analogPins) {
+            var sensorId = 0;
+            DistanceSensors = new AnalogInput[analogPins.Length];
+            foreach (var analogPin in analogPins) {
+                DistanceSensors[sensorId] = new AnalogInput(analogPin);
+                DistanceSensors[sensorId].SetRange(70, 970);
+                sensorId++;
+            }
+        }
+
+        public void Start(VoltageTriggerCallback callback) {
             if (DistanceSampler == null) {
-                VoltageThreshold = voltageThreshold;
                 VoltageTriggerProcedure = callback;
                 DistanceSamplerStop = false;
                 DistanceSampler = new Thread(DistanceSampling);
@@ -44,17 +58,19 @@ namespace netduino.helpers.Hardware {
 
         protected void DistanceSampling() {
             while (!DistanceSamplerStop) {
-                var averagedDistance = ReadAverageDistance();
-                var mappedVoltage = MapRange(970f, 70f, 3.3f, 0.4f, averagedDistance);
-                if (mappedVoltage >= VoltageThreshold) VoltageTriggerProcedure(averagedDistance, mappedVoltage);
+                for (var sensorId = 0; sensorId < DistanceSensors.Length; sensorId++ ) {
+                    var averagedDistance = ReadAverageDistance(DistanceSensors[sensorId]);
+                    var mappedVoltage = MapRange(970f, 70f, 3.3f, 0.4f, averagedDistance);
+                    if (mappedVoltage >= VoltageThreshold) VoltageTriggerProcedure(sensorId, averagedDistance, mappedVoltage);
+                }
             }
         }
 
-        public int ReadAverageDistance() {
+        protected int ReadAverageDistance(AnalogInput analogInput) {
             var count = AverageMeasurementCount;
             var total = 0;
             while (--count >= 0) {
-                total += DistanceSensor.Read();
+                total += analogInput.Read();
             }
             return total / AverageMeasurementCount;
         }
@@ -66,7 +82,7 @@ namespace netduino.helpers.Hardware {
 
         public void Dispose() {
             Stop();
-            DistanceSensor = null;
+            DistanceSensors = null;
             VoltageTriggerProcedure = null;
         }
     }
