@@ -21,7 +21,7 @@ namespace netduino.helpers.tools {
         public static void ProcessBitmap(string path) {
             using(var bmp = new Bitmap(path)) {
                 if(bmp.PixelFormat != System.Drawing.Imaging.PixelFormat.Format24bppRgb) {
-                    Console.WriteLine("Please provide a 24-bit depth bitmap to convert.");
+                    Console.WriteLine("Can't process {0}. Please provide a 24-bit depth bitmap to convert.", path);
                     return;
                 }
                 var periodPosition = path.LastIndexOf('.');
@@ -30,10 +30,11 @@ namespace netduino.helpers.tools {
                 for(int row = 0; row < bmp.Height; row++) {
                     for(int column = 0; column < bmp.Width; column++) {
                         var pixel = bmp.GetPixel(column, row);
-                        pixelBuffer[GreenByte] = (byte)(pixel.G | 0x80);
-                        pixelBuffer[RedByte] = (byte)(pixel.R | 0x80);
-                        pixelBuffer[BlueByte] = (byte)(pixel.B | 0x80);
+                        pixelBuffer[GreenByte] = (byte)(MapColor(pixel.G) | 0x80);
+                        pixelBuffer[RedByte] = (byte)(MapColor(pixel.R) | 0x80);
+                        pixelBuffer[BlueByte] = (byte)(MapColor(pixel.B) | 0x80);
                         bin.Write(pixelBuffer, 0, BytesPerPixel);
+                        //Console.WriteLine("Dbg: {0}->{1},{2}->{3},{4}->{5}", pixel.G, MapColor(pixel.G), pixel.R, MapColor(pixel.R), pixel.B, MapColor(pixel.B));
                         Console.Write("0x{0:x},0x{1:x},0x{2:x},", pixelBuffer[GreenByte], pixelBuffer[RedByte], pixelBuffer[BlueByte]);
                     }
                     Console.Write("\r\n");
@@ -41,6 +42,15 @@ namespace netduino.helpers.tools {
                 bin.Close();
                 Console.WriteLine("");
             }
+        }
+
+        public static byte MapColor(byte color) {
+            return (byte)MapRange(0f, 255, 0f, 127f, (float)color);
+        }
+
+        // Maps a range of values to another http://rosettacode.org/wiki/Map_range#C
+        public static float MapRange(float a1, float a2, float b1, float b2, float s) {
+            return b1 + (s - a1) * (b2 - b1) / (a2 - a1);
         }
     }
 }
