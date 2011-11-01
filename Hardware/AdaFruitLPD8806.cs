@@ -14,8 +14,7 @@ namespace netduino.helpers.Hardware {
         public const int BytesPerPixel = 3;
         protected int PixelBufferEnd;
 
-        public AdaFruitLPD8806(int width, int height, Cpu.Pin chipSelect, SPI.SPI_module spiModule = SPI.SPI_module.SPI1, uint speedKHz = 1000) {
-            
+        public AdaFruitLPD8806(int width, int height, Cpu.Pin chipSelect, SPI.SPI_module spiModule = SPI.SPI_module.SPI1, uint speedKHz = 10000) {
             Width = width;
             Height = height;
             PixelCount = Width * Height;
@@ -36,6 +35,8 @@ namespace netduino.helpers.Hardware {
             spi = new SPI(spiConfig);
 
             pixelBuffer = new byte[PixelCount * BytesPerPixel];
+
+            SetBackgroundColor(0,0,0);
         }
 
         protected SPI spi;
@@ -43,18 +44,20 @@ namespace netduino.helpers.Hardware {
         protected byte[] attentionSequence = new byte[] { 0, 0, 0, 0 };
         protected byte[] latchSequence = new byte[] { 0, 0, 0 };
 
+        // Sets the background color to black across the strip
         public void Reset() {
-            for (var i = 0; i < pixelBuffer.Length; i++) {
-                pixelBuffer[i] = 0x80;
+            SetColor(0, 0, 0);
+        }
+
+        // Sets the color of the entire strip
+        public void SetColor(byte red, byte green, byte blue) {
+            SetBackgroundColor(red, green, blue);
+            for (var pixel = 0; pixel < FrameSize; pixel += BytesPerPixel) {
+                Array.Copy(backgroundColor, 0, pixelBuffer, pixel, BytesPerPixel);
             }
         }
 
-        public void SetStripColor(UInt32 color) {
-            for (var pixel = 0; pixel < PixelCount; pixel++) {
-                SetPixel(pixel, color);
-            }
-        }
-
+        // Send the internal pixel buffer to the strip
         public void Refresh(int delayMS = 0) {
             spi.Write(attentionSequence);
             spi.Write(pixelBuffer);
@@ -65,26 +68,28 @@ namespace netduino.helpers.Hardware {
             if (delayMS > 0) Thread.Sleep(delayMS);
         }
 
-        public UInt32 RgbToColor(byte r, byte g, byte b) {
+        // Generates a 32 bit value from RGB values. RGB values must be between 0 and 127 (2,048,383 colors 'only')
+        public UInt32 RgbToColor(byte red, byte green, byte blue) {
           // Take the lowest 7 bits of each value and append them end to end
           // We have the top bit set high (its a 'parity-like' bit in the protocol and must be set!
           UInt32 color;
-          color = (UInt32)(g | 0x80);
+          color = (UInt32)(green | 0x80);
           color <<= 8;
-          color |= (UInt32)(r | 0x80);
+          color |= (UInt32)(red | 0x80);
           color <<= 8;
-          color |= (UInt32)(b | 0x80);
+          color |= (UInt32)(blue | 0x80);
           return color;
         }
 
-        public void SetPixel(int pixelIndex, byte r, byte g, byte b) {
+        // Sets a pixel at given index with an RGB value
+        public void SetPixel(int pixelIndex, byte red, byte green, byte blue) {
             if (pixelIndex >= PixelCount) return;
-            pixelBuffer[pixelIndex * 3] = (byte)(g | 0x80);
-            pixelBuffer[pixelIndex * 3 + 1] = (byte)(r | 0x80);
-            pixelBuffer[pixelIndex * 3 + 2] = (byte)(b | 0x80);
+            pixelBuffer[pixelIndex * 3] = (byte)(green | 0x80);
+            pixelBuffer[pixelIndex * 3 + 1] = (byte)(red | 0x80);
+            pixelBuffer[pixelIndex * 3 + 2] = (byte)(blue | 0x80);
         }
 
-        // The color parameter needs to come from RgbToColor()
+        // Sets a pixel at given index with a color value. The color parameter needs to come from RgbToColor()
         public void SetPixel(int pixelIndex, UInt32 color) {
             if (pixelIndex >= PixelCount) return;
             pixelBuffer[pixelIndex * 3] = (byte)(color >> 16);
@@ -92,46 +97,121 @@ namespace netduino.helpers.Hardware {
             pixelBuffer[pixelIndex * 3 + 2] = (byte)(color);
         }
 
+        // Set a pixel at a given coordinate with a color value. The color parameter needs to come from RgbToColor()
         public void SetPixel(int x, int y, UInt32 color) {
             if (x < 0 || x >= Width || y < 0 || y > Height) return;
             SetPixel((y * Width) + x, color);
         }
 
-        protected byte[] singlePixelBuffer = new byte[BytesPerPixel];
+        protected byte[] backgroundColor = new byte[BytesPerPixel];
+
+        // Sets the default background color. Internally used by Reset, SetColor, Scroll and Shift.
+        public void SetBackgroundColor(byte red, byte green, byte blue) {
+            backgroundColor[0] = (byte)(green | 0x80);
+            backgroundColor[1] = (byte)(red | 0x80);
+            backgroundColor[2] = (byte)(blue | 0x80);
+        }
+
+        public enum ScrollDirection {
+            Left,
+            Right
+        }
+
+        public enum ScrollingType {
+            Circular,
+            NonCircular
+        }
 
         // Shift the entire strip as a single line, either left or right, circularly or not.
-        public void Shift(bool goRight = true, bool circular = false) {
-            if(goRight) {
-                if(circular) {
-                    Array.Copy(pixelBuffer, PixelBufferEnd, singlePixelBuffer, 0, BytesPerPixel);
+        public void Shift(ScrollDirection direction, ScrollingType scrollingType) {
+            if (direction == ScrollDirection.Right) {
+                if (scrollingType == ScrollingType.Circular) {
+                    Array.Copy(pixelBuffer, PixelBufferEnd, backgroundColor, 0, BytesPerPixel);
                     Array.Copy(pixelBuffer, 0, pixelBuffer, BytesPerPixel, PixelBufferEnd);
-                    Array.Copy(singlePixelBuffer, pixelBuffer, BytesPerPixel);
+                    Array.Copy(backgroundColor, pixelBuffer, BytesPerPixel);
                 } else {
-                    singlePixelBuffer[0] = 0x80;
-                    singlePixelBuffer[1] = 0x80;
-                    singlePixelBuffer[2] = 0x80;
                     Array.Copy(pixelBuffer, 0, pixelBuffer, BytesPerPixel, PixelBufferEnd);
-                    Array.Copy(singlePixelBuffer, pixelBuffer, BytesPerPixel);
+                    Array.Copy(backgroundColor, pixelBuffer, BytesPerPixel);
                 }
-            } else {
-                if(circular) {
-                    Array.Copy(pixelBuffer, 0, singlePixelBuffer, 0, BytesPerPixel);
+            } else { // Left Shift
+                if (scrollingType == ScrollingType.Circular) {
+                    Array.Copy(pixelBuffer, 0, backgroundColor, 0, BytesPerPixel);
                     Array.Copy(pixelBuffer, BytesPerPixel, pixelBuffer, 0, PixelBufferEnd);
-                    Array.Copy(singlePixelBuffer, 0, pixelBuffer, PixelBufferEnd, BytesPerPixel);
+                    Array.Copy(backgroundColor, 0, pixelBuffer, PixelBufferEnd, BytesPerPixel);
                 } else {
-                    singlePixelBuffer[0] = 0x80;
-                    singlePixelBuffer[1] = 0x80;
-                    singlePixelBuffer[2] = 0x80;
                     Array.Copy(pixelBuffer, BytesPerPixel, pixelBuffer, 0, PixelBufferEnd);
-                    Array.Copy(singlePixelBuffer, 0, pixelBuffer, PixelBufferEnd, BytesPerPixel);
+                    Array.Copy(backgroundColor, 0, pixelBuffer, PixelBufferEnd, BytesPerPixel);
                 }
             }
         }
 
-        // Generates a gradient between two colors, between two pixels coordinates
-        public void Gradient(int startRed, int startGreen, int startBlue, int endRed, int endGreen, int endBlue, int pixelStart, int pixelEnd) {
-            var pixelRange = pixelEnd - pixelStart;
-            for (var pixel = pixelStart; pixel <= pixelEnd; pixel++) {
+        // Scroll the entire frame by x pixels either left or right, circularly or not.
+        public void Scroll(ScrollDirection direction, ScrollingType scrollingType, int pixelCount) {
+            var length = (Width * BytesPerPixel) - BytesPerPixel;
+            while (pixelCount != 0) {
+                for (var row = 0; row < Height; row += 2) {
+                    var offset = Width * row * BytesPerPixel;
+                    if (direction == ScrollDirection.Right) {
+                        if (scrollingType == ScrollingType.NonCircular) {
+                            Array.Copy(pixelBuffer, offset, pixelBuffer, offset + BytesPerPixel, length);
+                            Array.Copy(backgroundColor, 0, pixelBuffer, offset, BytesPerPixel);
+                        } else { // Circular
+                            Array.Copy(pixelBuffer, offset + length, backgroundColor, 0, BytesPerPixel);
+                            Array.Copy(pixelBuffer, offset, pixelBuffer, offset + BytesPerPixel, length);
+                            Array.Copy(backgroundColor, 0, pixelBuffer, offset, BytesPerPixel);
+                        }
+                    } else { // Scrolling Left
+                        if (scrollingType == ScrollingType.NonCircular) {
+                            Array.Copy(pixelBuffer, offset + BytesPerPixel, pixelBuffer, offset, length);
+                            Array.Copy(backgroundColor, 0, pixelBuffer, offset + length, BytesPerPixel);
+                        } else { // Circular
+                            Array.Copy(pixelBuffer, offset, backgroundColor, 0, BytesPerPixel);
+                            Array.Copy(pixelBuffer, offset + BytesPerPixel, pixelBuffer, offset, length + BytesPerPixel);
+                            Array.Copy(backgroundColor, 0, pixelBuffer, offset + length, BytesPerPixel);
+                        }
+                    }
+                }
+                for (var row = 1; row < Height; row += 2) {
+                    var offset = Width * row * BytesPerPixel;
+                    if (direction == ScrollDirection.Right) {
+                        if (scrollingType == ScrollingType.NonCircular) {
+                            Array.Copy(pixelBuffer, offset + BytesPerPixel, pixelBuffer, offset, length);
+                            Array.Copy(backgroundColor, 0, pixelBuffer, offset + length, BytesPerPixel);
+                        } else { // Circular
+                            Array.Copy(pixelBuffer, offset, backgroundColor, 0, BytesPerPixel);
+                            Array.Copy(pixelBuffer, offset + BytesPerPixel, pixelBuffer, offset, length);
+                            Array.Copy(backgroundColor, 0, pixelBuffer, offset + length, BytesPerPixel);
+                        }
+                    } else { // Scrolling Left
+                        var lengthLeftScrolling = Width * BytesPerPixel;
+                        if (scrollingType == ScrollingType.NonCircular) {
+                            ScrollEvenLineLeft(offset, lengthLeftScrolling);
+                            Array.Copy(backgroundColor, 0, pixelBuffer, offset, BytesPerPixel);
+                        } else { // Circular
+                            Array.Copy(pixelBuffer, offset + (lengthLeftScrolling - BytesPerPixel), backgroundColor, 0, BytesPerPixel);
+                            ScrollEvenLineLeft(offset, lengthLeftScrolling);
+                            Array.Copy(backgroundColor, 0, pixelBuffer, offset, BytesPerPixel);
+                        }
+                    }
+                }
+                Refresh();
+                pixelCount--;
+            }
+        }
+
+        // Scroll function helper
+        private void ScrollEvenLineLeft(int offset, int length) {
+            var pixelCounter = length - BytesPerPixel;
+            while (pixelCounter >= 0) {
+                Array.Copy(pixelBuffer, offset + pixelCounter - BytesPerPixel, pixelBuffer, offset + pixelCounter, BytesPerPixel);
+                pixelCounter -= BytesPerPixel;
+            }
+        }
+
+        // Generates a gradient between two colors, between two pixels indices
+        public void Gradient(int startRed, int startGreen, int startBlue, int endRed, int endGreen, int endBlue, int pixelIndexStart, int pixelIndexEnd) {
+            var pixelRange = pixelIndexEnd - pixelIndexStart;
+            for (var pixel = pixelIndexStart; pixel <= pixelIndexEnd; pixel++) {
                 var ratio = (float)pixel / (float)pixelRange;
                 SetPixel(pixel,
                     (byte)(endRed * ratio + startRed * (1 - ratio)),
@@ -141,7 +221,7 @@ namespace netduino.helpers.Hardware {
             }
         }
 
-        // Fade a bitmap into view using the bitmap currently loaded in the LED strip buffer as the starting point
+        // Fade a bitmap into view using the bitmap currently loaded in the LED strip buffer as the point of reference
         public void FadeIn(byte[] bitmap, int sourceBufferOffset = 0, byte Speed = 1) {
             var complete = false;
             var length = Width * BytesPerPixel; 
@@ -187,10 +267,11 @@ namespace netduino.helpers.Hardware {
                         sourceCount += BytesPerPixel;
                     }
                 }
-                Refresh(0);
+                Refresh();
             }
         }
 
+        // FadeIn helper function
         private bool FadeInPixelPart(int pixelComponent, int offSet, int targetCount, byte[] bitmap, int sourceBufferOffset, int sourceCount, byte Speed) {
             var source = bitmap[sourceBufferOffset + offSet + sourceCount + pixelComponent] & 0x7F;
             var destination = pixelBuffer[offSet + targetCount + pixelComponent] & 0x7F;
@@ -214,51 +295,54 @@ namespace netduino.helpers.Hardware {
             return false;
         }
 
-        // Copies a source bitmap to the LED strip buffer
+        // Copies a source bitmap to the LED strip buffer. Source and destinations must be the same size.
         public void Copy(byte[] bitmap, int sourceBufferOffset = 0) {
             var length = Width * BytesPerPixel;
             for (var row = 0; row < Height; row += 2) {
-                var offSet = Width * row * BytesPerPixel;
-                Array.Copy(bitmap, offSet + sourceBufferOffset, pixelBuffer, offSet, length);
+                var offset = Width * row * BytesPerPixel;
+                Array.Copy(bitmap, offset + sourceBufferOffset, pixelBuffer, offset, length);
             }
             for (var row = 1; row < Height; row += 2) {
-                var offSet = Width * row * BytesPerPixel;
+                var offset = Width * row * BytesPerPixel;
                 var targetCount = length - BytesPerPixel;
                 var sourceCount = 0;
                 while (targetCount >= 0) {
-                    Array.Copy(bitmap, sourceBufferOffset + offSet + sourceCount, pixelBuffer, offSet + targetCount, BytesPerPixel);
+                    Array.Copy(bitmap, sourceBufferOffset + offset + sourceCount, pixelBuffer, offset + targetCount, BytesPerPixel);
                     targetCount -= BytesPerPixel;
                     sourceCount += BytesPerPixel;
                 }
             }
         }
 
-        // Copies a source bitmap at the given coordinates into the LED strip buffer
+        // Copies a source bitmap at the given coordinates into the LED strip buffer.
+        // Does not yet handle the case where the source bitmap is smaller than the target frame size.
         public void Copy(byte[] bitmap, int x, int y, int width, int height, int bitmapWidth, int bitmapHeight) {
             var srcOffset = ((y * bitmapWidth) + x) * BytesPerPixel;
             var srcStep = bitmapWidth * BytesPerPixel * 2;
-            var fillerLength = 0;
-            var fillerHeight = 0;
+            //var fillerLength = 0;
+            //var fillerHeight = 0;
             
             var srcLength = Width;
             if(x + width > bitmapWidth) srcLength = bitmapWidth - x;
             if(srcLength >= Width) {
                 srcLength = Width;
-            } else {
-                fillerLength = Width - srcLength;
             }
+            // else {
+            //    fillerLength = Width - srcLength;
+            //}
 
             srcLength *= BytesPerPixel;
-            fillerLength *= BytesPerPixel;
+            //fillerLength *= BytesPerPixel;
 
             var srcHeight = Height;
             if(y + height > bitmapHeight)
                 srcHeight = bitmapHeight - y;
             if(srcHeight >= Height) {
                 srcHeight = Height;
-            } else {
-                fillerHeight = Height - srcHeight;
             }
+            // else {
+            //    fillerHeight = Height - srcHeight;
+            //}
            
             var offset = srcOffset;
             for (var row = 0; row < Height; row+=2) {
@@ -281,18 +365,21 @@ namespace netduino.helpers.Hardware {
             }
         }
 
-        public void DrawRectangle(int x, int y, int w, int h, UInt32 color) {
-            for (int i = x; i < x + w; i++) {
+        // Draws a rectangle of a given color
+        public void DrawRectangle(int x, int y, int width, int height, UInt32 color) {
+            for (int i = x; i < x + width; i++) {
                 SetPixel(i, y, color);
-                SetPixel(i, y + h - 1, color);
+                SetPixel(i, y + height - 1, color);
             }
-            for (int i = y; i < y + h; i++) {
+            for (int i = y; i < y + height; i++) {
                 SetPixel(x, i, color);
-                SetPixel(x + w - 1, i, color);
+                SetPixel(x + width - 1, i, color);
             }
         }
+
+        // Releases all resources used by the driver
         public void Dispose() {
-            singlePixelBuffer = null;
+            backgroundColor = null;
             pixelBuffer = null;
             attentionSequence = null;
             latchSequence = null;

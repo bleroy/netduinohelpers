@@ -25,18 +25,24 @@ namespace AdaFruitLPD8806Test {
 
             byte fadeSpeed = 4;
 
-            strip.Reset();
-
             while (true) {
+                strip.Reset();
+                strip.Refresh(); 
                 ScrollVanGogh();
                 strip.FadeIn(Pumpkin, 0, fadeSpeed);
-                DisplayShift();
+                DisplayShift(AdaFruitLPD8806.ScrollDirection.Right);
                 Thread.Sleep(400);
-                DisplayShift(false);
+                DisplayShift(AdaFruitLPD8806.ScrollDirection.Left);
                 strip.FadeIn(PacMan, 0, fadeSpeed);
                 DisplayAnimation(PacMan);
+                strip.SetBackgroundColor(127, 127, 127);
+                strip.Scroll(AdaFruitLPD8806.ScrollDirection.Right, AdaFruitLPD8806.ScrollingType.NonCircular, strip.Width);
                 strip.FadeIn(Ghost, 0, fadeSpeed);
                 DisplayAnimation(Ghost);
+                strip.SetBackgroundColor(0, 0, 0);
+                strip.Scroll(AdaFruitLPD8806.ScrollDirection.Right, AdaFruitLPD8806.ScrollingType.Circular, strip.Width);
+                strip.Scroll(AdaFruitLPD8806.ScrollDirection.Left, AdaFruitLPD8806.ScrollingType.Circular, strip.Width);
+                strip.Scroll(AdaFruitLPD8806.ScrollDirection.Right, AdaFruitLPD8806.ScrollingType.NonCircular, strip.Width);
                 DisplayRainbowCycle(0);
                 DisplaySquares();
             }
@@ -91,10 +97,10 @@ namespace AdaFruitLPD8806Test {
             }
         }
 
-        public static void DisplayShift(bool goRight = true) {
+        public static void DisplayShift(AdaFruitLPD8806.ScrollDirection direction) {
             var count = strip.PixelCount-1;
             while (count >= 0) {
-                strip.Shift(goRight, true);
+                strip.Shift(direction, AdaFruitLPD8806.ScrollingType.Circular);
                 strip.Refresh();
                 count--;
             }
