@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
+using netduino.helpers.Imaging;
 
 namespace netduino.helpers.Hardware {
     // Based on https://github.com/adafruit/LPD8806
@@ -40,9 +41,10 @@ namespace netduino.helpers.Hardware {
         }
 
         protected SPI spi;
-        protected byte[] pixelBuffer;
         protected byte[] attentionSequence = new byte[] { 0, 0, 0, 0 };
         protected byte[] latchSequence = new byte[] { 0, 0, 0 };
+
+        public byte[] pixelBuffer;
 
         // Sets the background color to black across the strip
         public void Reset() {
@@ -100,7 +102,11 @@ namespace netduino.helpers.Hardware {
         // Set a pixel at a given coordinate with a color value. The color parameter needs to come from RgbToColor()
         public void SetPixel(int x, int y, UInt32 color) {
             if (x < 0 || x >= Width || y < 0 || y > Height) return;
-            SetPixel((y * Width) + x, color);
+            if (((y + 1) % 2) == 0) {
+                SetPixel((y * Width) + (Width - x - 1), color);
+            } else {
+                SetPixel((y * Width) + x, color);
+            }
         }
 
         protected byte[] backgroundColor = new byte[BytesPerPixel];
@@ -324,7 +330,7 @@ namespace netduino.helpers.Hardware {
             
             var srcLength = Width;
             if(x + width > bitmapWidth) srcLength = bitmapWidth - x;
-            if(srcLength >= Width) {
+            if(srcLength > Width) {
                 srcLength = Width;
             }
             // else {
@@ -335,9 +341,8 @@ namespace netduino.helpers.Hardware {
             //fillerLength *= BytesPerPixel;
 
             var srcHeight = Height;
-            if(y + height > bitmapHeight)
-                srcHeight = bitmapHeight - y;
-            if(srcHeight >= Height) {
+            if(y + height > bitmapHeight) srcHeight = bitmapHeight - y;
+            if(srcHeight > Height) {
                 srcHeight = Height;
             }
             // else {
@@ -374,6 +379,46 @@ namespace netduino.helpers.Hardware {
             for (int i = y; i < y + height; i++) {
                 SetPixel(x, i, color);
                 SetPixel(x + width - 1, i, color);
+            }
+        }
+
+        public byte[] BuildMarquee(string text, CharSet charSet, byte redBackground, byte greenBackground, byte blueBackground, byte redText, byte greenText, byte blueText) {
+            var tempChar = new byte[8];
+            var textColor = new byte[3];
+            var backgroundColor = new byte[3];
+            var marquee = new byte[text.Length * 8 * AdaFruitLPD8806.BytesPerPixel * Height];
+            var lineLengthInBytes = text.Length * 8 * AdaFruitLPD8806.BytesPerPixel;
+            textColor[0] = (byte)(greenText | 0x80);
+            textColor[1] = (byte)(redText | 0x80);
+            textColor[2] = (byte)(blueText | 0x80);
+            backgroundColor[0] = (byte)(greenBackground | 0x80);
+            backgroundColor[1] = (byte)(redBackground | 0x80);
+            backgroundColor[2] = (byte)(blueBackground | 0x80);
+            var index = 0;
+            foreach (char c in text) {
+                charSet.CopyBitmapChar(c, tempChar, 0, 1);
+                BuildMarqueeCharacter(index++, lineLengthInBytes, marquee, tempChar, textColor, backgroundColor);
+            }
+            return marquee;
+        }
+
+        protected void BuildMarqueeCharacter(int index, int lineLengthInBytes, byte[] marquee, byte[] tempChar, byte[] textColor, byte[] backgroundColor) {
+            var row = 0;
+            var charOffset = index * 8 * AdaFruitLPD8806.BytesPerPixel;
+            for (var byteIndex = 0; byteIndex < tempChar.Length; byteIndex++) {
+                var col = 0;
+                var rowOffset = (row * lineLengthInBytes) + charOffset;
+                while (col < 8) {
+                    var pixelOffset = rowOffset + (col * AdaFruitLPD8806.BytesPerPixel);
+                    if ((tempChar[byteIndex] & 0x80) != 0) {
+                        Array.Copy(textColor, 0, marquee, pixelOffset, AdaFruitLPD8806.BytesPerPixel);
+                    } else {
+                        Array.Copy(backgroundColor, 0, marquee, pixelOffset, AdaFruitLPD8806.BytesPerPixel);
+                    }
+                    tempChar[byteIndex] <<= 1;
+                    col++;
+                }
+                row++;
             }
         }
 

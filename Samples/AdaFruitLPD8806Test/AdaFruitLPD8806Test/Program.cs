@@ -7,6 +7,7 @@ using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware;
 using SecretLabs.NETMF.Hardware.NetduinoMini;
 using netduino.helpers.Hardware;
+using netduino.helpers.Imaging;
 
 namespace AdaFruitLPD8806Test {
     public class Program {
@@ -15,19 +16,19 @@ namespace AdaFruitLPD8806Test {
         public static AdaFruitLPD8806 strip = new AdaFruitLPD8806(x, y, Pins.GPIO_PIN_13, SPI.SPI_module.SPI1,16000);
         public static SerialPort comPort = new SerialPort(Serial.COM1, 115200, Parity.None, 8, StopBits.One);
         private static UTF8Encoding _encoding = new UTF8Encoding();
+        private static string _marqueeText = "   CONSTRUCTION + CODE @ HTTP://WWW.PIX6T4.COM/BLOG ";
+        private static bool _marqueeTextChanged = true;
 
-        public static void Main() {            
-            comPort.ReadTimeout = 20;
-            comPort.WriteTimeout = 20;
-            comPort.Open();
+        public static void Main() {
 
-            Display("Start\r\n");
+            InitializeComPort();
 
             byte fadeSpeed = 4;
+            
+            strip.Reset();
+            strip.Refresh();
 
             while (true) {
-                strip.Reset();
-                strip.Refresh(); 
                 ScrollVanGogh();
                 strip.FadeIn(Pumpkin, 0, fadeSpeed);
                 DisplayShift(AdaFruitLPD8806.ScrollDirection.Right);
@@ -44,12 +45,66 @@ namespace AdaFruitLPD8806Test {
                 strip.Scroll(AdaFruitLPD8806.ScrollDirection.Left, AdaFruitLPD8806.ScrollingType.Circular, strip.Width);
                 strip.Scroll(AdaFruitLPD8806.ScrollDirection.Right, AdaFruitLPD8806.ScrollingType.NonCircular, strip.Width);
                 DisplayRainbowCycle(0);
+                DisplayMarquee(_marqueeText, 127, 127, 127, 127, 0, 0);
                 DisplaySquares();
             }
-            
-            Display("Stop\r\n");
 
             comPort.Close();
+        }
+
+        public static void InitializeComPort() {
+            comPort.ReadTimeout = 20;
+            comPort.WriteTimeout = 20;
+            comPort.DataReceived += new SerialDataReceivedEventHandler(ReceiveText);
+            comPort.Open();           
+        }
+
+        public static void Display(string line) {
+            byte[] bytes = _encoding.GetBytes(line);
+            comPort.Write(bytes, 0, bytes.Length);
+        }
+
+        private static byte[] _tempBuffer = new byte[45];
+
+        public static void ReceiveText(object sender, SerialDataReceivedEventArgs e) {
+            var sp = (SerialPort)sender;
+            Array.Clear(_tempBuffer, 0, _tempBuffer.Length - 1);
+            var bytes = sp.BytesToRead;
+            if (bytes > _tempBuffer.Length) {
+                bytes = _tempBuffer.Length;
+            }
+            sp.Read(_tempBuffer, 0, bytes);
+            sp.DiscardInBuffer();
+            _marqueeText = MakeUpperCaseString(_tempBuffer);
+            _marqueeTextChanged = true;
+        }
+
+        private static string MakeUpperCaseString(byte[] data) {
+            var str = new string(Encoding.UTF8.GetChars(data));
+            if (str != null) {
+                return str.ToUpper();
+            } else {
+                return " whut? ";
+            }
+        }
+
+        public static void DisplayMarquee(string text, byte redBackground, byte greenBackground, byte blueBackground, byte redText, byte greenText, byte blueText) {
+            if (_marqueeTextChanged) {
+                _marqueeTextChanged = false;
+                var charSet = new CharSet();
+                var marqueePixelWidth = text.Length * 8;
+                var marquee = strip.BuildMarquee(text, charSet, redBackground, greenBackground, blueBackground, redText, greenText, blueText);
+
+                var x = 0;
+                for (; x < marqueePixelWidth - strip.Width; x++) {
+                    strip.Copy(marquee, x, 0, strip.Width, strip.Height, marqueePixelWidth, strip.Height);
+                    strip.Refresh();
+                }
+                for (; x >= 0; x--) {
+                    strip.Copy(marquee, x, 0, strip.Width, strip.Height, marqueePixelWidth, strip.Height);
+                    strip.Refresh();
+                }
+            }
         }
 
         public static void ScrollVanGogh() {
@@ -63,7 +118,7 @@ namespace AdaFruitLPD8806Test {
             for (; y > 34; y--) {
                 strip.Copy(VanGogh, x, y, strip.Width, strip.Height, 70, 99);
                 strip.Refresh();
-            }            
+            }
             max = 70 - strip.Width;
             x = 11;
             for (; x < max; x++) {
@@ -89,7 +144,7 @@ namespace AdaFruitLPD8806Test {
             strip.Reset();
             var y = strip.Height / 2;
             var x = strip.Width / 2;
-            for (var wheel = 0; wheel < 384; wheel+=5) {
+            for (var wheel = 0; wheel < 384; wheel += 5) {
                 for (var dimension = 1; dimension < strip.Width; dimension++) {
                     strip.DrawRectangle(x - (dimension / 2), y - (dimension / 2), dimension, dimension, Wheel(wheel++));
                     strip.Refresh();
@@ -98,7 +153,7 @@ namespace AdaFruitLPD8806Test {
         }
 
         public static void DisplayShift(AdaFruitLPD8806.ScrollDirection direction) {
-            var count = strip.PixelCount-1;
+            var count = strip.PixelCount - 1;
             while (count >= 0) {
                 strip.Shift(direction, AdaFruitLPD8806.ScrollingType.Circular);
                 strip.Refresh();
@@ -126,33 +181,33 @@ namespace AdaFruitLPD8806Test {
             }
         }
 
-        public static void DisplayRainbowCycle(int delayMS) {  
-          for (var j=0; j < 384 * 3; j+=8) {     // 3 cycles of all 384 colors in the wheel
-            for (var i=0; i < strip.PixelCount; i++) {
-              // tricky math! we use each pixel as a fraction of the full 384-color wheel (that's the i / strip.numPixels() part)
-              // Then add in j which makes the colors go around per pixel. The % 384 is to make the wheel cycle around.
-                strip.SetPixel(i, Wheel(((i * 384 / strip.PixelCount) + j) % 384));
+        public static void DisplayRainbowCycle(int delayMS) {
+            for (var j = 0; j < 384 * 3; j += 8) {     // 3 cycles of all 384 colors in the wheel
+                for (var i = 0; i < strip.PixelCount; i++) {
+                    // tricky math! we use each pixel as a fraction of the full 384-color wheel (that's the i / strip.numPixels() part)
+                    // Then add in j which makes the colors go around per pixel. The % 384 is to make the wheel cycle around.
+                    strip.SetPixel(i, Wheel(((i * 384 / strip.PixelCount) + j) % 384));
+                }
+                strip.Refresh(delayMS);
             }
-            strip.Refresh(delayMS);
-          }
         }
 
         public static UInt32 Wheel(int wheelPosition) {
             byte r = 0, g = 0, b = 0;
             switch (wheelPosition / 128) {
                 case 0:
-                    r = (byte) (127 - (wheelPosition % 128));   //Red down
-                    g = (byte) (wheelPosition % 128);      // Green up
+                    r = (byte)(127 - (wheelPosition % 128));   //Red down
+                    g = (byte)(wheelPosition % 128);      // Green up
                     b = 0;                  //blue off
                     break;
                 case 1:
-                    g = (byte) (127 - wheelPosition % 128);  //green down
-                    b = (byte) (wheelPosition % 128);      //blue up
+                    g = (byte)(127 - wheelPosition % 128);  //green down
+                    b = (byte)(wheelPosition % 128);      //blue up
                     r = 0;                  //red off
                     break;
                 case 2:
-                    b = (byte) (127 - (wheelPosition % 128));  //blue down 
-                    r = (byte) (wheelPosition % 128);      //red up
+                    b = (byte)(127 - (wheelPosition % 128));  //blue down 
+                    r = (byte)(wheelPosition % 128);      //red up
                     g = 0;                  //green off
                     break;
             }
@@ -387,10 +442,5 @@ namespace AdaFruitLPD8806Test {
         0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xf2,0xff,0x80,0xf2,0xff,0x80,0xf2,0xff,0x80,0xf2,0xff,0x80,0xf2,0xff,0x80,0xf2,0xff,0x80,0xf2,0xff,0x80,0x80,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
         0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xf2,0xff,0x80,0xf2,0xff,0x80,0xf2,0xff,0x80,0xf2,0xff,0x80,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
                                       };
-
-        public static void Display(string line) {    
-            byte[] bytes = _encoding.GetBytes(line);
-            comPort.Write(bytes, 0, bytes.Length);
-        }
     }
 }

@@ -26,33 +26,25 @@ namespace netduino.helpers.Imaging {
             0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x30,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x30,0x0,0x0,0x0,0x0,
             };
 
-        public CharSet()
-            : base(FontData, 256, 16)
-        {
+        public CharSet() : base(FontData, 256, 16) {
         }
         /// <summary>
         /// Takes a string and builds a Bitmap object representing the text of the string
         /// </summary>
         /// <param name="text"></param>
         /// <returns>A Bitmap object representing the string</returns>
-        public Bitmap StringToBitmap(string text)
-        {
+        public Bitmap StringToBitmap(string text) {
             // Figure out the width in pixels required to build the bitmap matching the text string
             int textWidthInPixels = text.Length * FrameSize;
-
             var bmpData = new byte[textWidthInPixels];
-
             int index = 0;
-
             var upperText = text.ToUpper();
             for (var i = 0; i < text.Length; i++) {
                 // Build the target bitmap one character at a time
                 CopyBitmapChar(upperText[i], bmpData, index++, text.Length);
             }
-
             // Create the final bitmap object matching the text string
             var strBmp = new Bitmap(bmpData, textWidthInPixels, FrameSize);
-
             return strBmp;
         }
 
@@ -63,21 +55,18 @@ namespace netduino.helpers.Imaging {
         /// <param name="buffer">Target buffer where the character bitmap will be stored</param>
         /// <param name="index">Position of the character in the target buffer</param>
         /// <param name="textLength">Length of the text string being processed</param>
-        protected void CopyBitmapChar(char c, byte[] buffer, int index, int textLength)
-        {
+        public void CopyBitmapChar(char c, byte[] buffer, int index, int textLength) {
             // Default character is '@' if the character being passed doesn't exist 
             int x = 0;
             int y = 0;
 
             // Figure out which line of the font should be used for the character
             // Refer to http://www.ascii-code.com/ ASCII printable characters (character code 32-127)
-            if (c >= '@' && c <= '_')
-            {
+            if (c >= '@' && c <= '_') {
                 x = (c - '@') * FrameSize;
                 // 1st line, so no need to set y
             }
-            else if (c >= ' ' && c <= '?')
-            {
+            else if (c >= ' ' && c <= '?') {
                 x = (c - ' ') * FrameSize;
                 y = FrameSize; // 2nd line
             }
@@ -85,12 +74,10 @@ namespace netduino.helpers.Imaging {
             // Grab the bitmap frame matching the character
             var frame = GetFrame(x, y);
 
-            // Copy the character frame into the target bitmap buffer
-            for (int line = y, frameLine = 0; frameLine < FrameSize; line++, frameLine++) // Build the frame one line at a time
-            {
+            // Copy the character frame into the target bitmap buffer. Build the frame one line at a time
+            for (int line = y, frameLine = 0; frameLine < FrameSize; line++, frameLine++) {
                 // Figure out where in the target bitmap this frame line should be placed
                 var byteIndex = frameLine * textLength + index;
-
                 buffer[byteIndex] = frame[frameLine];
             }
         }
