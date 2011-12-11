@@ -75,8 +75,8 @@ namespace AdaFruitLPD8806Test {
             }
             sp.Read(_tempBuffer, 0, bytes);
             sp.DiscardInBuffer();
-            _marqueeText = MakeUpperCaseString(_tempBuffer);
-            _marqueeTextChanged = true;
+            //_marqueeText = MakeUpperCaseString(_tempBuffer);
+            //_marqueeTextChanged = true;
         }
 
         private static string MakeUpperCaseString(byte[] data) {

@@ -40,6 +40,6 @@
       <HintPath>..\..\..\bin\Debug\netduino.helpers.dll</HintPath>
     </Reference>
     <Reference Include="SecretLabs.NETMF.Hardware" />
-    <Reference Include="SecretLabs.NETMF.Hardware.Netduino" />
+    <Reference Include="SecretLabs.NETMF.Hardware.NetduinoMini, Version=4.1.0.0, Culture=neutral, processorArchitecture=MSIL" />
   </ItemGroup>
 </Project>

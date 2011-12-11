@@ -85,23 +85,18 @@ namespace netduino.helpers.Imaging {
             for (var i = 0; i < FrameSize; i++) _frame[i] = 0;
             var bitmapX = x / FrameSize; // Divide x by frameSize to determine where the x coordinate lands in the bitmap
             var xOffset = x % FrameSize; // Determine the amount of horizontal scrolling required to show the frame at this position
-
             var endLine = (y + FrameSize); // determine the ending line in the bitmap to create the final frame
-
             for (int line = y, frameLine = 0, index = bitmapX + y * WidthModuloSize;
                  line < endLine;
                  line++, frameLine++, index += WidthModuloSize) { // Build the frame one line at a time
-
                 if (line < 0 || line >= Height) {
                     _frame[frameLine] = 0x00;
-                }
-                else if (xOffset == 0) {
+                } else if (xOffset == 0) {
                     if (x >= 0 && x + FrameSize < Width) {
                         // if no scrolling is required, stored the graphics as-is
                         _frame[frameLine] = BitmapData[index];
                     }
-                }
-                else {
+                } else {
                     // we need to merge / scroll two graphics to make one line
                     byte merged = 0;
                     if (x >= 0 && x < Width) {
@@ -117,7 +112,6 @@ namespace netduino.helpers.Imaging {
                     _frame[frameLine] = merged;
                 }
             }
-
             return _frame;
         }
 
@@ -126,9 +120,6 @@ namespace netduino.helpers.Imaging {
             y %= Height;
             var xOffset = x % FrameSize; // Determine the amount of horizontal scrolling required to show the frame at this position
             var bitmapX = x / FrameSize; // Divide x by frameSize to determine where the x coordinate lands in the bitmap
-
-            var frame = new byte[FrameSize]; // Create the final frame
-
             for (int line = y,
                      frameLine = 0,
                      index = bitmapX + y * WidthModuloSize;
@@ -136,21 +127,18 @@ namespace netduino.helpers.Imaging {
                  line = (line + 1) % Height,
                  frameLine++,
                  index = (index + WidthModuloSize) % BitmapData.Length) { // Build the frame one line at a time
-
                 if (xOffset == 0) {
-                    frame[frameLine] = BitmapData[index];
-                }
-                else {
+                    _frame[frameLine] = BitmapData[index];
+                } else {
                     // we need to merge / scroll two graphics to make one line
-                    var merged = (byte)(BitmapData[index] << (byte) (xOffset));
+                    var merged = (byte)(BitmapData[index] << (byte)(xOffset));
                     merged |= (byte)((x + FrameSize >= Width ?
                         BitmapData[index - WidthModuloSize + 1] :
-                        BitmapData[index + 1]) >> (byte) (FrameSize - xOffset));
-                    frame[frameLine] = merged;
+                        BitmapData[index + 1]) >> (byte)(FrameSize - xOffset));
+                    _frame[frameLine] = merged;
                 }
             }
-
-            return frame;
-}
+            return _frame;
+        }
     }
 }

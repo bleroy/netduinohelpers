@@ -1,9 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+# Visual C# Express 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "netduino.helpers", "..\..\..\netduino.helpers.csproj", "{D15C30B3-3FDE-475F-AB25-7EA65DE56911}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DualStickTest", "DualStickTest.csproj", "{0BB36293-4DB9-41A6-9D79-B4D1F0E3C588}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D15C30B3-3FDE-475F-AB25-7EA65DE56911} = {D15C30B3-3FDE-475F-AB25-7EA65DE56911}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

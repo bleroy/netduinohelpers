@@ -112,7 +112,7 @@ namespace Meteors {
         public override void Loop() {
             // Ship
             Ship.HorizontalSpeed = (float)Hardware.JoystickLeft.XDirection * EnginePower;
-            Ship.VerticalSpeed = (float)Hardware.JoystickLeft.YDirection * EnginePower;
+            Ship.VerticalSpeed = (float)Hardware.JoystickLeft.YDirection * EnginePower * -1;
             Ship.Move();
 
             var ship = Ship;
@@ -140,7 +140,7 @@ namespace Meteors {
                     Pruneau.ExactX = Ship.ExactX;
                     Pruneau.ExactY = Ship.ExactY;
                     Pruneau.HorizontalSpeed = (float) shootXDir*PruneauSpeed;
-                    Pruneau.VerticalSpeed = (float) shootYDir*PruneauSpeed;
+                    Pruneau.VerticalSpeed = (float)shootYDir * PruneauSpeed * -1;
                     AgeOfPruneau = 0;
                     Pruneau.IsVisible = true;
                     Beep(2000, 20);

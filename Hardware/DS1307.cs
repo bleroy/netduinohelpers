@@ -18,12 +18,7 @@ namespace netduino.helpers.Hardware {
 
         // Real time clock I2C address
         public const int DS1307_I2C_ADDRESS = 0x68;
-        // I2C bus frequency for the clock
-        public const int DS1307_I2C_CLOCK_RATE_KHZ = 100;
-        
-        // Allow 10ms timeouts on all I2C transactions
-        public const int DS1307_I2C_TRANSACTION_TIMEOUT_MS = 10;
-        
+               
         // Start / End addresses of the date/time registers
         public const byte DS1307_RTC_START_ADDRESS = 0x00;
         public const byte DS1307_RTC_END_ADDRESS = 0x06;
@@ -39,10 +34,18 @@ namespace netduino.helpers.Hardware {
         public const byte DS1307_RAM_SIZE = 56;
 
         // Instance of the I2C clock
-        I2CDevice clock;
+        protected I2CDevice Clock;
 
-        public DS1307() {
-            clock = new I2CDevice(new I2CDevice.Configuration(DS1307_I2C_ADDRESS, DS1307_I2C_CLOCK_RATE_KHZ));
+        // I2C bus frequency for the clock
+        public int ClockRateKHz { get; private set; }
+
+        // I2C transactions timeout value in milliseconds
+        public int TimeOutMs { get; private set; }
+
+        public DS1307(int timeoutMs = 30, int clockRateKHz = 50) {
+            TimeOutMs = timeoutMs;
+            ClockRateKHz = clockRateKHz;
+            Clock = new I2CDevice(new I2CDevice.Configuration(DS1307_I2C_ADDRESS, ClockRateKHz));
         }
 
         /// <summary>
@@ -58,7 +61,7 @@ namespace netduino.helpers.Hardware {
                 I2CDevice.CreateReadTransaction(clockData)
             };
 
-            if (clock.Execute(transaction, DS1307_I2C_TRANSACTION_TIMEOUT_MS) == 0) {
+            if (Clock.Execute(transaction, TimeOutMs) == 0) {
                 throw new Exception("I2C transaction failed");
             }
 
@@ -89,7 +92,7 @@ namespace netduino.helpers.Hardware {
                                   DecToBcd(dt.Year - 2000)} )
             };
 
-            if (clock.Execute(transaction, DS1307_I2C_TRANSACTION_TIMEOUT_MS) == 0) {
+            if (Clock.Execute(transaction, TimeOutMs) == 0) {
                 throw new Exception("I2C write transaction failed");
             }
         }
@@ -158,7 +161,7 @@ namespace netduino.helpers.Hardware {
             // Write to the clock's RAM
             var transaction = new I2CDevice.I2CWriteTransaction[] {I2CDevice.CreateWriteTransaction(TrxBuffer)};
 
-            if (clock.Execute(transaction, DS1307_I2C_TRANSACTION_TIMEOUT_MS) == 0) {
+            if (Clock.Execute(transaction, TimeOutMs) == 0) {
                 throw new Exception("I2C write transaction failed");
             }
         }
@@ -175,7 +178,7 @@ namespace netduino.helpers.Hardware {
                     I2CDevice.CreateReadTransaction(ram) 
                     };
 
-            if (clock.Execute(transaction, DS1307_I2C_TRANSACTION_TIMEOUT_MS) == 0) {
+            if (Clock.Execute(transaction, TimeOutMs) == 0) {
                 throw new Exception("I2C transaction failed");
             }
 
@@ -201,7 +204,7 @@ namespace netduino.helpers.Hardware {
                     I2CDevice.CreateReadTransaction(value) 
                     };
 
-                if (clock.Execute(transaction, DS1307_I2C_TRANSACTION_TIMEOUT_MS) == 0) {
+                if (Clock.Execute(transaction, TimeOutMs) == 0) {
                     throw new Exception("I2C transaction failed");
                 }
 
@@ -223,7 +226,7 @@ namespace netduino.helpers.Hardware {
                 I2CDevice.CreateWriteTransaction(new byte[] {address, (byte) val})
             };
 
-            if (clock.Execute(transaction, DS1307_I2C_TRANSACTION_TIMEOUT_MS) == 0) {
+            if (Clock.Execute(transaction, TimeOutMs) == 0) {
                 throw new Exception("I2C write transaction failed");
             }
         }
@@ -250,7 +253,8 @@ namespace netduino.helpers.Hardware {
         /// Releases clock resources
         /// </summary>
         public void Dispose() {
-            clock.Dispose();
+            Clock.Dispose();
+            Clock = null;
         }
     }
 }

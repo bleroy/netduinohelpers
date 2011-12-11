@@ -15,7 +15,7 @@ namespace RTC
             var clock = new DS1307();
 
             // Set the clock to some arbitrary date / time
-            clock.Set(new DateTime(2011, 1, 2, 20, 20, 20));
+            clock.Set(new DateTime(2011, 11, 30, 4, 26, 0));
 
             // Make sure the clock is running
             clock.Halt(false);

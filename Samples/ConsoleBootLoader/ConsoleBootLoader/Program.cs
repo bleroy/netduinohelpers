@@ -22,8 +22,8 @@ namespace ConsoleBootLoader {
     public class Program {
 #if NETDUINO_MINI
         // Use this document to see the pin map of the mini: http://www.netduino.com/netduinomini/schematic.pdf
-        public static AnalogJoystick JoystickLeft = new AnalogJoystick(Pins.GPIO_PIN_5, Pins.GPIO_PIN_6, minRange: 1023, maxRange: 0, centerDeadZoneRadius: 20);
-        public static AnalogJoystick JoystickRight = new AnalogJoystick(Pins.GPIO_PIN_7, Pins.GPIO_PIN_8, minRange: 1023, maxRange: 0, centerDeadZoneRadius: 20);
+        public static AnalogJoystick JoystickLeft = new AnalogJoystick(Pins.GPIO_PIN_5, Pins.GPIO_PIN_6, minYRange: 1023, maxYRange: 0, centerDeadZoneRadius: 80);
+        public static AnalogJoystick JoystickRight = new AnalogJoystick(Pins.GPIO_PIN_7, Pins.GPIO_PIN_8, minYRange: 1023, maxYRange: 0, centerDeadZoneRadius: 80);
         public static Max72197221 Matrix = new Max72197221(chipSelect: Pins.GPIO_PIN_17);
         public static PWM Speaker = new PWM(Pins.GPIO_PIN_18);
         public static PushButton ButtonLeft = new PushButton(Pins.GPIO_PIN_19, Port.InterruptMode.InterruptEdgeLevelLow, null, Port.ResistorMode.PullUp);
@@ -61,7 +61,7 @@ namespace ConsoleBootLoader {
                     Matrix.Shutdown(Max72197221.ShutdownRegister.NormalOperation);
                     Matrix.SetDecodeMode(Max72197221.DecodeModeRegister.NoDecodeMode);
                     Matrix.SetDigitScanLimit(7);
-                    Matrix.SetIntensity(1);
+                    Matrix.SetIntensity(3);
 
                     Matrix.Display(new byte[] { 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55 });
 #if NETDUINO_MINI
