@@ -37,7 +37,7 @@
     <Compile Include="Fun\Game.cs" />
     <Compile Include="Fun\GameLoop.cs" />
     <Compile Include="Hardware\AdaFruit7565.cs" />
-    <Compile Include="Hardware\AdaFruitILI9328.cs" />
+    <Compile Include="Hardware\AdaFruitILI932x.cs" />
     <Compile Include="Hardware\AdaFruitLPD8806.cs" />
     <Compile Include="Hardware\AdaFruitSSD1306.cs" />
     <Compile Include="Hardware\AdaFruitST7735.cs" />
