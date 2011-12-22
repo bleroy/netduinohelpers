@@ -43,10 +43,12 @@
     <Compile Include="Hardware\AdaFruitST7735.cs" />
     <Compile Include="Hardware\AdaFruitVC0706.cs" />
     <Compile Include="Hardware\AnalogJoystick.cs" />
+    <Compile Include="Imaging\Colors.cs" />
     <Compile Include="Hardware\DS1307.cs" />
     <Compile Include="Hardware\ExtendedSpiConfiguration.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Hardware\LCD.cs" />
     <Compile Include="Hardware\LedMatrix.cs" />
     <Compile Include="Hardware\Max72197221.cs" />
     <Compile Include="Hardware\PushButton.cs" />
@@ -65,6 +67,7 @@
     <Compile Include="Imaging\CharSet.cs" />
     <Compile Include="Imaging\CoincEventHandler.cs" />
     <Compile Include="Imaging\Composition.cs" />
+    <Compile Include="Imaging\Drawing.cs" />
     <Compile Include="Imaging\PlayerMissile.cs" />
     <Compile Include="Imaging\SmallChars.cs" />
     <Compile Include="Imaging\VirtualFrame.cs" />

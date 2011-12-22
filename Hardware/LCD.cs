@@ -14,7 +14,9 @@ namespace netduino.helpers.Hardware {
         public bool HwScrolling { get; set; }
         public LcdOrientation Orientation { get; set; }
     }
-
+    /// <summary>
+    /// Based on MicroBuilder's code: http://www.microbuilder.eu/Projects/LPC1343ReferenceDesign/TFTLCDAPI.aspx
+    /// </summary>
     public abstract class LCD {
         abstract public ushort Width { get; set; }
         abstract public ushort Height { get; set; }

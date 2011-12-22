@@ -7,8 +7,7 @@ using netduino.helpers.Imaging;
 
 namespace netduino.helpers.Hardware {
     /// <summary>
-    /// Graphics library by ladyada/adafruit with init code from Rossum (MIT license)
-    /// https://github.com/adafruit/TFTLCD-Library/
+    /// Based on MicroBuilder's code: http://www.microbuilder.eu/Projects/LPC1343ReferenceDesign/TFTLCDAPI.aspx
     /// </summary>
     public class AdaFruitILI932x : LCD
     {
@@ -350,38 +349,38 @@ namespace netduino.helpers.Hardware {
             WriteData(data);
         }
         protected void WriteCommand(Register command) {
-            _chipSelect.Write(false);   //digitalWrite(_cs, LOW);
-            _commandData.Write(false);  //digitalWrite(_cd, LOW);
-            //_read.Write(true);          //digitalWrite(_rd, HIGH);
-            _write.Write(true);         //digitalWrite(_wr, HIGH);
+            _chipSelect.Write(false);   
+            _commandData.Write(false);  
+            //_read.Write(true);          
+            _write.Write(true);         
             _parallelDataOut.Write((byte)((uint)command >> 8));
-            _write.Write(false); //digitalWrite(_wr, LOW);
-            _write.Write(true); //digitalWrite(_wr, HIGH);
+            _write.Write(false); 
+            _write.Write(true); 
             _parallelDataOut.Write((byte)(command));
-            _write.Write(false); //digitalWrite(_wr, LOW);
-            _write.Write(true); //digitalWrite(_wr, HIGH);
-            _chipSelect.Write(true);   //digitalWrite(_cs, HIGH);
+            _write.Write(false); 
+            _write.Write(true); 
+            _chipSelect.Write(true);   
         }
         protected void WriteData(ushort data) {
-            _chipSelect.Write(false);   //digitalWrite(_cs, LOW);
-            _commandData.Write(true);  //digitalWrite(_cd, HIGH);
-            //_read.Write(true);          //digitalWrite(_rd, HIGH);
-            _write.Write(true);         //digitalWrite(_wr, HIGH);
+            _chipSelect.Write(false);   
+            _commandData.Write(true);  
+            //_read.Write(true);          
+            _write.Write(true);         
             _parallelDataOut.Write((byte)(data >> 8));
-            _write.Write(false); //digitalWrite(_wr, LOW);
-            _write.Write(true); //digitalWrite(_wr, HIGH);
+            _write.Write(false); 
+            _write.Write(true); 
             _parallelDataOut.Write((byte)(data));
-            _write.Write(false); //digitalWrite(_wr, LOW);
-            _write.Write(true); //digitalWrite(_wr, HIGH);
-            _chipSelect.Write(true);   //digitalWrite(_cs, HIGH);
+            _write.Write(false); 
+            _write.Write(true); 
+            _chipSelect.Write(true);   
         }
         protected void WriteDataUnsafe(ushort data) {
             _parallelDataOut.Write((byte)(data >> 8));
-            _write.Write(false); //digitalWrite(_wr, LOW);
-            _write.Write(true); //digitalWrite(_wr, HIGH);
+            _write.Write(false); 
+            _write.Write(true); 
             _parallelDataOut.Write((byte)(data));
-            _write.Write(false); //digitalWrite(_wr, LOW);
-            _write.Write(true); //digitalWrite(_wr, HIGH);
+            _write.Write(false); 
+            _write.Write(true); 
         }
     }
 }
