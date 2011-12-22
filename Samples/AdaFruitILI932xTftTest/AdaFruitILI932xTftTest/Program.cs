@@ -18,11 +18,7 @@ namespace AdaFruitILI932xTftTest {
                                     tftReset: Pins.GPIO_PIN_D5);
         public static void Main() {
             tft.Initialize();
-            tft.DrawPixel(160, 120, 0xF800);
-            tft.DrawPixel(161, 120, 0xF800);
-            tft.DrawPixel(162, 120, 0xF800);
-            tft.DrawPixel(163, 120, 0xF800);
-            tft.DrawPixel(164, 120, 0xF800);
+            tft.Test();
         }
     }
 }
