@@ -32,6 +32,15 @@
   </PropertyGroup>
   <Import Project="$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets" />
   <ItemGroup>
+    <Compile Include="Fonts\DejaVuSans9.cs" />
+    <Compile Include="Fonts\DejaVuSansBold9.cs" />
+    <Compile Include="Fonts\DejaVuSansCondensed9.cs" />
+    <Compile Include="Fonts\DejaVuSansMono8.cs" />
+    <Compile Include="Fonts\DejaVuSansMonoBold8.cs" />
+    <Compile Include="Fonts\FontDefinition.cs" />
+    <Compile Include="Fonts\Verdana14.cs" />
+    <Compile Include="Fonts\Verdana9.cs" />
+    <Compile Include="Fonts\VerdanaBold14.cs" />
     <Compile Include="Fun\CartridgeVersionInfo.cs" />
     <Compile Include="Fun\ConsoleHardwareConfig.cs" />
     <Compile Include="Fun\Game.cs" />
@@ -43,6 +52,10 @@
     <Compile Include="Hardware\AdaFruitST7735.cs" />
     <Compile Include="Hardware\AdaFruitVC0706.cs" />
     <Compile Include="Hardware\AnalogJoystick.cs" />
+    <Compile Include="Helpers\BasicTypeDeSerializer.cs" />
+    <Compile Include="Helpers\BasicTypeSerializer.cs" />
+    <Compile Include="Helpers\CRC.cs" />
+    <Compile Include="Imaging\BitmapFonts.cs" />
     <Compile Include="Imaging\Colors.cs" />
     <Compile Include="Hardware\DS1307.cs" />
     <Compile Include="Hardware\ExtendedSpiConfiguration.cs">
@@ -67,8 +80,10 @@
     <Compile Include="Imaging\CharSet.cs" />
     <Compile Include="Imaging\CoincEventHandler.cs" />
     <Compile Include="Imaging\Composition.cs" />
-    <Compile Include="Imaging\Drawing.cs" />
+    <Compile Include="Imaging\Canvas.cs" />
+    <Compile Include="Imaging\Icons16.cs" />
     <Compile Include="Imaging\PlayerMissile.cs" />
+    <Compile Include="Imaging\VirtualCanvas.cs" />
     <Compile Include="Imaging\SmallChars.cs" />
     <Compile Include="Imaging\VirtualFrame.cs" />
     <Compile Include="Math\Trigo.cs" />

@@ -2,22 +2,26 @@ using System;
 using Microsoft.SPOT;
 
 namespace netduino.helpers.Hardware {
-    public enum LcdOrientation {
-        Portrait,
-        Landscape
-    }
-
+    // Based on MicroBuilder's code: http://www.microbuilder.eu/Projects/LPC1343ReferenceDesign/TFTLCDAPI.aspx
     public class LcdProperties {
+        public LcdProperties(ushort width, ushort height, bool supportTouch, bool supportHardwareScrolling, bool supportOrientation) {
+            Width = width;
+            Height = height;
+            Touchscreen = supportTouch;
+            HwScrolling = supportHardwareScrolling;
+            Orientation = supportOrientation;
+        }
         public ushort Width { get; set; }
-        public ushort Heigth { get; set; }
+        public ushort Height { get; set; }
         public bool Touchscreen { get; set; }
         public bool HwScrolling { get; set; }
-        public LcdOrientation Orientation { get; set; }
+        public bool Orientation { get; set; }
     }
-    /// <summary>
-    /// Based on MicroBuilder's code: http://www.microbuilder.eu/Projects/LPC1343ReferenceDesign/TFTLCDAPI.aspx
-    /// </summary>
     public abstract class LCD {
+        public enum Orientation {
+            Portrait,
+            Landscape
+        }
         abstract public ushort Width { get; set; }
         abstract public ushort Height { get; set; }
         abstract public void Initialize();
@@ -31,7 +35,7 @@ namespace netduino.helpers.Hardware {
         abstract public void DrawVLine(ushort x, ushort y0, ushort y1, ushort color);
         abstract public void BackLight(uint dutyCycle);
         abstract public void Scroll(ushort pixels, ushort fillColor);
-        abstract public void SetOrientation(LcdOrientation orientation);
+        abstract public void SetOrientation(Orientation orientation);
         abstract public ushort GetControllerID();
         abstract public LcdProperties GetProperties();
         // Protected functions

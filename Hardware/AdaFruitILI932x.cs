@@ -6,9 +6,7 @@ using SecretLabs.NETMF.Hardware;
 using netduino.helpers.Imaging;
 
 namespace netduino.helpers.Hardware {
-    /// <summary>
-    /// Based on MicroBuilder's code: http://www.microbuilder.eu/Projects/LPC1343ReferenceDesign/TFTLCDAPI.aspx
-    /// </summary>
+    // Based on MicroBuilder's code: http://www.microbuilder.eu/Projects/LPC1343ReferenceDesign/TFTLCDAPI.aspx
     public class AdaFruitILI932x : LCD
     {
         public enum Register {
@@ -76,14 +74,16 @@ namespace netduino.helpers.Hardware {
         private LcdProperties _lcdProperties;
         private PWM _backLight;
 
+        public Orientation Orientation { get; set; }
+
         public override ushort Width { 
             get{
-                switch (_lcdProperties.Orientation) {
-                    case LcdOrientation.Portrait:
+                switch (Orientation) {
+                    case Orientation.Portrait:
                         return _lcdProperties.Width;
-                    case LcdOrientation.Landscape:
+                    case Orientation.Landscape:
                     default:
-                        return _lcdProperties.Heigth;
+                        return _lcdProperties.Height;
                 }
             }
             set{
@@ -92,16 +92,16 @@ namespace netduino.helpers.Hardware {
         }
         public override ushort Height {
             get {
-                switch (_lcdProperties.Orientation) {
-                    case LcdOrientation.Portrait:
-                        return _lcdProperties.Heigth;
-                    case LcdOrientation.Landscape:
+                switch (Orientation) {
+                    case Orientation.Portrait:
+                        return _lcdProperties.Height;
+                    case Orientation.Landscape:
                     default:
                         return _lcdProperties.Width;
                 }
             }
             set {
-                _lcdProperties.Heigth = value;
+                _lcdProperties.Height = value;
             }
         }
         public AdaFruitILI932x(
@@ -118,12 +118,10 @@ namespace netduino.helpers.Hardware {
                 //_read = new OutputPort(tftRead, false);
                 _write = new OutputPort(tftWrite, true);
                 _reset = new OutputPort(tftReset, true);
-                _lcdProperties = new LcdProperties();
-                _lcdProperties.Heigth = 240;
-                _lcdProperties.Width = 320;
-                _lcdProperties.Touchscreen = true;
-                _lcdProperties.HwScrolling = true;
-                _lcdProperties.Orientation = LcdOrientation.Portrait;
+                Orientation = LCD.Orientation.Portrait;
+                _lcdProperties = new LcdProperties(
+                    width: 240, height: 320,
+                    supportTouch: true, supportHardwareScrolling: true, supportOrientation: true);
                 if (tftBackLight != Cpu.Pin.GPIO_NONE) {
                     _backLight = new PWM(tftBackLight);
                 }
@@ -189,10 +187,10 @@ namespace netduino.helpers.Hardware {
                 var data = (ushort) _initializationSequence[i + 1];
                 if (register == _delay) {
                     Thread.Sleep(data);
-                    Debug.Print("Delay: " + data);
+                    //Debug.Print("Delay: " + data);
                 } else {
                     WriteRegister((Register)register, data);
-                    Debug.Print("Register: " + register + "(" + data + ")");
+                    //Debug.Print("Register: " + register + "(" + data + ")");
                 }
             }
         }
@@ -210,14 +208,14 @@ namespace netduino.helpers.Hardware {
             Home();
             for (var i = 0; i < 320; i++) {
                 for (var j = 0; j < 240; j++) {
-                    if (i > 279) WriteData((ushort)BasicColor.WHITE);
-                    else if (i > 239) WriteData((ushort)BasicColor.BLUE);
-                    else if (i > 199) WriteData((ushort)BasicColor.GREEN);
-                    else if (i > 159) WriteData((ushort)BasicColor.CYAN);
-                    else if (i > 119) WriteData((ushort)BasicColor.RED);
-                    else if (i > 79) WriteData((ushort)BasicColor.MAGENTA);
-                    else if (i > 39) WriteData((ushort)BasicColor.YELLOW);
-                    else WriteData((ushort)BasicColor.BLACK);
+                    if (i > 279) WriteData((ushort)BasicColor.White);
+                    else if (i > 239) WriteData((ushort)BasicColor.Blue);
+                    else if (i > 199) WriteData((ushort)BasicColor.Green);
+                    else if (i > 159) WriteData((ushort)BasicColor.Cyan);
+                    else if (i > 119) WriteData((ushort)BasicColor.Red);
+                    else if (i > 79) WriteData((ushort)BasicColor.Magenta);
+                    else if (i > 39) WriteData((ushort)BasicColor.Yellow);
+                    else WriteData((ushort)BasicColor.Black);
                 }
             }
         }
@@ -268,18 +266,17 @@ namespace netduino.helpers.Hardware {
             }
         }
         public override void DrawVLine(ushort x, ushort y0, ushort y1, ushort color) {
-            LcdOrientation oldOrientation = _lcdProperties.Orientation;
-
-            if (oldOrientation == LcdOrientation.Portrait) {
-                SetOrientation(LcdOrientation.Landscape);
-                DrawHLine(y0, y1, (ushort) (Height - (x + 1)), color);
-            } else {
-                SetOrientation(LcdOrientation.Portrait);
-                DrawHLine((ushort) (Width - (y0 + 1)), (ushort) (Width - (y1 + 1)), x, color);
-            }
-
-            // Switch orientation back
-            SetOrientation(oldOrientation);
+            throw new NotSupportedException("DrawVLine");
+            //Orientation oldOrientation = Orientation;
+            //if (oldOrientation == Orientation.Portrait) {
+            //    SetOrientation(Orientation.Landscape);
+            //    DrawHLine(y0, y1, (ushort) (Height - (x + 1)), color);
+            //} else {
+            //    SetOrientation(Orientation.Portrait);
+            //    DrawHLine((ushort) (Width - (y0 + 1)), (ushort) (Width - (y1 + 1)), x, color);
+            //}
+            //// Switch orientation back
+            //SetOrientation(oldOrientation);
         }
 
         public const uint BackLightOnDutyCycle = 255;
@@ -298,22 +295,22 @@ namespace netduino.helpers.Hardware {
                 y -= 320;
             WriteRegister(Register.VERTICALSCROLLCONTROL, y);
         }
-        public override void SetOrientation(LcdOrientation orientation) {
+        public override void SetOrientation(Orientation orientation) {
             ushort entryMode = 0x1030;
             ushort outputControl = 0x0100;
             switch (orientation) {
-                case LcdOrientation.Portrait:
+                case Orientation.Portrait:
                     entryMode = 0x1030;
                     outputControl = 0x0100;
                     break;
-                case LcdOrientation.Landscape:
+                case Orientation.Landscape:
                     entryMode = 0x1028;
                     outputControl = 0x0000;
                     break;
             }
             WriteRegister(Register.ENTRYMODE, entryMode);
             WriteRegister(Register.DRIVEROUTPUTCONTROL1, outputControl);
-            _lcdProperties.Orientation = orientation;
+            Orientation = orientation;
             SetCursor(0, 0);
         }
         public override ushort GetControllerID() {
@@ -335,7 +332,7 @@ namespace netduino.helpers.Hardware {
             SetCursor(x0, y0);
         }
         protected override void SetCursor(ushort x, ushort y) {
-            if (_lcdProperties.Orientation == LcdOrientation.Landscape) {
+            if (Orientation == Orientation.Landscape) {
                 WriteRegister(Register.HORIZONTALGRAMADDRESSSET, y);
                 WriteRegister(Register.VERTICALGRAMADDRESSSET, x);
             } else {

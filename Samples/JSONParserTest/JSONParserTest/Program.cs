@@ -18,7 +18,7 @@ namespace JSONParserTest {
             KloutTestInfluencees();
             TestUnicodeCharacters();
             // Requires connecting an SD card reader
-            TestParsingFromStream();
+            //TestParsingFromStream();
         }
 
         public static void TestParsingFromStream() {

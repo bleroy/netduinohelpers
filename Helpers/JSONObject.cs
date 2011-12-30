@@ -2,18 +2,20 @@ using System;
 
 namespace netduino.helpers.Helpers {
     public enum JSONObjectType {
-        String,
-        Array,
-        Object
+        Object,
+        Array
     }
 
     public class JSONObject {
         public JSONObjectType ObjectType { get; set; }
         public Object Object { get; set; }
-
-        public JSONObject(Object obj, JSONObjectType type) {
+        public string Name { get; set; }
+        public JSONObject(Object obj, JSONObjectType type, string name = null) {
             ObjectType = type;
             Object = obj;
+            if (name != null) {
+                Name = name;
+            }
         }
     }
 }
