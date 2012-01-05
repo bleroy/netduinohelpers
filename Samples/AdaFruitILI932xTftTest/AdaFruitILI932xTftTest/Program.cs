@@ -42,14 +42,15 @@ namespace AdaFruitILI932xTftTest {
 
         public static void Main() {
             tft.Initialize();
+
 #if DRAWTOFILE
             StorageDevice.MountSD("SD", SPI.SPI_module.SPI1, Pins.GPIO_PIN_D10);
             var file = new FileStream(@"SD\VirtualCanvas.bin", FileMode.Create);
-            var serializer = new BasicTypeSerializer(file);
+            var context = new BasicTypeSerializerContext(file);
 #else
-            var serializer = new BasicTypeSerializer();
+            var context = new BasicTypeSerializerContext();
 #endif
-            var virtualCanvas = new VirtualCanvas(serializer);
+            var virtualCanvas = new VirtualCanvas(context);
             var fontDejaVuSansBold9 = new DejaVuSansBold9();
             var fontDejaVuSans9 = new DejaVuSans9();
             var fontDejaVuSansMono8 = new DejaVuSansMono8();
@@ -79,10 +80,10 @@ namespace AdaFruitILI932xTftTest {
 #if DRAWTOFILE
             file.Flush();
             file.Close();
-            localCanvas.Replay(new BasicTypeDeSerializer(new FileStream(@"SD\VirtualCanvas.bin", FileMode.Open)));
+            localCanvas.Replay(new BasicTypeDeSerializerContext(new FileStream(@"SD\VirtualCanvas.bin", FileMode.Open)));
             StorageDevice.Unmount("SD");
 #else
-            localCanvas.Replay(new BasicTypeDeSerializer(serializer.GetBuffer(),serializer.ContentSize));
+            localCanvas.Replay(new BasicTypeDeSerializerContext(context.GetBuffer()));
 #endif
         }
         public static void RenderCompoundShapes(Canvas canvas, FontInfo fontInfo) {

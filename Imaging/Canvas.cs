@@ -765,107 +765,107 @@ namespace netduino.helpers.Imaging {
             a = b;
             b = t;
         }
-        public void Replay(BasicTypeDeSerializer deserializer) {
-            if (deserializer == null) throw new ArgumentNullException("deserializer");
+        public void Replay(BasicTypeDeSerializerContext context) {
+            if (context == null) throw new ArgumentNullException("context");
             byte command = 0;
-            while (deserializer.MoreData) {
-                command = deserializer.Get();
+            while (context.MoreData) {
+                command = BasicTypeDeSerializer.Get(context);
                 switch ((Command)command) {
                     case Command.DrawTestPattern:
                         DrawTestPattern();
                         break;
                     case Command.DrawPixel:
-                        GetDrawPixel(deserializer);
+                        GetDrawPixel(context);
                         break;
                     case Command.DrawFill:
-                        GetDrawFill(deserializer);
+                        GetDrawFill(context);
                         break;
                     case Command.DrawLine:
-                        GetDrawLine(deserializer);
+                        GetDrawLine(context);
                         break;
                     case Command.DrawLineDotted:
-                        GetDrawLineDotted(deserializer);
+                        GetDrawLineDotted(context);
                         break;
                     case Command.DrawCircle:
-                        GetDrawCircle(deserializer);
+                        GetDrawCircle(context);
                         break;
                     case Command.DrawCircleFilled:
-                        GetDrawCircleFilled(deserializer);
+                        GetDrawCircleFilled(context);
                         break;
                     case Command.DrawCornerFilled:
-                        GetDrawCornerFilled(deserializer);
+                        GetDrawCornerFilled(context);
                         break;
                     case Command.DrawArrow:
-                        GetDrawArrow(deserializer);
+                        GetDrawArrow(context);
                         break;
                     case Command.DrawRectangle:
-                        GetDrawRectangle(deserializer);
+                        GetDrawRectangle(context);
                         break;
                     case Command.DrawRectangleFilled:
-                        GetDrawRectangleFilled(deserializer);
+                        GetDrawRectangleFilled(context);
                         break;
                     case Command.DrawRectangleRounded:
-                        GetDrawRectangleRounded(deserializer);
+                        GetDrawRectangleRounded(context);
                         break;
                     case Command.DrawTriangle:
-                        GetDrawTriangle(deserializer);
+                        GetDrawTriangle(context);
                         break;
                     case Command.DrawTriangleFilled:
-                        GetDrawTriangleFilled(deserializer);
+                        GetDrawTriangleFilled(context);
                         break;
                     case Command.DrawProgressBar:
-                        GetDrawProgressBar(deserializer);
+                        GetDrawProgressBar(context);
                         break;
                     case Command.DrawButton:
-                        GetDrawButton(deserializer);
+                        GetDrawButton(context);
                         break;
                     case Command.DrawIcon16:
-                        GetDrawIcon16(deserializer);
+                        GetDrawIcon16(context);
                         break;
                     case Command.DrawString:
-                        GetDrawString(deserializer);
+                        GetDrawString(context);
                         break;
                     case Command.DrawBitmapImage:
                         throw new NotImplementedException("command");
                     case Command.DrawCirclePoints:
-                        GetDrawCirclePoints(deserializer);
+                        GetDrawCirclePoints(context);
                         break;
                     case Command.SetOrientation:
-                        GetSetOrientation(deserializer);
+                        GetSetOrientation(context);
                         break;
                     default:
                         throw new ApplicationException("command");
                 }
             }
         }
-        private void GetDrawPixel(BasicTypeDeSerializer deserializer) {
+        private void GetDrawPixel(BasicTypeDeSerializerContext context) {
             ushort x = 0;
             ushort y = 0;
             ushort color = 0;
-            x = deserializer.Get(x);
-            y = deserializer.Get(y);
-            color = deserializer.Get(color);
+            x = BasicTypeDeSerializer.Get(context, x);
+            y = BasicTypeDeSerializer.Get(context, y);
+            color = BasicTypeDeSerializer.Get(context, color);
             DrawPixel(x, y, (BasicColor)color);
         }
-        private void GetDrawFill(BasicTypeDeSerializer deserializer) {
+        private void GetDrawFill(BasicTypeDeSerializerContext context) {
             ushort color = 0;
-            color = deserializer.Get(color);
+            color = BasicTypeDeSerializer.Get(context, color);
             DrawFill((BasicColor)color);
         }
-        private void GetDrawLine(BasicTypeDeSerializer deserializer) {
+        private void GetDrawLine(BasicTypeDeSerializerContext context) {
             ushort x0 = 0;
             ushort y0 = 0;
             ushort x1 = 0;
             ushort y1 = 0;
             ushort color = 0;
-            x0 = deserializer.Get(x0);
-            y0 = deserializer.Get(y0);
-            x1 = deserializer.Get(x1);
-            y1 = deserializer.Get(y1);
-            color = deserializer.Get(color);
+            x0 = BasicTypeDeSerializer.Get(context, x0);
+            y0 = BasicTypeDeSerializer.Get(context, y0);
+            x1 = BasicTypeDeSerializer.Get(context, x1);
+            y1 = BasicTypeDeSerializer.Get(context, y1);
+            color = BasicTypeDeSerializer.Get(context, color);
             DrawLine(x0, y0, x1, y1, (BasicColor)color);
         }
-        private void GetDrawLineDotted(BasicTypeDeSerializer deserializer) {
+        private void GetDrawLineDotted(BasicTypeDeSerializerContext context) {
             ushort x0 = 0;
             ushort y0 = 0;
             ushort x1 = 0;
@@ -873,90 +873,90 @@ namespace netduino.helpers.Imaging {
             ushort empty = 0;
             ushort solid = 0;
             ushort color = 0;
-            x0 = deserializer.Get(x0);
-            y0 = deserializer.Get(y0);
-            x1 = deserializer.Get(x1);
-            y1 = deserializer.Get(y1);
-            color = deserializer.Get(color);
-            empty = deserializer.Get(empty);
-            solid = deserializer.Get(solid);
+            x0 = BasicTypeDeSerializer.Get(context, x0);
+            y0 = BasicTypeDeSerializer.Get(context, y0);
+            x1 = BasicTypeDeSerializer.Get(context, x1);
+            y1 = BasicTypeDeSerializer.Get(context, y1);
+            color = BasicTypeDeSerializer.Get(context, color);
+            empty = BasicTypeDeSerializer.Get(context, empty);
+            solid = BasicTypeDeSerializer.Get(context, solid);
             DrawLineDotted(x0, y0, x1, y1, empty, solid, (BasicColor)color);
         }
-        private void GetDrawCircle(BasicTypeDeSerializer deserializer) {
+        private void GetDrawCircle(BasicTypeDeSerializerContext context) {
             ushort xCenter = 0;
             ushort yCenter = 0;
             ushort radius = 0;
             ushort color = 0;
-            xCenter = deserializer.Get(xCenter);
-            yCenter = deserializer.Get(yCenter);
-            radius = deserializer.Get(radius);
-            color = deserializer.Get(color);
+            xCenter = BasicTypeDeSerializer.Get(context, xCenter);
+            yCenter = BasicTypeDeSerializer.Get(context, yCenter);
+            radius = BasicTypeDeSerializer.Get(context, radius);
+            color = BasicTypeDeSerializer.Get(context, color);
             DrawCircle(xCenter, yCenter, radius, (BasicColor)color);
         }
-        private void GetDrawCircleFilled(BasicTypeDeSerializer deserializer) {
+        private void GetDrawCircleFilled(BasicTypeDeSerializerContext context) {
             ushort xCenter = 0;
             ushort yCenter = 0;
             ushort radius = 0;
             ushort color = 0;
-            xCenter = deserializer.Get(xCenter);
-            yCenter = deserializer.Get(yCenter);
-            radius = deserializer.Get(radius);
-            color = deserializer.Get(color);
+            xCenter = BasicTypeDeSerializer.Get(context, xCenter);
+            yCenter = BasicTypeDeSerializer.Get(context, yCenter);
+            radius = BasicTypeDeSerializer.Get(context, radius);
+            color = BasicTypeDeSerializer.Get(context, color);
             DrawCircleFilled(xCenter, yCenter, radius, (BasicColor)color);
         }
-        private void GetDrawCornerFilled(BasicTypeDeSerializer deserializer) {
+        private void GetDrawCornerFilled(BasicTypeDeSerializerContext context) {
             ushort xCenter = 0;
             ushort yCenter = 0;
             ushort radius = 0;
             ushort position = 0;
             ushort color = 0;
-            xCenter = deserializer.Get(xCenter);
-            yCenter = deserializer.Get(yCenter);
-            radius = deserializer.Get(radius);
-            position = deserializer.Get(position);
-            color = deserializer.Get(color);
+            xCenter = BasicTypeDeSerializer.Get(context, xCenter);
+            yCenter = BasicTypeDeSerializer.Get(context, yCenter);
+            radius = BasicTypeDeSerializer.Get(context, radius);
+            position = BasicTypeDeSerializer.Get(context, position);
+            color = BasicTypeDeSerializer.Get(context, color);
             DrawCornerFilled(xCenter, yCenter, radius, (CornerPosition)position, (BasicColor)color);
         }
-        private void GetDrawArrow(BasicTypeDeSerializer deserializer) {
+        private void GetDrawArrow(BasicTypeDeSerializerContext context) {
             ushort x = 0;
             ushort y = 0;
             ushort size = 0;
             ushort direction = 0;
             ushort color = 0;
-            x = deserializer.Get(x);
-            y = deserializer.Get(y);
-            size = deserializer.Get(size);
-            direction = deserializer.Get(direction);
-            color = deserializer.Get(color);
+            x = BasicTypeDeSerializer.Get(context, x);
+            y = BasicTypeDeSerializer.Get(context, y);
+            size = BasicTypeDeSerializer.Get(context, size);
+            direction = BasicTypeDeSerializer.Get(context, direction);
+            color = BasicTypeDeSerializer.Get(context, color);
             DrawArrow(x, y, size, (DrawingDirection)direction, (BasicColor)color);
         }
-        private void GetDrawRectangle(BasicTypeDeSerializer deserializer) {
+        private void GetDrawRectangle(BasicTypeDeSerializerContext context) {
             ushort x0 = 0;
             ushort y0 = 0;
             ushort x1 = 0;
             ushort y1 = 0;
             ushort color = 0;
-            x0 = deserializer.Get(x0);
-            y0 = deserializer.Get(y0);
-            x1 = deserializer.Get(x1);
-            y1 = deserializer.Get(y1);
-            color = deserializer.Get(color);
+            x0 = BasicTypeDeSerializer.Get(context, x0);
+            y0 = BasicTypeDeSerializer.Get(context, y0);
+            x1 = BasicTypeDeSerializer.Get(context, x1);
+            y1 = BasicTypeDeSerializer.Get(context, y1);
+            color = BasicTypeDeSerializer.Get(context, color);
             DrawRectangle(x0, y0, x1, y1, (BasicColor)color);
         }
-        private void GetDrawRectangleFilled(BasicTypeDeSerializer deserializer) {
+        private void GetDrawRectangleFilled(BasicTypeDeSerializerContext context) {
             ushort x0 = 0;
             ushort y0 = 0;
             ushort x1 = 0;
             ushort y1 = 0;
             ushort color = 0;
-            x0 = deserializer.Get(x0);
-            y0 = deserializer.Get(y0);
-            x1 = deserializer.Get(x1);
-            y1 = deserializer.Get(y1);
-            color = deserializer.Get(color);
+            x0 = BasicTypeDeSerializer.Get(context, x0);
+            y0 = BasicTypeDeSerializer.Get(context, y0);
+            x1 = BasicTypeDeSerializer.Get(context, x1);
+            y1 = BasicTypeDeSerializer.Get(context, y1);
+            color = BasicTypeDeSerializer.Get(context, color);
             DrawRectangleFilled(x0, y0, x1, y1, (BasicColor)color);
         }
-        private void GetDrawRectangleRounded(BasicTypeDeSerializer deserializer) {
+        private void GetDrawRectangleRounded(BasicTypeDeSerializerContext context) {
             ushort x0 = 0;
             ushort y0 = 0;
             ushort x1 = 0;
@@ -964,16 +964,16 @@ namespace netduino.helpers.Imaging {
             ushort color = 0;
             ushort radius = 0;
             ushort corners = 0;
-            x0 = deserializer.Get(x0);
-            y0 = deserializer.Get(y0);
-            x1 = deserializer.Get(x1);
-            y1 = deserializer.Get(y1);
-            color = deserializer.Get(color);
-            radius = deserializer.Get(radius);
-            corners = deserializer.Get(corners);
+            x0 = BasicTypeDeSerializer.Get(context, x0);
+            y0 = BasicTypeDeSerializer.Get(context, y0);
+            x1 = BasicTypeDeSerializer.Get(context, x1);
+            y1 = BasicTypeDeSerializer.Get(context, y1);
+            color = BasicTypeDeSerializer.Get(context, color);
+            radius = BasicTypeDeSerializer.Get(context, radius);
+            corners = BasicTypeDeSerializer.Get(context, corners);
             DrawRectangleRounded(x0, y0, x1, y1, (BasicColor)color, radius, (RoundedCornerStyle)corners);
         }
-        private void GetDrawTriangle(BasicTypeDeSerializer deserializer) {
+        private void GetDrawTriangle(BasicTypeDeSerializerContext context) {
             ushort x0 = 0;
             ushort y0 = 0;
             ushort x1 = 0;
@@ -981,16 +981,16 @@ namespace netduino.helpers.Imaging {
             ushort x2 = 0;
             ushort y2 = 0; 
             ushort color = 0;
-            x0 = deserializer.Get(x0);
-            y0 = deserializer.Get(y0);
-            x1 = deserializer.Get(x1);
-            y1 = deserializer.Get(y1);
-            x2 = deserializer.Get(x2);
-            y2 = deserializer.Get(y2);
-            color = deserializer.Get(color);
+            x0 = BasicTypeDeSerializer.Get(context, x0);
+            y0 = BasicTypeDeSerializer.Get(context, y0);
+            x1 = BasicTypeDeSerializer.Get(context, x1);
+            y1 = BasicTypeDeSerializer.Get(context, y1);
+            x2 = BasicTypeDeSerializer.Get(context, x2);
+            y2 = BasicTypeDeSerializer.Get(context, y2);
+            color = BasicTypeDeSerializer.Get(context, color);
             DrawTriangle(x0, y0, x1, y1, x2, y2, (BasicColor)color);
         }
-        private void GetDrawTriangleFilled(BasicTypeDeSerializer deserializer) {
+        private void GetDrawTriangleFilled(BasicTypeDeSerializerContext context) {
             ushort x0 = 0;
             ushort y0 = 0;
             ushort x1 = 0;
@@ -998,16 +998,16 @@ namespace netduino.helpers.Imaging {
             ushort x2 = 0;
             ushort y2 = 0;
             ushort color = 0;
-            x0 = deserializer.Get(x0);
-            y0 = deserializer.Get(y0);
-            x1 = deserializer.Get(x1);
-            y1 = deserializer.Get(y1);
-            x2 = deserializer.Get(x2);
-            y2 = deserializer.Get(y2);
-            color = deserializer.Get(color);
+            x0 = BasicTypeDeSerializer.Get(context, x0);
+            y0 = BasicTypeDeSerializer.Get(context, y0);
+            x1 = BasicTypeDeSerializer.Get(context, x1);
+            y1 = BasicTypeDeSerializer.Get(context, y1);
+            x2 = BasicTypeDeSerializer.Get(context, x2);
+            y2 = BasicTypeDeSerializer.Get(context, y2);
+            color = BasicTypeDeSerializer.Get(context, color);
             DrawTriangleFilled(x0, y0, x1, y1, x2, y2, (BasicColor)color);
         }
-        private void GetDrawProgressBar(BasicTypeDeSerializer deserializer) {
+        private void GetDrawProgressBar(BasicTypeDeSerializerContext context) {
             ushort x = 0;
             ushort y = 0;
             ushort width = 0;
@@ -1019,17 +1019,17 @@ namespace netduino.helpers.Imaging {
             ushort progressBorderColor = 0;
             ushort progressFillColor = 0;
             ushort progress = 0;
-            x = deserializer.Get(x);
-            y = deserializer.Get(y);
-            width = deserializer.Get(width);
-            height = deserializer.Get(height);
-            borderCorners = deserializer.Get(borderCorners);
-            progressCorners = deserializer.Get(progressCorners);
-            borderColor = deserializer.Get(borderColor);
-            borderFillColor = deserializer.Get(borderFillColor);
-            progressBorderColor = deserializer.Get(progressBorderColor);
-            progressFillColor = deserializer.Get(progressFillColor);
-            progress = deserializer.Get(progress);
+            x = BasicTypeDeSerializer.Get(context, x);
+            y = BasicTypeDeSerializer.Get(context, y);
+            width = BasicTypeDeSerializer.Get(context, width);
+            height = BasicTypeDeSerializer.Get(context, height);
+            borderCorners = BasicTypeDeSerializer.Get(context, borderCorners);
+            progressCorners = BasicTypeDeSerializer.Get(context, progressCorners);
+            borderColor = BasicTypeDeSerializer.Get(context, borderColor);
+            borderFillColor = BasicTypeDeSerializer.Get(context, borderFillColor);
+            progressBorderColor = BasicTypeDeSerializer.Get(context, progressBorderColor);
+            progressFillColor = BasicTypeDeSerializer.Get(context, progressFillColor);
+            progress = BasicTypeDeSerializer.Get(context, progress);
             DrawProgressBar(
                 x, y,
                 width, height,
@@ -1038,7 +1038,7 @@ namespace netduino.helpers.Imaging {
                 (BasicColor)progressBorderColor, (BasicColor)progressFillColor,
                 progress);
         }
-        private void GetDrawButton(BasicTypeDeSerializer deserializer) {
+        private void GetDrawButton(BasicTypeDeSerializerContext context) {
             ushort x=0;
             ushort y=0;
             ushort width=0;
@@ -1050,17 +1050,17 @@ namespace netduino.helpers.Imaging {
             ushort fontColor=0;
             string text;
             ushort cornerStyle = 0;
-            x = deserializer.Get(x);
-            y = deserializer.Get(y);
-            width = deserializer.Get(width);
-            height = deserializer.Get(height);
-            fontInfoID = deserializer.Get(fontInfoID);
-            fontHeight = deserializer.Get(fontHeight);
-            borderColor = deserializer.Get(borderColor);
-            fillColor = deserializer.Get(fillColor);
-            fontColor = deserializer.Get(fontColor);
-            text = deserializer.Get("");
-            cornerStyle = deserializer.Get(cornerStyle);
+            x = BasicTypeDeSerializer.Get(context, x);
+            y = BasicTypeDeSerializer.Get(context, y);
+            width = BasicTypeDeSerializer.Get(context, width);
+            height = BasicTypeDeSerializer.Get(context, height);
+            fontInfoID = BasicTypeDeSerializer.Get(context, fontInfoID);
+            fontHeight = BasicTypeDeSerializer.Get(context, fontHeight);
+            borderColor = BasicTypeDeSerializer.Get(context, borderColor);
+            fillColor = BasicTypeDeSerializer.Get(context, fillColor);
+            fontColor = BasicTypeDeSerializer.Get(context, fontColor);
+            text = BasicTypeDeSerializer.Get(context, "");
+            cornerStyle = BasicTypeDeSerializer.Get(context, cornerStyle);
             DrawButton(
                 x, y,
                 width, height,
@@ -1093,46 +1093,46 @@ namespace netduino.helpers.Imaging {
             }
             return ((FontDefinition)_fontInfoTable[fontInfoID]).GetFontInfo();
         }
-        private void GetDrawIcon16(BasicTypeDeSerializer deserializer) {
+        private void GetDrawIcon16(BasicTypeDeSerializerContext context) {
             ushort x = 0;
             ushort y = 0;
             ushort color = 0;
             ushort[] icon = null;
-            x = deserializer.Get(x);
-            y = deserializer.Get(y);
-            color = deserializer.Get(color);
-            icon = deserializer.Get(icon);
+            x = BasicTypeDeSerializer.Get(context, x);
+            y = BasicTypeDeSerializer.Get(context, y);
+            color = BasicTypeDeSerializer.Get(context, color);
+            icon = BasicTypeDeSerializer.Get(context, icon);
             DrawIcon16(x, y, (BasicColor)color, icon);
         }
-        private void GetDrawString(BasicTypeDeSerializer deserializer){
+        private void GetDrawString(BasicTypeDeSerializerContext context) {
             ushort x = 0;
             ushort y = 0;
             ushort color = 0;
             ushort fontInfoID = 0;
             string text;
-            x = deserializer.Get(x);
-            y = deserializer.Get(y);
-            color = deserializer.Get(color);
-            fontInfoID = deserializer.Get(fontInfoID);
-            text = deserializer.Get("");
+            x = BasicTypeDeSerializer.Get(context, x);
+            y = BasicTypeDeSerializer.Get(context, y);
+            color = BasicTypeDeSerializer.Get(context, color);
+            fontInfoID = BasicTypeDeSerializer.Get(context, fontInfoID);
+            text = BasicTypeDeSerializer.Get(context, "");
             DrawString(x, y, (BasicColor)color, FontInfoLookUp(fontInfoID), text);
         }
-        private void GetDrawCirclePoints(BasicTypeDeSerializer deserializer) {
+        private void GetDrawCirclePoints(BasicTypeDeSerializerContext context) {
             ushort cx = 0;
             ushort cy = 0;
             ushort x = 0;
             ushort y = 0;
             ushort color = 0;
-            cx = deserializer.Get(cx);
-            cy = deserializer.Get(cy);
-            x = deserializer.Get(x);
-            y = deserializer.Get(y);
-            color = deserializer.Get(color);
+            cx = BasicTypeDeSerializer.Get(context, cx);
+            cy = BasicTypeDeSerializer.Get(context, cy);
+            x = BasicTypeDeSerializer.Get(context, x);
+            y = BasicTypeDeSerializer.Get(context, y);
+            color = BasicTypeDeSerializer.Get(context, color);
             DrawCirclePoints(cx, cy, x, y, (BasicColor)color);
         }
-        private void GetSetOrientation(BasicTypeDeSerializer deserializer) {
+        private void GetSetOrientation(BasicTypeDeSerializerContext context) {
             ushort orientation = 0;
-            orientation = deserializer.Get(orientation);
+            orientation = BasicTypeDeSerializer.Get(context, orientation);
             SetOrientation((LCD.Orientation)orientation);
         }
         private LCD _display; 

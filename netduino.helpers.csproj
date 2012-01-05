@@ -54,7 +54,6 @@
     <Compile Include="Hardware\AnalogJoystick.cs" />
     <Compile Include="Helpers\BasicTypeDeSerializer.cs" />
     <Compile Include="Helpers\BasicTypeSerializer.cs" />
-    <Compile Include="Helpers\CRC.cs" />
     <Compile Include="Imaging\BitmapFonts.cs" />
     <Compile Include="Imaging\Colors.cs" />
     <Compile Include="Hardware\DS1307.cs" />
