@@ -65,6 +65,7 @@ namespace netduino.helpers.Helpers {
             // Finalize the content size in the header
             _serializeBuffer[1] = (byte)(ContentSize >> 8);
             _serializeBuffer[2] = (byte)(ContentSize);
+            _currentIndex = _headerVersion;
             return _serializeBuffer;
         }
         public void Dispose() {
