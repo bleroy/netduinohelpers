@@ -68,11 +68,11 @@ namespace AdaFruitST7735Test {
             byte green = 1;
             byte blue = 5;
             var y = 0;
-            
-            for (; y < AdaFruitST7735.Height; y++) {
+
+            for (; y < tft.Height; y++) {
                 red += 2;
                 green++;
-                tft.DrawLine(0, 0, AdaFruitST7735.Width, y, tft.GetRGBColor(red, green, blue));
+                tft.DrawLine(0, 0, tft.Width, y, tft.GetRGBColor(red, green, blue));
                 tft.Refresh();
             }
 
@@ -82,14 +82,14 @@ namespace AdaFruitST7735Test {
             for (; y >= 0; y--) {
                 red += 2;
                 green++;
-                tft.DrawLine(AdaFruitST7735.Width - 1, AdaFruitST7735.Height - 1, 0, y, tft.GetRGBColor(red, green, blue));
+                tft.DrawLine(tft.Width - 1, tft.Height - 1, 0, y, tft.GetRGBColor(red, green, blue));
                 tft.Refresh();
             }
         }
 
         public static void DisplayCircles() {
-            var xHalf = AdaFruitST7735.Width / 2;
-            var yHalf = AdaFruitST7735.Height / 2;
+            var xHalf = tft.Width / 2;
+            var yHalf = tft.Height / 2;
             byte red = 1;
             byte green = 1;
             byte blue = 1;        
@@ -126,7 +126,7 @@ namespace AdaFruitST7735Test {
             var x = 0;
             var y = 0;
 
-            while (y < AdaFruitST7735.Height) {
+            while (y < tft.Height) {
                 byte red = 1;
                 for (; red < 32; red+=3) {
                     byte green = 1;
@@ -137,7 +137,7 @@ namespace AdaFruitST7735Test {
 
                             tft.DrawPixel(x++, y, color);
 
-                            if (x >= AdaFruitST7735.Width) {
+                            if (x >= tft.Width) {
                                 x = 0;
                                 y++;
                             }
