@@ -13,18 +13,19 @@ using SecretLabs.NETMF.Hardware.NetduinoMini;
 using SecretLabs.NETMF.Hardware.Netduino;
 #endif
 
-namespace Paddles {
+namespace Meteors {
     public class Program {
 
 #if dev
 #if NETDUINO_MINI
         // Use this document to see the pin map of the mini: http://www.netduino.com/netduinomini/schematic.pdf
-        public static AnalogJoystick JoystickLeft = new AnalogJoystick(Pins.GPIO_PIN_5, Pins.GPIO_PIN_6, minRange: 1023, maxRange: 0, centerDeadZoneRadius: 20);
-        public static AnalogJoystick JoystickRight = new AnalogJoystick(Pins.GPIO_PIN_7, Pins.GPIO_PIN_8, minRange: 1023, maxRange: 0, centerDeadZoneRadius: 20);
+        public static AnalogJoystick JoystickLeft = new AnalogJoystick(Pins.GPIO_PIN_5, Pins.GPIO_PIN_6, minYRange: 1023, maxYRange: 0, centerDeadZoneRadius: 80);
+        public static AnalogJoystick JoystickRight = new AnalogJoystick(Pins.GPIO_PIN_7, Pins.GPIO_PIN_8, minYRange: 1023, maxYRange: 0, centerDeadZoneRadius: 80);
         public static Max72197221 Matrix = new Max72197221(chipSelect: Pins.GPIO_PIN_17);
         public static PWM Speaker = new PWM(Pins.GPIO_PIN_18);
         public static PushButton ButtonLeft = new PushButton(Pins.GPIO_PIN_19, Port.InterruptMode.InterruptEdgeLevelLow, null, Port.ResistorMode.PullUp);
         public static PushButton ButtonRight = new PushButton(Pins.GPIO_PIN_20, Port.InterruptMode.InterruptEdgeLevelLow, null, Port.ResistorMode.PullUp);
+        public static OutputPort max7219PowerTransistor = new OutputPort(Pins.GPIO_PIN_9,false);
 #else
         public static AnalogJoystick JoystickLeft = new AnalogJoystick(Pins.GPIO_PIN_A0, Pins.GPIO_PIN_A1, centerDeadZoneRadius: 20);
         public static AnalogJoystick JoystickRight = new AnalogJoystick(Pins.GPIO_PIN_A2, Pins.GPIO_PIN_A3, centerDeadZoneRadius: 20);
@@ -32,6 +33,7 @@ namespace Paddles {
         public static PWM Speaker = new PWM(Pins.GPIO_PIN_D5);
         public static PushButton ButtonLeft = new PushButton(Pins.GPIO_PIN_D0, Port.InterruptMode.InterruptEdgeLevelLow, null, Port.ResistorMode.PullUp);
         public static PushButton ButtonRight = new PushButton(Pins.GPIO_PIN_D1, Port.InterruptMode.InterruptEdgeLevelLow, null, Port.ResistorMode.PullUp);
+        public static OutputPort max7219PowerTransistor = new OutputPort(Pins.GPIO_PIN_D7,false);
 #endif
         public static SDResourceLoader ResourceLoader = new SDResourceLoader();
 #endif
@@ -67,7 +69,7 @@ namespace Paddles {
         /// </summary>
         /// <param name="args">Array of object references to the hardware features</param>
         public static void Run(object[] args) {
-            var thread = new GameOfPaddles(new ConsoleHardwareConfig(args)).Run();
+            var thread = new GameOfMeteors(new ConsoleHardwareConfig(args)).Run();
             thread.Join();
         }
     }
