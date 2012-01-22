@@ -58,14 +58,14 @@ namespace netduino.helpers.Imaging {
         }
 
         public bool GetPixel(int x, int y) {
-            if (x >= Height || y >= Width || x < 0 || y < 0) return false;
+            if (x >= Width || y >= Height || x < 0 || y < 0) return false;
             var xOffset = x % FrameSize;
             var index = y * WidthModuloSize + (x / FrameSize);
             return (BitmapData[index] & ShiftMasks[xOffset]) != 0;
         }
 
         public void SetPixel(int x, int y, bool value) {
-            if (x >= Height || y >= Width || x < 0 || y < 0) return;
+            if (x >= Width || y >= Height || x < 0 || y < 0) return;
             var xOffset = x % FrameSize;
             var index = y * WidthModuloSize + (x / FrameSize);
             if (value) {
@@ -92,7 +92,7 @@ namespace netduino.helpers.Imaging {
                 if (line < 0 || line >= Height) {
                     _frame[frameLine] = 0x00;
                 } else if (xOffset == 0) {
-                    if (x >= 0 && x + FrameSize < Width) {
+                    if (x >= 0 && x + FrameSize <= Width) {
                         // if no scrolling is required, stored the graphics as-is
                         _frame[frameLine] = BitmapData[index];
                     }
