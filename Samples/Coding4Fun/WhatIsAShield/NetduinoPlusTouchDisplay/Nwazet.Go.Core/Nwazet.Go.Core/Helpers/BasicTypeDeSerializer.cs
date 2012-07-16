@@ -1,10 +1,9 @@
 using System;
-using System.Collections;
 using System.IO;
 using System.Text;
-using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
-namespace netduino.helpers.Helpers {
+
+namespace Nwazet.Go.Helpers {
     public class BasicTypeDeSerializerContext : IDisposable {
         public int ContentSize {
             get {
@@ -13,26 +12,40 @@ namespace netduino.helpers.Helpers {
         }
         public bool MoreData {
             get {
-                return (_currentIndex < _contentSize) ? true : false;
+                return (_currentIndex < _contentSize);
             }
         }
-        public BasicTypeDeSerializerContext(byte[] buffer) {
+        public const int BufferStartOffsetDefault = 2;
+
+        private int _bufferStartOffset;
+
+        public BasicTypeDeSerializerContext() {
+            _bufferStartOffset = BufferStartOffsetDefault;
+        }
+        public BasicTypeDeSerializerContext(byte[] buffer, int BufferStartOffset = BufferStartOffsetDefault) {
+            Bind(buffer, BufferStartOffset);
+        }
+        public BasicTypeDeSerializerContext(FileStream file, int BufferStartOffset = BufferStartOffsetDefault) {
+            Bind(file, BufferStartOffset);
+        }
+        public void Bind(byte[] buffer, int BufferStartOffset) {
             if (buffer == null) throw new ArgumentNullException("buffer");
             _buffer = buffer;
             _readFunction = ReadFromBuffer;
-            ReadHeader();
+            ReadHeader(BufferStartOffset);
         }
-        public BasicTypeDeSerializerContext(FileStream file) {
+        public void Bind(FileStream file, int BufferStartOffset) {
             if (file == null) throw new ArgumentNullException("file");
             _file = file;
             _readFunction = ReadFromFile;
-            ReadHeader();
+            _file.Seek(_bufferStartOffset, SeekOrigin.Begin); 
+            ReadHeader(BufferStartOffset);
         }
-        private void ReadHeader() {
-            _isLittleEndian = Utility.ExtractValueFromArray(new byte[] { 0xBE, 0xEF }, 0, 2) == 0xEFBE;
-            _currentIndex = 0;
+        private void ReadHeader(int BufferStartOffset) {
+            _bufferStartOffset = BufferStartOffset;
+            _currentIndex = _bufferStartOffset;
             _headerVersion = Retrieve();
-            if (_headerVersion < 3) throw new ApplicationException("_headerVersion");
+            if (_headerVersion != 3) throw new ApplicationException("_headerVersion");
             if (_buffer != null) {
                 _contentSize = (int)(Retrieve() << 8);
                 _contentSize |= (int)Retrieve();
@@ -42,7 +55,7 @@ namespace netduino.helpers.Helpers {
                 Retrieve();
                 _contentSize = (int)_file.Length;
             }
-            if (_contentSize == 0) throw new ArgumentNullException("_contentSize");
+            if (_contentSize == 0) throw new ApplicationException("_contentSize");
         }
         public byte Retrieve() {
             return _readFunction();
@@ -59,6 +72,12 @@ namespace netduino.helpers.Helpers {
                 return _isLittleEndian;
             }
         }
+        public void Wipe() {
+            var length = _buffer.Length;
+            for (var i = 0; i < length; i++) {
+                _buffer[i] = 0;
+            }
+        }
         public void Dispose() {
             _encoding = null;
             _file = null;
@@ -72,7 +91,7 @@ namespace netduino.helpers.Helpers {
         private int _currentIndex;
         private int _contentSize;
         private byte _headerVersion;
-        private bool _isLittleEndian;
+        private bool _isLittleEndian = Utility.ExtractValueFromArray(new byte[] { 0xBE, 0xEF }, 0, 2) == 0xEFBE;
         private ReadByte _readFunction;
     }
 
@@ -173,6 +192,7 @@ namespace netduino.helpers.Helpers {
                     return new string(unicodeChars);
                 }
             }
+            Get(context); // Skip null character terminator
             return "";
         }
         public static byte[] Get(BasicTypeDeSerializerContext context, byte[] bytes) {

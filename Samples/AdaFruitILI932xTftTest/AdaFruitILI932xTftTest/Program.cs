@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define DRAWTOFILE
+
+using System;
 using System.IO;
 
 using Microsoft.SPOT;
@@ -83,7 +85,18 @@ namespace AdaFruitILI932xTftTest {
             localCanvas.Replay(new BasicTypeDeSerializerContext(new FileStream(@"SD\VirtualCanvas.bin", FileMode.Open)));
             StorageDevice.Unmount("SD");
 #else
-            localCanvas.Replay(new BasicTypeDeSerializerContext(context.GetBuffer()));
+            //localCanvas.Replay(new BasicTypeDeSerializerContext(context.GetBuffer()));
+
+            StorageDevice.MountSD("SD", SPI.SPI_module.SPI1, Pins.GPIO_PIN_D10);
+            var file = new FileStream(@"SD\VirtualCanvas.bin", FileMode.Create);
+            
+            int contentSize = 0;
+            byte[] buffer = context.GetBuffer(ref contentSize);
+
+            file.Write(buffer, 0, contentSize);
+            file.Flush();
+            file.Close();
+            StorageDevice.Unmount("SD");
 #endif
         }
         public static void RenderCompoundShapes(Canvas canvas, FontInfo fontInfo) {

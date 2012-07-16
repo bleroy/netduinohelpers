@@ -3,22 +3,35 @@ using System.IO;
 using System.Text;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
-namespace netduino.helpers.Helpers {
+
+namespace Nwazet.Go.Helpers {
     public class BasicTypeSerializerContext : IDisposable {
+        public delegate void OnHighWatermarkEvent();
+
         public int ContentSize {
             get { return _currentIndex; }
         }
         public const int MinimumBufferSize = 100;
-        private bool _isLittleEndian;
+        
+        private bool _isLittleEndian = Utility.ExtractValueFromArray(new byte[] { 0xDE, 0xAD }, 0, 2) == 0xADDE;
         public bool IsLittleEndian {
             get {
                 return _isLittleEndian;
             }
         }
-        public BasicTypeSerializerContext(int defaultBufferSize = 1024) {
+        
+        public int  HighWatermark { get; set; }
+        public bool ByteLevelWaterMark { get; set; }
+
+        protected OnHighWatermarkEvent HighWatermarkEvent;
+
+        public BasicTypeSerializerContext(int defaultBufferSize = 1024, int highWatermark = 0, OnHighWatermarkEvent highWatermarkEvent = null, bool byteLevelWatermark = false) {
             if (defaultBufferSize < MinimumBufferSize) throw new ArgumentOutOfRangeException("defaultBufferSize");
-            _serializeBuffer = new byte[defaultBufferSize];           
+            _serializeBuffer = new byte[defaultBufferSize];
             _storeFunction = StoreToBuffer;
+            HighWatermarkEvent = highWatermarkEvent;
+            HighWatermark = highWatermark;
+            ByteLevelWaterMark = byteLevelWatermark;
             InitializeHeader();
         }
         public BasicTypeSerializerContext(FileStream file) {
@@ -28,10 +41,17 @@ namespace netduino.helpers.Helpers {
             _storeFunction = StoreToFile;
             InitializeHeader();
         }
+
+        private const int BufferStartOffset = 2;
+        private const int NwazetLibSerializerHeaderVersionOffset = BufferStartOffset + 0;
+        private const int NwazetLibSerializerHeaderContentSizeOffset = BufferStartOffset + 1;
         private const byte _headerVersion = 3;
+
         private void InitializeHeader() {
-            _isLittleEndian = Utility.ExtractValueFromArray(new byte[] { 0xDE, 0xAD }, 0, 2) == 0xADDE;
-            _currentIndex = 0;
+            _currentIndex = BufferStartOffset;
+            if (BufferStartOffset > 0 && _file != null) {
+                _file.SetLength(BufferStartOffset);
+            }
             // Store the version byte
             Store((byte)_headerVersion);
             // Reserve two bytes to track the length of the data in the buffer. Not used with the FileStream.
@@ -40,6 +60,28 @@ namespace netduino.helpers.Helpers {
         }
         public void Store(byte data) {
             _storeFunction(data);
+            if (ByteLevelWaterMark == true) {
+                CheckHighWatermark();
+            }
+        }
+        public void Store(byte[] bytes, ushort offset, ushort count) {
+            if (_file == null) {
+                var currentSerializeBufferLength = _serializeBuffer.Length;
+                if (currentSerializeBufferLength < _currentIndex + count) {
+                    var buffer = new byte[(currentSerializeBufferLength * 2) + count];
+                    Array.Copy(_serializeBuffer, buffer, currentSerializeBufferLength);
+                    _serializeBuffer = buffer;
+                    buffer = null;
+                    Debug.GC(true);
+                }
+                Array.Copy(bytes, offset, _serializeBuffer, _currentIndex, count);
+            } else {
+                _file.Write(bytes, offset, count);
+            }
+            _currentIndex += count;
+            if (ByteLevelWaterMark == true) {
+                CheckHighWatermark();
+            }
         }
         private void StoreToBuffer(byte data) {
             if (_currentIndex < _serializeBuffer.Length) {
@@ -58,18 +100,34 @@ namespace netduino.helpers.Helpers {
             _file.WriteByte(data);
             _currentIndex++;
         }
-        public byte[] GetBuffer(ref int contentSize) {
+        public void CheckHighWatermark() {
+            if (HighWatermark != 0 && _currentIndex >= HighWatermark) {
+                HighWatermarkEvent();
+            }
+        }
+        public byte[] GetBuffer(out int contentSize) {
             if (_serializeBuffer == null) {
+                contentSize = 0;
                 return null;
             }
             // Finalize the content size in the header
-            _serializeBuffer[1] = (byte)(ContentSize >> 8);
-            _serializeBuffer[2] = (byte)(ContentSize);
+            _serializeBuffer[NwazetLibSerializerHeaderContentSizeOffset] = (byte)(ContentSize >> 8);
+            _serializeBuffer[NwazetLibSerializerHeaderContentSizeOffset+1] = (byte)(ContentSize);
             contentSize = _currentIndex;
-            _currentIndex = _headerVersion;
+            _currentIndex = BufferStartOffset + _headerVersion;
             return _serializeBuffer;
         }
+        public void Wipe() {
+            var length = _serializeBuffer.Length;
+            for (var i = 0; i < length; i++) {
+                _serializeBuffer[i] = 0;
+            }
+            InitializeHeader();
+        }
         public void Dispose() {
+            if (_file != null) {
+                _file.Dispose();
+            }
             _encoding = null;
             _file = null;
             _serializeBuffer = null;
@@ -148,6 +206,10 @@ namespace netduino.helpers.Helpers {
             foreach (var b in bytes) {
                 Put(context, b);
             }
+        }
+        public static void Put(BasicTypeSerializerContext context, byte[] bytes, ushort offset, ushort count) {
+            Put(context, (ushort)count);
+            context.Store(bytes, offset, count);
         }
         public static void Put(BasicTypeSerializerContext context, ushort[] array) {
             Put(context, (ushort)array.Length);
