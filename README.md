@@ -29,6 +29,7 @@ The 'netduino Helpers' is a C# library providing hardware drivers and utility cl
 * Basic type serialization / deserialization
 * Trigonometry library (exMath-based)
 * Lightweight JSON parser (parsing from stream &amp; string)
-* Virtual Memory support </li><li>PIX-6T4 console bootloader and games
+* Virtual Memory support
+* PIX-6T4 console bootloader and games
 
 The library is available as source-code only.
