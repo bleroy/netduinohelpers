@@ -44,8 +44,6 @@ namespace Quadris
             for (var r = 0; r < pixels.Length; r++)
             {
                 var row = y + r;
-                // Ignore what's above the top edge of the world: no collision can happen there
-                if (row < 0) continue;
                 for (var c = 0; c < pixels[0].Length; c++)
                 {
                     // No pixel, no trouble
@@ -53,8 +51,8 @@ namespace Quadris
                     // A pixel below the bottom edge of the world isn't valid
                     if (row >= Quadris.FieldHeight) return false;
                     var column = x + c;
-                    // Pixels left of the left edge, right of the right edge, or hitting a playfiled pixel are invalid
-                    if (column < 0 || column >= Quadris.FieldWidth || Owner.Playfield[row][column]) return false;
+                    // Pixels left of the left edge, right of the right edge, or hitting a playfield pixel are invalid
+                    if (column < 0 || column >= Quadris.FieldWidth || (row > 0&& Owner.Playfield[row][column])) return false;
                 }
             }
             return true;
@@ -77,7 +75,6 @@ namespace Quadris
 
         public bool MoveLeft()
         {
-            if (Y < 0) return false;
             if (!CheckMoveIsValid(X - 1, Y, Orientation)) return false;
             X--;
             return true;
@@ -85,7 +82,6 @@ namespace Quadris
 
         public bool MoveRight()
         {
-            if (Y < 0) return false;
             if (!CheckMoveIsValid(X + 1, Y, Orientation)) return false;
             X++;
             return true;
@@ -93,7 +89,6 @@ namespace Quadris
 
         public bool RotateLeft()
         {
-            if (Y < 0) return false;
             var leftOrientation = (Orientation)(((int)Orientation + 1) % 4);
             if (!CheckMoveIsValid(X, Y, leftOrientation)) return false;
             Orientation = leftOrientation;
@@ -102,7 +97,6 @@ namespace Quadris
 
         public bool RotateRight()
         {
-            if (Y < 0) return false;
             var rightOrientation = (Orientation)(((int)Orientation + 3) % 4);
             if (!CheckMoveIsValid(X, Y, rightOrientation)) return false;
             Orientation = rightOrientation;
