@@ -1,0 +1,1 @@
+assembly:file=Quadris.pe;name=Quadris;version=1.0.0.0;class=Quadris.Program;method=Run
