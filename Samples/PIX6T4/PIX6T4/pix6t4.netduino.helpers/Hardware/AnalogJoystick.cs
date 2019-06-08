@@ -12,8 +12,8 @@ namespace netduino.helpers.Hardware {
     /// </summary>
     public class AnalogJoystick : IDisposable
     {
-        protected AnalogInput Xinput;
-        protected AnalogInput Yinput;
+        protected SecretLabs.NETMF.Hardware.AnalogInput Xinput;
+        protected SecretLabs.NETMF.Hardware.AnalogInput Yinput;
 
         /// <summary>
         /// Returns the current raw x position
@@ -137,9 +137,9 @@ namespace netduino.helpers.Hardware {
         /// <param name="maxRange"></param>
         /// <param name="centerDeadZoneRadius"></param>
         public AnalogJoystick(Cpu.Pin xAxisPin, Cpu.Pin yAxisPin, int minXRange = 0, int maxXRange = 1023, int minYRange = 0, int maxYRange = 1023, int centerDeadZoneRadius = 25) {
-            Xinput = new AnalogInput(xAxisPin);
+            Xinput = new SecretLabs.NETMF.Hardware.AnalogInput(xAxisPin);
             Xinput.SetRange(minXRange, maxXRange);
-            Yinput = new AnalogInput(yAxisPin);
+            Yinput = new SecretLabs.NETMF.Hardware.AnalogInput(yAxisPin);
             Yinput.SetRange(minYRange, maxYRange);
             _xRangeFlipped = (minXRange > maxXRange) ? true : false;
             _yRangeFlipped = (minYRange > maxYRange) ? true : false;
